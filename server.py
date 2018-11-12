@@ -1,7 +1,10 @@
 from flask import Flask, request, jsonify
-from flask_restful import Resource, Api
+#from flask_restful import Resource, Api
 from json import dumps
 from dotenv import load_dotenv, find_dotenv
+from flask_cors import CORS, cross_origin
+
+
 load_dotenv()
 
 import data
@@ -9,7 +12,8 @@ import twitter
 import evaluate
 
 app = Flask(__name__)
-api = Api(app)
+CORS(app)
+#api = Api(app)
 
 tagged_url = data.load_data(by_url=True)
 bearer_token = twitter.get_bearer_token()
@@ -34,11 +38,12 @@ def get_shared_urls():
     return jsonify(urls)
 
 @app.route('/evaluate')
+@cross_origin()
 def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tagged_url)
+    result = evaluate.count(urls, tagged_url, tweets)
     return jsonify(result)
 
 
