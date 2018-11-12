@@ -30,10 +30,23 @@ def get_tweets_from_display_name():
     tweets = twitter.get_user_tweets(bearer_token, handle)
     return jsonify(tweets)
 
+@app.route('/tweets_old')
+def get_tweets_from_display_name2():
+    handle = request.args.get('handle')
+    tweets = twitter.get_user_tweets_old(bearer_token, handle)
+    return jsonify(tweets)
+
 @app.route('/urls')
 def get_shared_urls():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
+    urls = twitter.get_urls_from_tweets(tweets)
+    return jsonify(urls)
+
+@app.route('/urls_old')
+def get_shared_urls_old():
+    handle = request.args.get('handle')
+    tweets = twitter.get_user_tweets_old(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets)
     return jsonify(urls)
 
@@ -42,6 +55,15 @@ def get_shared_urls():
 def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
+    urls = twitter.get_urls_from_tweets(tweets)
+    result = evaluate.count(urls, tagged_url, tweets)
+    return jsonify(result)
+
+@app.route('/evaluate_old')
+@cross_origin()
+def evaluate_user_old():
+    handle = request.args.get('handle')
+    tweets = twitter.get_user_tweets_old(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets)
     result = evaluate.count(urls, tagged_url, tweets)
     return jsonify(result)

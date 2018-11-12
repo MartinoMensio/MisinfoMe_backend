@@ -1,8 +1,14 @@
 import requests
 import os
 import base64
+#from lxml import etree
+from bs4 import BeautifulSoup
+
+from twitterscraper.query import query_tweets_from_user
 
 from requests.auth import HTTPBasicAuth
+
+#htmlparser = etree.HTMLParser()
 
 def get_bearer_token():
     # these env variables must be there
@@ -13,7 +19,7 @@ def get_bearer_token():
     print('twitter OK')
     return response['access_token']
 
-def get_user_tweets(bearer_token, user_handle):
+def get_user_tweets_old(bearer_token, user_handle):
     headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
     params = {'screen_name': user_handle, 'max_count': 200}
     all_tweets = []
@@ -32,6 +38,19 @@ def get_user_tweets(bearer_token, user_handle):
         params['max_id'] = max_id
     print('retrieved', len(all_tweets), 'tweets')
     return all_tweets
+
+def get_user_tweets(bearer_token, user_handle):
+    list_of_tweets = query_tweets_from_user(user_handle)
+    results = [{'entities': {'urls': get_urls_scraper(t)}} for t in list_of_tweets]
+    return results
+
+def get_urls_scraper(tweet):
+    # get from html with BeautifulSoup
+    soup = BeautifulSoup(tweet.html, 'html.parser')
+    #tree = etree.parse(tweet['html'], htmlparser)
+    urls = [{'expanded_url': el['data-expanded-url']} for el in soup.select('a[data-expanded-url]')]
+    return urls
+
 
 def get_urls_from_tweets(tweets):
     all_urls = []
