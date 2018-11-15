@@ -15,13 +15,13 @@ app = Flask(__name__)
 CORS(app)
 #api = Api(app)
 
-tagged_url = data.load_data(by_url=True)
+info = data.load_data()
 bearer_token = twitter.get_bearer_token()
 
 @app.route('/classify')
 def get_class_for_url():
     url = request.args.get('url')
-    res = tagged_url.get(url, None)
+    res = data.classify_url(url, info)
     return jsonify({'result': res})
 
 @app.route('/tweets')
@@ -56,7 +56,7 @@ def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tagged_url, tweets)
+    result = evaluate.count(urls, info, tweets)
     return jsonify(result)
 
 @app.route('/evaluate_old')
@@ -65,7 +65,7 @@ def evaluate_user_old():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets_old(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tagged_url, tweets)
+    result = evaluate.count(urls, info, tweets)
     return jsonify(result)
 
 

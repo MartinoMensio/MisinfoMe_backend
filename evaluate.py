@@ -1,6 +1,11 @@
+import data
 
-def count(shared_urls, dataset_by_url, tweets):
-    matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
+def count(shared_urls, info, tweets):
+    #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
+    #verified = [el for el in matching if el['label'] == 'true']
+    #fake = [el for el in matching if el['label'] == 'fake']
+    results = [data.classify_url(url, info) for url in shared_urls]
+    matching = [el for el in results if el]
     verified = [el for el in matching if el['label'] == 'true']
     fake = [el for el in matching if el['label'] == 'fake']
     return {
