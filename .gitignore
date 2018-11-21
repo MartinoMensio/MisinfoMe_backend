@@ -1,3 +1,7 @@
+aggregated_*.json
+all_*.json
+cache/**
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

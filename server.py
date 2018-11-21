@@ -1,3 +1,5 @@
+import os
+import json
 from flask import Flask, request, jsonify
 #from flask_restful import Resource, Api
 from json import dumps
@@ -15,6 +17,12 @@ app = Flask(__name__)
 CORS(app)
 #api = Api(app)
 
+mappings = {}
+mappings_path = 'cache/url_mappings.json'
+if os.path.isfile(mappings_path):
+     with open(mappings_path) as f:
+          mappings = json.load(f)
+
 info = data.load_data()
 bearer_token = twitter.get_bearer_token()
 
@@ -30,24 +38,24 @@ def get_tweets_from_display_name():
     tweets = twitter.get_user_tweets(bearer_token, handle)
     return jsonify(tweets)
 
-@app.route('/tweets_old')
+@app.route('/tweets_api')
 def get_tweets_from_display_name2():
     handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets_old(bearer_token, handle)
+    tweets = twitter.get_user_tweets_api(bearer_token, handle)
     return jsonify(tweets)
 
 @app.route('/urls')
 def get_shared_urls():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets)
+    urls = twitter.get_urls_from_tweets(tweets, mappings)
     return jsonify(urls)
 
-@app.route('/urls_old')
-def get_shared_urls_old():
+@app.route('/urls_api')
+def get_shared_urls_api():
     handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets_old(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets)
+    tweets = twitter.get_user_tweets_api(bearer_token, handle)
+    urls = twitter.get_urls_from_tweets(tweets, mappings)
     return jsonify(urls)
 
 @app.route('/evaluate')
@@ -55,19 +63,22 @@ def get_shared_urls_old():
 def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets)
+    urls = twitter.get_urls_from_tweets(tweets, mappings)
     result = evaluate.count(urls, info, tweets)
     return jsonify(result)
 
-@app.route('/evaluate_old')
+@app.route('/evaluate_api')
 @cross_origin()
-def evaluate_user_old():
+def evaluate_user_api():
     handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets_old(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets)
+    tweets = twitter.get_user_tweets_api(bearer_token, handle)
+    urls = twitter.get_urls_from_tweets(tweets, mappings)
     result = evaluate.count(urls, info, tweets)
     return jsonify(result)
 
+@app.route('/mappings')
+def get_mappings():
+     return jsonify(mappings)
 
 if __name__ == '__main__':
      app.run()
