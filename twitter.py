@@ -8,6 +8,7 @@ from bs4 import BeautifulSoup
 from twitterscraper.query import query_tweets_from_user
 
 from requests.auth import HTTPBasicAuth
+from tqdm import tqdm
 
 import unshortener
 
@@ -71,7 +72,7 @@ def get_urls_from_tweets(tweets, mappings):
         all_urls.extend(urls)
 
     uns = unshortener.Unshortener(mappings)
-    for url in all_urls:
+    for url in tqdm(all_urls):
         resolved = uns.unshorten(url['url'])
         url['resolved'] = resolved
     with open('cache/url_mappings.json', 'w') as f:
