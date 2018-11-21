@@ -34,11 +34,12 @@ def get_user_tweets_api(bearer_token, user_handle):
         newest_saved = max([t['id'] for t in all_tweets])
     while True:
         response = requests.get('https://api.twitter.com/1.1/statuses/user_timeline.json', headers=headers, params=params).json()
-        if 'errors' in response:
+        if 'errors' in response or 'error' in response:
             print(response)
-            raise ValueError()
+            return []
 
         print('.', end='', flush=True)
+        #print(response)
         new_tweets = [t for t in response if t['id'] > newest_saved]
         all_tweets.extend(new_tweets)
         if not len(new_tweets):
