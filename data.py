@@ -1,4 +1,5 @@
 import json
+import copy
 from urllib.parse import urlparse
 from pathlib import Path
 
@@ -15,17 +16,19 @@ def load_data(path_str='.'):
 
 def classify_url(url_info, data):
     url = url_info['resolved']
-    label = data['by_url'].get(url, None)
+    label = copy.copy(data['by_url'].get(url, None))
     if label:
         label['reason'] = 'The URL you shared matched'
     else:
         domain = get_url_domain(url)
-        label = data['by_domain'].get(domain, None)
+        label = copy.copy(data['by_domain'].get(domain, None))
         if label:
             label['reason'] = 'The domain of the URL you shared matched'
             label['url'] = url
     if label:
         label['found_in_tweet'] = url_info['found_in_tweet']
+        label['retweet'] = url_info['retweet']
+        #print(label)
     return label
 
 def get_url_domain(url):
