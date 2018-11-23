@@ -55,7 +55,7 @@ def get_user_tweets_api(bearer_token, user_handle):
 
 def get_user_tweets(bearer_token, user_handle):
     list_of_tweets = query_tweets_from_user(user_handle)
-    results = [{'entities': {'urls': get_urls_scraper(t)}, 'id': int(t.id)} for t in list_of_tweets]
+    results = [{'entities': {'urls': get_urls_scraper(t)}, 'id': int(t.id), 'id_str': t.id} for t in list_of_tweets]
     return results
 
 def get_urls_scraper(tweet):
@@ -69,7 +69,7 @@ def get_urls_scraper(tweet):
 def get_urls_from_tweets(tweets, mappings):
     all_urls = []
     for t in tweets:
-        urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id']} for u in t['entities']['urls']]
+        urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id_str'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
 
     uns = unshortener.Unshortener(mappings)

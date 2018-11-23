@@ -64,7 +64,7 @@ def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, info, tweets)
+    result = evaluate.count(urls, info, tweets, handle)
     return jsonify(result)
 
 @app.route('/evaluate_api')
@@ -73,7 +73,7 @@ def evaluate_user_api():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets_api(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, info, tweets)
+    result = evaluate.count(urls, info, tweets, handle)
     return jsonify(result)
 
 @app.route('/mappings')
