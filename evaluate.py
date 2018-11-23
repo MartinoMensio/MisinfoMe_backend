@@ -11,7 +11,7 @@ if os.path.isfile(stats_file):
 
 def save_stats():
     with open(stats_file, 'w') as f:
-        json.dump(stats, f)
+        json.dump(stats, f, indent=2)
 
 def count(shared_urls, info, tweets, handle):
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]

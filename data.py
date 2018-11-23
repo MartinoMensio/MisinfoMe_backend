@@ -19,6 +19,7 @@ def classify_url(url_info, data):
     label = copy.copy(data['by_url'].get(url, None))
     if label:
         label['reason'] = 'The URL you shared matched'
+        label['url'] = url
     else:
         domain = get_url_domain(url)
         label = copy.copy(data['by_domain'].get(domain, None))

@@ -49,8 +49,9 @@ def get_user_tweets_api(bearer_token, user_handle):
         max_id = new_tweets[-1]['id'] - 1
         params['max_id'] = max_id
     print('retrieved', len(all_tweets), 'tweets')
-    with open(cache_file, 'w') as f:
-        json.dump(all_tweets, f, indent=2)
+    if all_tweets:
+        with open(cache_file, 'w') as f:
+            json.dump(all_tweets, f, indent=2)
     return all_tweets
 
 def get_user_tweets(bearer_token, user_handle):
@@ -72,10 +73,21 @@ def get_urls_from_tweets(tweets, mappings):
         urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id_str'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
 
+    # multiprocess
+    """
+    unshortener.unshorten_multiprocess([u['url'] for u in all_urls], mappings=mappings)
+    for url in all_urls:
+        url['resolved'] = mappings[url['url']]
+    """
+
+    # single process
+    #"""
     uns = unshortener.Unshortener(mappings)
     for url in tqdm(all_urls):
         resolved = uns.unshorten(url['url'])
         url['resolved'] = resolved
+    #"""
+
     with open('cache/url_mappings.json', 'w') as f:
         json.dump(mappings, f, indent=2)
     return all_urls
