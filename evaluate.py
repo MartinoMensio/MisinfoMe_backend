@@ -32,7 +32,8 @@ def count(shared_urls, info, tweets, handle):
         'verified_urls': verified,
         'unknown_urls_cnt': len(shared_urls) - len(matching)
     }
-    stats[handle] = you
+    if len(tweets):
+        stats[handle] = you
     save_stats()
     sum_over_stats = lambda key: sum([el[key] for el in stats.values()])
     overall = {
@@ -40,7 +41,8 @@ def count(shared_urls, info, tweets, handle):
         'shared_urls_cnt': sum_over_stats('shared_urls_cnt'),
         'verified_urls_cnt': sum_over_stats('verified_urls_cnt'),
         'fake_urls_cnt': sum_over_stats('fake_urls_cnt'),
-        'unknown_urls_cnt': sum_over_stats('unknown_urls_cnt')
+        'unknown_urls_cnt': sum_over_stats('unknown_urls_cnt'),
+        'users_cnt': len(stats)
     }
     return {
         'you': you,
