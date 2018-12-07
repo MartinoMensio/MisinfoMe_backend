@@ -9,22 +9,25 @@ def load_data(path_str='.'):
         urls = json.load(f)
     with open(path / 'aggregated_domains.json') as f:
         domains = json.load(f)
+    with open(path / 'aggregated_rebuttals.json') as f:
+        rebuttals = json.load(f)
     return {
         'by_url': urls,
-        'by_domain':domains
+        'by_domain': domains,
+        'rebuttals': rebuttals
     }
 
 def classify_url(url_info, data):
     url = url_info['resolved']
     label = copy.copy(data['by_url'].get(url, None))
     if label:
-        label['reason'] = 'The URL you shared matched'
+        label['reason'] = 'full URL match'
         label['url'] = url
     else:
         domain = get_url_domain(url)
         label = copy.copy(data['by_domain'].get(domain, None))
         if label:
-            label['reason'] = 'The domain of the URL you shared matched'
+            label['reason'] = 'domain match'
             label['url'] = url
     if label:
         label['found_in_tweet'] = url_info['found_in_tweet']

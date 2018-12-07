@@ -23,6 +23,8 @@ def count(shared_urls, info, tweets, handle):
     #print(matching)
     verified = [el for el in matching if el['label'] == 'true']
     fake = [el for el in matching if el['label'] == 'fake']
+    # rebuttals
+    rebuttals_match = {claim_url['resolved']: info['rebuttals'][claim_url['resolved']] for claim_url in shared_urls if claim_url['resolved'] in info['rebuttals']}
     you = {
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
@@ -30,7 +32,8 @@ def count(shared_urls, info, tweets, handle):
         'fake_urls_cnt': len(fake),
         'fake_urls': fake,
         'verified_urls': verified,
-        'unknown_urls_cnt': len(shared_urls) - len(matching)
+        'unknown_urls_cnt': len(shared_urls) - len(matching),
+        'rebuttals': rebuttals_match
     }
     if len(tweets):
         stats[handle] = you
