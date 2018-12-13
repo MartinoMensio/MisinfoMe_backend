@@ -44,6 +44,18 @@ def get_tweets_from_display_name2():
     tweets = twitter.get_user_tweets_api(bearer_token, handle)
     return jsonify(tweets)
 
+@app.route('/followers_api')
+def get_followers():
+    handle = request.args.get('handle')
+    followers = twitter.get_followers_api(bearer_token, handle)
+    return jsonify(followers)
+
+@app.route('/following_api')
+def get_following():
+    handle = request.args.get('handle')
+    following = twitter.get_followers_api(bearer_token, handle)
+    return jsonify(following)
+
 @app.route('/urls')
 def get_shared_urls():
     handle = request.args.get('handle')
@@ -74,6 +86,18 @@ def evaluate_user_api():
     tweets = twitter.get_user_tweets_api(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
     result = evaluate.count(urls, info, tweets, handle)
+    # evaluate also the following
+    include_following = request.args.get('include_following')
+    print(include_following)
+    if include_following:
+        result['following'] = {}
+        following = twitter.get_followers_api(bearer_token, handle)
+        print(len(following), 'following')
+        for f in following:
+            tweets_f = twitter.get_user_tweets_api(bearer_token, f)
+            urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+            result_f = evaluate.count(urls_f, info, tweets_f, handle)
+            result['following'][f] = result_f['you']
     return jsonify(result)
 
 @app.route('/mappings')

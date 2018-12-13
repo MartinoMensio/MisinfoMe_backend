@@ -24,7 +24,11 @@ def get_bearer_token():
 
 def get_user_tweets_api(bearer_token, user_handle):
     headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
-    params = {'screen_name': user_handle, 'max_count': 200}
+    params = {
+        'screen_name': user_handle,
+        'max_count': 200,
+        'tweet_mode': 'extended' # to get the full content and all the URLs
+    }
     all_tweets = []
     newest_saved = 0
     cache_file = 'cache/tweets/{}.json'.format(user_handle)
@@ -96,3 +100,27 @@ def get_urls_from_tweets(tweets, mappings, resolve=False):
     with open('cache/url_mappings.json', 'w') as f:
         json.dump(mappings, f, indent=2)
     return all_urls
+
+def get_followers_api(bearer_token, user_handle):
+    headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
+    params = {
+        'screen_name': user_handle,
+        'count': 20,
+        'cursor': -1
+        #'cursor': -1,
+    }
+    response = requests.get('https://api.twitter.com/1.1/followers/list.json', params=params, headers=headers).json()
+    #print(response['users'][0])
+    return [u['screen_name'] for u in response['users']]
+
+def get_following_api(bearer_token, user_handle):
+    headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
+    params = {
+        'screen_name': user_handle,
+        'count': 20,
+        'cursor': -1
+        #'cursor': -1,
+    }
+    response = requests.get('https://api.twitter.com/1.1/following/list.json', params=params, headers=headers).json()
+    #print(response['users'][0])
+    return [u['screen_name'] for u in response['users']]
