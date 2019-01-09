@@ -35,7 +35,7 @@ def count(shared_urls, info, tweets, handle):
         'unknown_urls_cnt': len(shared_urls) - len(matching),
         'rebuttals': rebuttals_match
     }
-    if len(tweets):
+    if len(tweets) and handle:
         stats[handle] = you
     save_stats()
     sum_over_stats = lambda key: sum([el[key] for el in stats.values()])

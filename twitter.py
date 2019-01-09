@@ -15,8 +15,8 @@ import unshortener
 
 def get_bearer_token():
     # these env variables must be there
-    tw_key = os.environ['TWITTER_API_KEY']
-    tw_secret = os.environ['TWITTER_API_SECRET']
+    tw_key = os.environ['KEY_1']
+    tw_secret = os.environ['SECRET_1']
     response = requests.post('https://api.twitter.com/oauth2/token', data={'grant_type': 'client_credentials'}, auth=HTTPBasicAuth(tw_key, tw_secret)).json()
     assert response['token_type'] == 'bearer'
     print('twitter OK')
@@ -40,7 +40,7 @@ def get_user_tweets_api(bearer_token, user_handle):
         response = requests.get('https://api.twitter.com/1.1/statuses/user_timeline.json', headers=headers, params=params).json()
         if 'errors' in response or 'error' in response:
             print(response)
-            return []
+            return all_tweets
 
         print('.', end='', flush=True)
         #print(response)
@@ -105,22 +105,32 @@ def get_followers_api(bearer_token, user_handle):
     headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
     params = {
         'screen_name': user_handle,
-        'count': 20,
+        'count': 20, # TODO loop over groups of 200
         'cursor': -1
         #'cursor': -1,
     }
     response = requests.get('https://api.twitter.com/1.1/followers/list.json', params=params, headers=headers).json()
-    #print(response['users'][0])
+    if not 'users' in response:
+        return []
     return [u['screen_name'] for u in response['users']]
 
 def get_following_api(bearer_token, user_handle):
     headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
     params = {
         'screen_name': user_handle,
-        'count': 20,
+        'count': 20, # TODO loop over groups of 200
         'cursor': -1
         #'cursor': -1,
     }
     response = requests.get('https://api.twitter.com/1.1/following/list.json', params=params, headers=headers).json()
-    #print(response['users'][0])
+    if not 'users' in response:
+        return []
     return [u['screen_name'] for u in response['users']]
+
+def get_statuses_lookup(bearer_token, tweet_ids):
+    headers = {'Authorization': 'Bearer {}'.format(bearer_token)}#.format(base64.b64encode(bearer_token.encode('utf-8')))}
+    params = {
+        'id': tweet_ids
+    }
+    response = requests.get('https://api.twitter.com/1.1/statuses/lookup.json', params=params, headers=headers).json()
+    return response

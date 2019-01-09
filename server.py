@@ -1,10 +1,14 @@
 import os
 import json
+
+import concurrent.futures
+
 from flask import Flask, request, jsonify
 #from flask_restful import Resource, Api
 from json import dumps
 from dotenv import load_dotenv, find_dotenv
 from flask_cors import CORS, cross_origin
+from flask_marshmallow import Marshmallow
 
 
 load_dotenv()
@@ -15,6 +19,7 @@ import evaluate
 
 app = Flask(__name__)
 CORS(app)
+ma = Marshmallow(app)
 #api = Api(app)
 
 mappings = {}
@@ -26,8 +31,17 @@ if os.path.isfile(mappings_path):
 info = data.load_data()
 bearer_token = twitter.get_bearer_token()
 
-@app.route('/classify')
-def get_class_for_url():
+'''
+# Marshmallow schemas
+class AnalysisSchema(ma.schema):
+     class Meta:
+          # fields to expose
+          fields = ()
+'''
+
+
+@app.route('/analyse/url')
+def analyse_url():
     url = request.args.get('url')
     res = data.classify_url(url, info)
     return jsonify({'result': res})
@@ -70,7 +84,7 @@ def get_shared_urls_api():
     urls = twitter.get_urls_from_tweets(tweets, mappings)
     return jsonify(urls)
 
-@app.route('/evaluate')
+@app.route('/evaluate_old')
 @cross_origin()
 def evaluate_user():
     handle = request.args.get('handle')
@@ -79,9 +93,22 @@ def evaluate_user():
     result = evaluate.count(urls, info, tweets, handle)
     return jsonify(result)
 
-@app.route('/evaluate_api')
+def get_tweets_wrap(handle):
+    return twitter.get_user_tweets_api(bearer_token, handle)
+
+@app.route('/analyse/tweets')
 @cross_origin()
-def evaluate_user_api():
+def analyse_tweets():
+    """from a list of tweet IDs (comma-separated) retrieves and analyses them"""
+    tweet_ids = request.args.get('ids')
+    tweets = twitter.get_statuses_lookup(bearer_token, tweet_ids)
+    urls = twitter.get_urls_from_tweets(tweets, mappings)
+    result = evaluate.count(urls, info, tweets, None)
+    return jsonify(result)
+
+@app.route('/analyse/user')
+@cross_origin()
+def analyse_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets_api(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
@@ -93,11 +120,16 @@ def evaluate_user_api():
         result['following'] = {}
         following = twitter.get_followers_api(bearer_token, handle)
         print(len(following), 'following')
-        for f in following:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
+                urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+                result_f = evaluate.count(urls_f, info, tweets_f, handle)
+                result['following'][f] = result_f['you']
+        """for f in following:
             tweets_f = twitter.get_user_tweets_api(bearer_token, f)
             urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
             result_f = evaluate.count(urls_f, info, tweets_f, handle)
-            result['following'][f] = result_f['you']
+            result['following'][f] = result_f['you']"""
     return jsonify(result)
 
 @app.route('/mappings')

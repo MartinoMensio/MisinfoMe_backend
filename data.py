@@ -26,6 +26,9 @@ def classify_url(url_info, data):
     else:
         domain = get_url_domain(url)
         label = copy.copy(data['by_domain'].get(domain, None))
+        if not label and domain.startswith('www.'):
+            # try also without www
+            label = copy.copy(data['by_domain'].get(domain[4:], None))
         if label:
             label['reason'] = 'domain match'
             label['url'] = url
