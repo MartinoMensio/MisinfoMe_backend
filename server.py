@@ -117,7 +117,7 @@ def analyse_user():
     print(include_following)
     if include_following:
         result['following'] = {}
-        following = twitter.get_followers_api(bearer_token, handle)
+        following = twitter.get_following_api(bearer_token, handle)
         print(len(following), 'following')
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
@@ -129,6 +129,33 @@ def analyse_user():
             urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
             result_f = evaluate.count(urls_f, tweets_f, handle)
             result['following'][f] = result_f['you']"""
+    return jsonify(result)
+
+@app.route('/analyse/user/network')
+@cross_origin()
+def analyse_user_network():
+    handle = request.args.get('handle')
+    # evaluate the following
+    following_analysis = {}
+    following = twitter.get_following_api(bearer_token, handle)
+    print(len(following), 'following')
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
+            urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+            result_f = evaluate.count(urls_f, tweets_f, handle)
+            following_analysis[f] = result_f['you']
+    """for f in following:
+        tweets_f = twitter.get_user_tweets_api(bearer_token, f)
+        urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+        result_f = evaluate.count(urls_f, tweets_f, handle)
+        result['following'][f] = result_f['you']"""
+    result = {
+        'fake_urls_cnt': sum([el['fake_urls_cnt'] for el in following_analysis.values()]),
+        'shared_urls_cnt': sum([el['shared_urls_cnt'] for el in following_analysis.values()]),
+        'verified_urls_cnt': sum([el['verified_urls_cnt'] for el in following_analysis.values()]),
+        'tweets_cnt': sum([el['tweets_cnt'] for el in following_analysis.values()]),
+        'unknown_urls_cnt': sum([el['unknown_urls_cnt'] for el in following_analysis.values()])
+    }
     return jsonify(result)
 
 @app.route('/mappings')

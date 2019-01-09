@@ -15,8 +15,8 @@ import unshortener
 
 def get_bearer_token():
     # these env variables must be there
-    tw_key = os.environ['KEY_1']
-    tw_secret = os.environ['SECRET_1']
+    tw_key = os.environ['KEY_3']
+    tw_secret = os.environ['SECRET_3']
     response = requests.post('https://api.twitter.com/oauth2/token', data={'grant_type': 'client_credentials'}, auth=HTTPBasicAuth(tw_key, tw_secret)).json()
     assert response['token_type'] == 'bearer'
     print('twitter OK')
@@ -122,7 +122,8 @@ def get_following_api(bearer_token, user_handle):
         'cursor': -1
         #'cursor': -1,
     }
-    response = requests.get('https://api.twitter.com/1.1/following/list.json', params=params, headers=headers).json()
+    response = requests.get('https://api.twitter.com/1.1/friends/list.json', params=params, headers=headers).json()
+    print(response)
     if not 'users' in response:
         return []
     return [u['screen_name'] for u in response['users']]
