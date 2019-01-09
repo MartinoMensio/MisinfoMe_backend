@@ -3,6 +3,8 @@ import copy
 from urllib.parse import urlparse
 from pathlib import Path
 
+import database
+
 def load_data(path_str='.'):
     path = Path(path_str)
     with open(path / 'aggregated_urls.json') as f:
@@ -17,18 +19,18 @@ def load_data(path_str='.'):
         'rebuttals': rebuttals
     }
 
-def classify_url(url_info, data):
+def classify_url(url_info):
     url = url_info['resolved']
-    label = copy.copy(data['by_url'].get(url, None))
+    label = database.get_url_info(url)
     if label:
         label['reason'] = 'full URL match'
         label['url'] = url
     else:
         domain = get_url_domain(url)
-        label = copy.copy(data['by_domain'].get(domain, None))
+        label = database.get_domain_info(domain)
         if not label and domain.startswith('www.'):
-            # try also without www
-            label = copy.copy(data['by_domain'].get(domain[4:], None))
+            # try also without www.
+            label = database.get_domain_info(domain[4:])
         if label:
             label['reason'] = 'domain match'
             label['url'] = url

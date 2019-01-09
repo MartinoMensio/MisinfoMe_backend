@@ -9,3 +9,4 @@ bs4
 twitterscraper
 tqdm
 flask-marshmallow
+pymongo

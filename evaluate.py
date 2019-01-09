@@ -2,6 +2,8 @@ import data
 import json
 import os
 
+import database
+
 # this variable keeps the evaluations for each user. Persistence on disk
 stats = {}
 stats_file = 'cache/stats.json'
@@ -13,18 +15,21 @@ def save_stats():
     with open(stats_file, 'w') as f:
         json.dump(stats, f, indent=2)
 
-def count(shared_urls, info, tweets, handle):
+def count(shared_urls, tweets, handle):
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
-    results = [data.classify_url(url, info) for url in shared_urls] # NEED TWEET ID here
+    results = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
     #print(results)
     matching = [el for el in results if el]
     #print(matching)
-    verified = [el for el in matching if el['label'] == 'true']
-    fake = [el for el in matching if el['label'] == 'fake']
+    verified = [el for el in matching if el['score']['label'] == 'true']
+    fake = [el for el in matching if el['score']['label'] == 'fake']
     # rebuttals
-    rebuttals_match = {claim_url['resolved']: info['rebuttals'][claim_url['resolved']] for claim_url in shared_urls if claim_url['resolved'] in info['rebuttals']}
+    #print(shared_urls)
+    rebuttals_match = {claim_url['resolved']: database.get_rebuttals(claim_url['resolved']) for claim_url in shared_urls}
+    rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
+    print(rebuttals_match)
     you = {
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),

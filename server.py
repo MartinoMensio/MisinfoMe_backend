@@ -28,7 +28,6 @@ if os.path.isfile(mappings_path):
      with open(mappings_path) as f:
           mappings = json.load(f)
 
-info = data.load_data()
 bearer_token = twitter.get_bearer_token()
 
 '''
@@ -43,7 +42,7 @@ class AnalysisSchema(ma.schema):
 @app.route('/analyse/url')
 def analyse_url():
     url = request.args.get('url')
-    res = data.classify_url(url, info)
+    res = data.classify_url(url)
     return jsonify({'result': res})
 
 @app.route('/tweets')
@@ -90,7 +89,7 @@ def evaluate_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, info, tweets, handle)
+    result = evaluate.count(urls, tweets, handle)
     return jsonify(result)
 
 def get_tweets_wrap(handle):
@@ -103,7 +102,7 @@ def analyse_tweets():
     tweet_ids = request.args.get('ids')
     tweets = twitter.get_statuses_lookup(bearer_token, tweet_ids)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, info, tweets, None)
+    result = evaluate.count(urls, tweets, None)
     return jsonify(result)
 
 @app.route('/analyse/user')
@@ -112,7 +111,7 @@ def analyse_user():
     handle = request.args.get('handle')
     tweets = twitter.get_user_tweets_api(bearer_token, handle)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, info, tweets, handle)
+    result = evaluate.count(urls, tweets, handle)
     # evaluate also the following
     include_following = request.args.get('include_following')
     print(include_following)
@@ -123,12 +122,12 @@ def analyse_user():
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
                 urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
-                result_f = evaluate.count(urls_f, info, tweets_f, handle)
+                result_f = evaluate.count(urls_f, tweets_f, handle)
                 result['following'][f] = result_f['you']
         """for f in following:
             tweets_f = twitter.get_user_tweets_api(bearer_token, f)
             urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
-            result_f = evaluate.count(urls_f, info, tweets_f, handle)
+            result_f = evaluate.count(urls_f, tweets_f, handle)
             result['following'][f] = result_f['you']"""
     return jsonify(result)
 
