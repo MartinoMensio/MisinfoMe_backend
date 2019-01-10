@@ -11,6 +11,7 @@ from requests.auth import HTTPBasicAuth
 from tqdm import tqdm
 
 import unshortener
+import database
 
 class TwitterAPI(object):
 
@@ -102,32 +103,40 @@ class TwitterAPI(object):
                     # rate limit exceeded, this is catched by the decorator
                     raise ValueError(88)
         if 'errors' in response or 'error' in response:
-            raise Error(response)
+            raise Exception(response)
 
         return response
 
-    #@_check_rate_limit_exceeded
+    def get_user_lookup_from_screen_name(self, screen_name):
+        return self.perform_get({'url': 'https://api.twitter.com/1.1/users/show.json', 'params': {'screen_name': screen_name}})
+
+
     def get_user_tweets(self, user_handle):
+        print(user_handle)
+        user = database.get_twitter_user_from_screen_name(user_handle)
+        if not user:
+            try:
+                user = self.get_user_lookup_from_screen_name(user_handle)
+                database.save_twitter_user(user)
+            except Exception as e:
+                print(e)
+                return []
         params = {
-            'screen_name': user_handle,
+            'user_id': user['id_str'],
             'max_count': 200,
             'tweet_mode': 'extended' # to get the full content and all the URLs
         }
-        all_tweets = []
         newest_saved = 0
-        cache_file = 'cache/tweets/{}.json'.format(user_handle)
-        if os.path.isfile(cache_file):
-            with open(cache_file) as f:
-                try:
-                    all_tweets = json.load(f)
-                except:
-                    raise ValueError(cache_file)
+        #print('user id', user['id_str'])
+        all_tweets = list(database.get_tweets_from_user_id(user['id_str']))
+        #print('tweets found', len(all_tweets))
+        if all_tweets:
             newest_saved = max([t['id'] for t in all_tweets])
         while True:
             try:
                 response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/user_timeline.json', 'params': params})
-            except:
-                print(response)
+            except Exception as e:
+                print(e)
                 return all_tweets
 
             print('.', end='', flush=True)
@@ -142,8 +151,7 @@ class TwitterAPI(object):
             params['max_id'] = max_id
         print('retrieved', len(all_tweets), 'tweets')
         if all_tweets:
-            with open(cache_file, 'w') as f:
-                json.dump(all_tweets, f, indent=2)
+            database.save_new_tweets(all_tweets)
         return all_tweets
 
     def get_followers(self, user_handle):
@@ -151,18 +159,21 @@ class TwitterAPI(object):
             'screen_name': user_handle,
             'count': 200 # TODO loop over groups of 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/followers/list.json', params=params, partial_field_name='users')
-        return [u['screen_name'] for u in response]
+        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params, partial_field_name='users')
+        users = self.get_users_lookup(response)
+        return [u['screen_name'] for u in users]
 
     def get_following(self, user_handle):
         params = {
             'screen_name': user_handle,
             'count': 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/friends/list.json', params=params, partial_field_name='users')
-        return [u['screen_name'] for u in response]
+        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, partial_field_name='users')
+        users = self.get_users_lookup(response)
+        return [u['screen_name'] for u in users]
 
     def get_statuses_lookup(self, tweet_ids):
+        # TODO docs say to use POST for larger requests
         result = []
         for chunk in split_in_chunks(tweet_ids, 100):
             params = {
@@ -170,8 +181,21 @@ class TwitterAPI(object):
             }
             response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/lookup.json', 'params': params})
             result.extend(response)
-        print(result)
+        #print(result)
         return result
+
+    def get_users_lookup(self, id_list):
+        # TODO docs say to use POST for larger requests
+        result = []
+        for chunk in split_in_chunks(id_list, 100):
+            params = {
+                'user_id': ','.join(chunk)
+            }
+            response = self.perform_get({'url': 'https://api.twitter.com/1.1/users/lookup.json', 'params': params})
+            result.extend(response)
+        #print(result)
+        return result
+
 
 """
 def get_user_tweets(user_handle):
@@ -222,3 +246,14 @@ def get_urls_from_tweets(tweets, mappings, resolve=False):
 def split_in_chunks(iterable, chunk_size):
     for i in range(0, len(iterable), chunk_size):
         yield iterable[i:i+chunk_size]
+
+
+def save_cached_to_db():
+    """Migration function"""
+    import glob
+    import tqdm
+    for file in tqdm.tqdm(glob.glob('cache/tweets/*')):
+        with open(file) as f:
+            content = json.load(f)
+        for t in content:
+            database.save_tweet(t)
