@@ -105,7 +105,7 @@ def get_tweets_wrap(handle):
 @cross_origin()
 def analyse_tweets():
     """from a list of tweet IDs (comma-separated) retrieves and analyses them"""
-    tweet_ids = request.args.get('ids')
+    tweet_ids = request.args.get('ids').split(',')
     tweets = twitterApi.get_statuses_lookup(tweet_ids)
     urls = twitter.get_urls_from_tweets(tweets, mappings)
     result = evaluate.count(urls, tweets, None)
