@@ -10,3 +10,4 @@ twitterscraper
 tqdm
 flask-marshmallow
 pymongo
+validators

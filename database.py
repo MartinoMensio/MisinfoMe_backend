@@ -16,11 +16,25 @@ datasets_collection = db['datasets']
 # the same applies to fact_checkers
 fact_checkers_collection = db['fact_checkers']
 claimReviews_collection = db['claim_reviews']
+# the key is the url itself
 url_redirects_collection = db['url_redirects']
 
 # the key of a twitter user is the twitter id (long int)
 twitter_users = db['twitter_users']
 twitter_tweets = db['twitter_tweets']
+
+def get_url_redirect(url):
+    return url_redirects_collection.find_one({'_id': url})
+
+def save_url_redirect(from_url, to_url):
+    url_mapping = {'_id': from_url, 'to': to_url}
+    return url_redirects_collection.replace_one({'_id': url_mapping['_id']}, url_mapping, upsert=True)
+
+def get_url_redirects():
+    return url_redirects_collection.find()
+
+def get_url_redirects_in(url_list):
+    return url_redirects_collection.find({'_id': {'$in': url_list}})
 
 def get_domain_info(domain):
     return domains_collection.find_one({'_id': domain})

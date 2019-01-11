@@ -10,8 +10,8 @@ from twitterscraper.query import query_tweets_from_user
 from requests.auth import HTTPBasicAuth
 from tqdm import tqdm
 
-import unshortener
 import database
+import url_redirect_manager
 
 class TwitterAPI(object):
 
@@ -252,34 +252,15 @@ def get_urls_scraper(tweet):
 
 
 
-def get_urls_from_tweets(tweets, mappings, resolve=False):
+def get_urls_from_tweets(tweets):
     all_urls = []
     for t in tweets:
         urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
 
-    urls_missing_mapping = [u for u in all_urls if u['url'] not in mappings]
-    if resolve:
-        # multiprocess
-        #"""
-        unshortener.unshorten_multiprocess([u['url'] for u in urls_missing_mapping], mappings=mappings)
-        for url in all_urls:
-            url['resolved'] = mappings[url['url']]
-        #"""
+    for url in tqdm(all_urls):
+        url['resolved'] = url_redirect_manager.get_url_redirect_for(url['url'])
 
-        # single process
-        """
-        uns = unshortener.Unshortener(urls_missing_mapping)
-        for url in tqdm(all_urls):
-            resolved = uns.unshorten(url['url'])
-            url['resolved'] = resolved
-        """
-    else:
-        for url in all_urls:
-            url['resolved'] = url['url']
-
-    with open('cache/url_mappings.json', 'w') as f:
-        json.dump(mappings, f, indent=2)
     return all_urls
 
 def split_in_chunks(iterable, chunk_size):

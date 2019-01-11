@@ -16,6 +16,7 @@ load_dotenv()
 import data
 import twitter
 import evaluate
+import url_redirect_manager
 
 app = Flask(__name__)
 CORS(app)
@@ -23,12 +24,6 @@ ma = Marshmallow(app)
 #api = Api(app)
 
 twitterApi = twitter.TwitterAPI()
-
-mappings = {}
-mappings_path = 'cache/url_mappings.json'
-if os.path.isfile(mappings_path):
-     with open(mappings_path) as f:
-          mappings = json.load(f)
 
 '''
 # Marshmallow schemas
@@ -42,16 +37,8 @@ class AnalysisSchema(ma.schema):
 @app.route('/analyse/url')
 def analyse_url():
     url = request.args.get('url')
-    res = data.classify_url(url)
+    res = data.classify_url({'resolved': url, 'found_in_tweet': 0, 'retweet': False})
     return jsonify({'result': res})
-
-"""
-@app.route('/tweets')
-def get_tweets_from_display_name():
-    handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets(bearer_token, handle)
-    return jsonify(tweets)
-"""
 
 @app.route('/tweets')
 def get_tweets_from_display_name2():
@@ -71,32 +58,12 @@ def get_following():
     following = twitterApi.get_following(handle)
     return jsonify(following)
 
-"""
-@app.route('/urls')
-def get_shared_urls():
-    handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets, mappings)
-    return jsonify(urls)
-"""
-
 @app.route('/urls')
 def get_shared_urls():
     handle = request.args.get('handle')
     tweets = twitterApi.get_user_tweets(handle)
-    urls = twitter.get_urls_from_tweets(tweets, mappings)
+    urls = twitter.get_urls_from_tweets(tweets)
     return jsonify(urls)
-
-"""
-@app.route('/evaluate_old')
-@cross_origin()
-def evaluate_user():
-    handle = request.args.get('handle')
-    tweets = twitter.get_user_tweets(bearer_token, handle)
-    urls = twitter.get_urls_from_tweets(tweets, mappings)
-    result = evaluate.count(urls, tweets, handle)
-    return jsonify(result)
-"""
 
 def get_tweets_wrap(handle):
     return twitterApi.get_user_tweets(handle)
@@ -105,9 +72,12 @@ def get_tweets_wrap(handle):
 @cross_origin()
 def analyse_tweets():
     """from a list of tweet IDs (comma-separated) retrieves and analyses them"""
-    tweet_ids = request.args.get('ids').split(',')
+    tweet_ids_param = request.args.get('ids')
+    tweet_ids = []
+    if tweet_ids_param:
+        tweet_ids = tweet_ids_param.split(',')
     tweets = twitterApi.get_statuses_lookup(tweet_ids)
-    urls = twitter.get_urls_from_tweets(tweets, mappings)
+    urls = twitter.get_urls_from_tweets(tweets)
     result = evaluate.count(urls, tweets, None)
     return jsonify(result)
 
@@ -116,7 +86,7 @@ def analyse_tweets():
 def analyse_user():
     handle = request.args.get('handle')
     tweets = twitterApi.get_user_tweets(handle)
-    urls = twitter.get_urls_from_tweets(tweets, mappings)
+    urls = twitter.get_urls_from_tweets(tweets)
     result = evaluate.count(urls, tweets, handle)
     # evaluate also the following
     include_following = request.args.get('include_following')
@@ -127,14 +97,9 @@ def analyse_user():
         print(len(following), 'following')
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
-                urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+                urls_f = twitter.get_urls_from_tweets(tweets_f)
                 result_f = evaluate.count(urls_f, tweets_f, handle)
                 result['following'][f] = result_f['you']
-        """for f in following:
-            tweets_f = twitterApi.get_user_tweets(f)
-            urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
-            result_f = evaluate.count(urls_f, tweets_f, handle)
-            result['following'][f] = result_f['you']"""
     return jsonify(result)
 
 @app.route('/analyse/user/network')
@@ -147,14 +112,9 @@ def analyse_user_network():
     print(len(following), 'following')
     with concurrent.futures.ProcessPoolExecutor() as executor:
         for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
-            urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
+            urls_f = twitter.get_urls_from_tweets(tweets_f)
             result_f = evaluate.count(urls_f, tweets_f, handle)
             following_analysis[f] = result_f['you']
-    """for f in following:
-        tweets_f = twitterApi.get_user_tweets(f)
-        urls_f = twitter.get_urls_from_tweets(tweets_f, mappings)
-        result_f = evaluate.count(urls_f, tweets_f, handle)
-        result['following'][f] = result_f['you']"""
     result = {
         'fake_urls_cnt': sum([el['fake_urls_cnt'] for el in following_analysis.values()]),
         'shared_urls_cnt': sum([el['shared_urls_cnt'] for el in following_analysis.values()]),
@@ -165,8 +125,10 @@ def analyse_user_network():
     return jsonify(result)
 
 @app.route('/mappings')
-def get_mappings():
-     return jsonify(mappings)
+def get_redirect_for():
+    url = request.args.get('url')
+    url_redirect_manager.get_redirect_for(url)
+    return jsonify(mappings)
 
 if __name__ == '__main__':
-     app.run()
+    app.run()
