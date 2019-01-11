@@ -68,7 +68,7 @@ def get_followers():
 @app.route('/following')
 def get_following():
     handle = request.args.get('handle')
-    following = twitterApi.get_followers(handle)
+    following = twitterApi.get_following(handle)
     return jsonify(following)
 
 """

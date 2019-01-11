@@ -43,7 +43,44 @@ class TwitterAPI(object):
         print('twitter bearer token OK')
         return response['access_token']
 
+    def _cached_database_list(retrieve_item_from_db_fn, save_item_to_db_fn):
+        """
+        This decorator avoids querying all the items remotely, using a local database.
+        It can be used over a function that has two arguments(self, ids) where ids is a list of id to be retrieved.
+        The retrieve_item_from_db_fn is a function with one argument(id) that will try to find the id
+        The save_item_to_db_fn is a function with one argument(item) that will save the new elements found by the decorated function.
+        """
+        def wrap(f):
+            def wrapped_f(*args):
+                # expand the arguments
+                other, ids = args
+                # use a dict to manage the merge between the cached values and the ones retrived by the decorated function
+                all_results = {}
+                # collect there the items that are not in the database yet
+                new_ids = []
+                for id in ids:
+                    item = retrieve_item_from_db_fn(id)
+                    if item:
+                        # can save to final result
+                        all_results[id] = item
+                    else:
+                        # this has to be retrieved
+                        new_ids.append(id)
+                # call the decorated function on the reduced list of ids
+                print('crazy decorator: already there', len(all_results), 'to be retrieved', len(new_ids))
+                new_args = (other, new_ids)
+                new_results = f(*new_args)
+                # and merge the results in the combined results
+                for id, item in zip(new_ids, new_results):
+                    all_results[id] = item
+                    # saving them in the database too
+                    save_item_to_db_fn(item)
+                return [all_results[id] for id in ids]
+            return wrapped_f
+        return wrap
+
     def _check_rate_limit_exceeded(func):
+        """This decorator manages the rate exceeded of the API, switching token and trying again"""
         def magic(self, arg):
             retries_available = len(self.bearer_tokens)
             while retries_available:
@@ -58,10 +95,10 @@ class TwitterAPI(object):
                     else:
                         # not my problem!
                         raise e
-
+            raise Exception('all your twitter credentials have exceeded limits!!!')
         return magic
 
-    def _cursor_request(self, url, headers={}, params={}, partial_field_name='id'):
+    def _cursor_request(self, url, headers={}, params={}, partial_field_name='ids'):
         """
         This function handles cursored requests, combining the partial results and giving back the combined result
         Cursored requests are followers/ids, friends/ids
@@ -122,13 +159,13 @@ class TwitterAPI(object):
                 print(e)
                 return []
         params = {
-            'user_id': user['id_str'],
+            'user_id': user['id'],
             'max_count': 200,
             'tweet_mode': 'extended' # to get the full content and all the URLs
         }
         newest_saved = 0
-        #print('user id', user['id_str'])
-        all_tweets = list(database.get_tweets_from_user_id(user['id_str']))
+        #print('user id', user['id'])
+        all_tweets = list(database.get_tweets_from_user_id(user['id']))
         #print('tweets found', len(all_tweets))
         if all_tweets:
             newest_saved = max([t['id'] for t in all_tweets])
@@ -159,7 +196,7 @@ class TwitterAPI(object):
             'screen_name': user_handle,
             'count': 200 # TODO loop over groups of 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params, partial_field_name='users')
+        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params)
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
 
@@ -168,28 +205,30 @@ class TwitterAPI(object):
             'screen_name': user_handle,
             'count': 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, partial_field_name='users')
+        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params)
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
 
+    @_cached_database_list(database.get_tweet, database.save_tweet)
     def get_statuses_lookup(self, tweet_ids):
         # TODO docs say to use POST for larger requests
         result = []
         for chunk in split_in_chunks(tweet_ids, 100):
             params = {
-                'id': ','.join(chunk)
+                'id': ','.join([str(el) for el in chunk])
             }
             response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/lookup.json', 'params': params})
             result.extend(response)
         #print(result)
         return result
 
+    @_cached_database_list(database.get_twitter_user, database.save_twitter_user)
     def get_users_lookup(self, id_list):
         # TODO docs say to use POST for larger requests
         result = []
         for chunk in split_in_chunks(id_list, 100):
             params = {
-                'user_id': ','.join(chunk)
+                'user_id': ','.join([str(el) for el in chunk])
             }
             response = self.perform_get({'url': 'https://api.twitter.com/1.1/users/lookup.json', 'params': params})
             result.extend(response)
@@ -200,7 +239,7 @@ class TwitterAPI(object):
 """
 def get_user_tweets(user_handle):
     list_of_tweets = query_tweets_from_user(user_handle)
-    results = [{'entities': {'urls': get_urls_scraper(t)}, 'id': int(t.id), 'id_str': t.id} for t in list_of_tweets]
+    results = [{'entities': {'urls': get_urls_scraper(t)}, 'id': int(t.id), 'id': t.id} for t in list_of_tweets]
     return results
 
 def get_urls_scraper(tweet):
@@ -216,7 +255,7 @@ def get_urls_scraper(tweet):
 def get_urls_from_tweets(tweets, mappings, resolve=False):
     all_urls = []
     for t in tweets:
-        urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id_str'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
+        urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
 
     urls_missing_mapping = [u for u in all_urls if u['url'] not in mappings]
