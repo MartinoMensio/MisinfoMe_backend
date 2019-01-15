@@ -11,3 +11,4 @@ tqdm
 flask-marshmallow
 pymongo
 validators
+tldextract

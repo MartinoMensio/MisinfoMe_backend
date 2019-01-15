@@ -1,0 +1,126 @@
+{
+    "dataset_entry": {
+        "analysis": {
+            "type": "dataset_entry",
+            "score": {
+                "value": "HERE the value belonging to [-1 (bad),1 (good)]"
+            },
+            "reasons": [
+                {
+                    "type": "dataset_entry" // TODO add some details about the dataset??
+                }
+            ]
+        },
+        "details": {
+            // THE ITEM FROM DATASET (TODO or do that in reasons??)
+        }
+    },
+    "text_analysis": { // for NLP stuff
+        "analysis": {
+            "type": "text_analysis",
+            "score": {
+                "value": "HERE the value belonging to [-1 (bad),1 (good)]"
+            },
+            "reasons": [
+                {
+                    "type": "text_analysis",
+                    "description": "the text" // TODO add a motivation type maybe ?? could also be a relationship of type match
+                }
+            ]
+        }
+    },
+    "domain_analysis": {
+        "analysis": {
+            "type": "domain_analysis",
+            "score": {
+                "value": "HERE the score of the domain"
+            },
+            "reasons": [
+                {
+                    "type": "relationship",
+                    "relationship_type": "matches",
+                    "related_analysis": { /* HERE THE DATASET_ENTRY OBJECT*/}
+                }
+            ]
+        }
+    },
+    "url_analysis": {
+        "analysis": {
+            "type": "url_analysis",
+            "score": {
+                "value": "HERE the value belonging to [-1 (bad),1 (good)]"
+                // other properties/aspects/dimensions can fit here
+            },
+            "reasons": [ // none, one or more of them
+                {
+                    "type": "relationship",
+                    "relationship_type": "belongs_to_domain", // type is a relationship name
+                    "related_analysis": { /* HERE A DOMAIN_ANALYSIS OBJECT*/}
+                },
+                {
+                    "type": "relationship",
+                    "relationship_type": "matches",
+                    "related_analysis": { /* HERE THE DATASET_ENTRY OBJECT*/}
+                }
+            ]
+        },
+        "related_links": [ // the related entities that could be interesting to analyse
+            {
+                "type": "tweet_analysis",
+                "url": "URL to tweet analysis"
+            }, // this is optional
+            {
+                "type": "rebuttal",
+                "url": "URL to rebuttal"
+            } // list of rebuttals if available
+        ]
+    },
+    "tweet_analysis": {
+        "analysis": {
+            "type": "tweet_analysis",
+            "score": {
+                "value": "HERE the value belonging to [-1 (bad),1 (good)]"
+            },
+            "reasons": [
+                {
+                    "type": "relationship",
+                    "relationship_type": "contains_url",
+                    "related_analysis": { /* HERE THE URL_ANALYSIS OBJECT*/}
+                },
+                {
+                    "type": "relationship",
+                    "relationship_type": "contains_text",
+                    "related_analysis": { /* HERE THE TEXT_ANALYSIS OBJECT*/}
+                }
+            ]
+        },
+        "related_links": [
+            {
+                "type": "user",
+                "url": "URL to the user analysis"
+            }
+        ]
+    },
+    "user_analysis": {
+        "analysis": {
+            "type": "user_analysis",
+            "score": {
+                "value": "HERE the value belonging to [-1 (bad),1 (good)]"
+            },
+            "reasons": [
+                {
+                    "type": "relationship",
+                    "relationship_type": "writes",
+                    "related_analysis": { /* HERE THE TWEET_ANALYSIS OBJECT */}
+                }
+            ]
+        },
+        "related_links": [
+            {
+                "type": "user/following",
+                "url": "URL to the following analysis"
+            }
+        ]
+    }
+}
+}

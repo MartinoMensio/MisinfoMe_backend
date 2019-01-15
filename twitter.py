@@ -35,12 +35,12 @@ class TwitterAPI(object):
             self.active += 1
         if not self.bearer_tokens:
             raise ValueError('you don\'t have twitter credentials in the environment!!!')
+        print('twitter tokens available:', len(self.bearer_tokens))
         self.active = 0
 
     def get_bearer_token(self, key, secret):
         response = requests.post('https://api.twitter.com/oauth2/token', data={'grant_type': 'client_credentials'}, auth=HTTPBasicAuth(key, secret)).json()
         assert response['token_type'] == 'bearer'
-        print('twitter bearer token OK')
         return response['access_token']
 
     def _cached_database_list(retrieve_item_from_db_fn, save_item_to_db_fn):
