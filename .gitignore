@@ -1,3 +1,5 @@
+dump/**
+dump.tar.gz
 aggregated_*.json
 all_*.json
 cache/**
