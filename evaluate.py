@@ -94,7 +94,12 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 
 
 
-def count(shared_urls, tweets, handle):
+def count_user(screen_name, twitter_api):
+    user = twitter_api.get_user_from_screen_name(screen_name)
+    if not user:
+        return {}
+    tweets = twitter_api.get_user_tweets(user['id'])
+    shared_urls = twitter.get_urls_from_tweets(tweets)
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
@@ -109,31 +114,43 @@ def count(shared_urls, tweets, handle):
     rebuttals_match = {claim_url['resolved']: database.get_rebuttals(claim_url['resolved']) for claim_url in shared_urls}
     rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
     print(rebuttals_match)
+
+    if len(fake) + len(verified):
+        score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
+        print('evaluating', score, len(verified), len(fake))
+    else:
+        score = 0
+
     you = {
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
         'verified_urls_cnt': len(verified),
         'fake_urls_cnt': len(fake),
-        'fake_urls': fake,
-        'verified_urls': verified,
+        #'fake_urls': fake,
+        #'verified_urls': verified,
         'unknown_urls_cnt': len(shared_urls) - len(matching),
-        'rebuttals': rebuttals_match
+        #'rebuttals': rebuttals_match
+        'score': score
     }
-    if len(tweets) and handle:
-        pass
+    if len(tweets):
+        database.save_count_result(user['id'], you)
         #stats[handle] = you
-    #save_stats()
-    #sum_over_stats = lambda key: sum([el[key] for el in stats.values()])
-    sum_over_stats = lambda key: 0
-    overall = {
-        'tweets_cnt': sum_over_stats('tweets_cnt'),
-        'shared_urls_cnt': sum_over_stats('shared_urls_cnt'),
-        'verified_urls_cnt': sum_over_stats('verified_urls_cnt'),
-        'fake_urls_cnt': sum_over_stats('fake_urls_cnt'),
-        'unknown_urls_cnt': sum_over_stats('unknown_urls_cnt'),
-        'users_cnt': 0#len(stats)
-    }
+
+    # add after saving to mongo, because rebuttals have dotted heys
+    you['rebuttals'] = rebuttals_match
+    you['fake_urls'] = fake
+    you['verified_urls'] = verified
+
+    return you
+
+def get_overall_counts():
+    counts = database.get_all_counts()
+    counts = [el for el in counts]
     return {
-        'you': you,
-        'overall': overall
+        'tweets_cnt': sum(c.get('tweets_cnt', 0) for c in counts),
+        'shared_urls_cnt': sum(c.get('shared_urls_cnt', 0) for c in counts),
+        'verified_urls_cnt': sum(c.get('verified_urls_cnt', 0) for c in counts),
+        'fake_urls_cnt': sum(c.get('fake_urls_cnt', 0) for c in counts),
+        'unknown_urls_cnt': sum(c.get('unknown_urls_cnt', 0) for c in counts),
+        'score': sum(c.get('score', 0) for c in counts) / len(counts),
     }

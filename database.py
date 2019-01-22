@@ -23,6 +23,12 @@ url_redirects_collection = db['url_redirects']
 twitter_users = db['twitter_users']
 twitter_tweets = db['twitter_tweets']
 
+
+# stored analysis (for stats overall pie chart)
+twitter_users_counts = db['twitter_users_counts']
+
+
+
 def get_url_redirect(url):
     return url_redirects_collection.find_one({'_id': url})
 
@@ -82,7 +88,17 @@ def get_tweet(id):
 def get_tweets_from_user_id(user_id):
     return twitter_tweets.find({'user.id': user_id})
 
-def get_stats():
+def get_collections_stats():
     return {
-
+        'urls': urls_collection.count(),
+        'domains': domains_collection.count(),
+        'rebuttals': rebuttals_collection.count(),
+        'datasets': datasets_collection.count()
     }
+
+def save_count_result(user_id, count_result):
+    count_result['_id'] = user_id
+    return twitter_users_counts.replace_one({'_id': count_result['_id']}, count_result, upsert=True)
+
+def get_all_counts():
+    return twitter_users_counts.find()

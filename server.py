@@ -15,6 +15,7 @@ import json
 load_dotenv()
 
 import data
+import database
 import twitter
 import evaluate
 import url_redirect_manager
@@ -49,13 +50,6 @@ class AnalysisResultSchema(ma.Schema):
 analysisResultSchema = AnalysisResultSchema()
 
 
-
-@app.route('/analyse/fake')
-def analyse_fake():
-    analysis = model.AnalysisResult(model.Score(0.5), model.Reason('why not?'), 'fake')
-    return analysisResultSchema.jsonify(analysis)
-
-
 '''
 @app.route('/analyse/tweet/<tweet_id>')
 #@cross_origin()
@@ -82,7 +76,9 @@ class MyEncoder(json.JSONEncoder):
 
 
 
-@app.route('/analyse/domain')
+
+
+@app.route('/analyse_tree/domain')
 def analyse_domain():
     domain = request.args.get('domain')
     print(domain)
@@ -90,16 +86,7 @@ def analyse_domain():
     #return jsonify(result.to_dict())
     return jsonify(json.loads(MyEncoder().encode(result)))
 
-
-@app.route('/analyse/domain')
-def analyse_domain():
-    domain = request.args.get('domain')
-    print(domain)
-    result = evaluate.evaluate_domain(domain)
-    #return jsonify(result.to_dict())
-    return jsonify(json.loads(MyEncoder().encode(result)))
-
-@app.route('/analyse/url')
+@app.route('/analyse_tree/url')
 def analyse_url():
     url = request.args.get('url')
     print(url)
@@ -107,17 +94,17 @@ def analyse_url():
     #return jsonify(result.to_dict())
     return jsonify(json.loads(MyEncoder().encode(result)))
 
-@app.route('/analyse/tweets/<tweet_id>')
+@app.route('/analyse_tree/tweets/<tweet_id>')
 def analyse_tweet(tweet_id):
     result = evaluate.evaluate_tweet(tweet_id, twitter_api)
     return jsonify(json.loads(MyEncoder().encode(result)))
 
-@app.route('/analyse/users/<user_id>')
+@app.route('/analyse_tree/users/<user_id>')
 def analyse_twitter_user(user_id):
     result = evaluate.evaluate_twitter_user(user_id, twitter_api)
     return jsonify(json.loads(MyEncoder().encode(result)))
 
-@app.route('/analyse/users')
+@app.route('/analyse_tree/users')
 def analyse_twitter_user_from_screen_name():
     screen_name = request.args.get('screen_name')
     print(screen_name)
@@ -126,7 +113,7 @@ def analyse_twitter_user_from_screen_name():
 
 @app.route('/about')
 def get_about():
-    pass
+    return jsonify(database.get_collections_stats())
 
 
 
@@ -163,7 +150,8 @@ def get_shared_urls():
 def get_tweets_wrap(handle):
     return twitter_api.get_user_tweets_from_screen_name(handle)
 
-@app.route('/analyse/tweets_old')
+'''
+@app.route('/count_urls/tweets')
 @cross_origin()
 def analyse_tweets():
     """from a list of tweet IDs (comma-separated) retrieves and analyses them"""
@@ -175,14 +163,14 @@ def analyse_tweets():
     urls = twitter.get_urls_from_tweets(tweets)
     result = evaluate.count(urls, tweets, None)
     return jsonify(result)
+'''
 
-@app.route('/analyse/user')
+@app.route('/count_urls/users')
 @cross_origin()
 def analyse_user():
     handle = request.args.get('handle')
-    tweets = twitter_api.get_user_tweets_from_screen_name(handle)
-    urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tweets, handle)
+
+    result = evaluate.count_user(handle, twitter_api)
     # evaluate also the following
     include_following = request.args.get('include_following')
     print(include_following)
@@ -190,14 +178,22 @@ def analyse_user():
         result['following'] = {}
         following = twitter_api.get_following(handle)
         print(len(following), 'following')
+        """
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
                 urls_f = twitter.get_urls_from_tweets(tweets_f)
-                result_f = evaluate.count(urls_f, tweets_f, handle)
+                result_f = evaluate.count_user(urls_f, tweets_f, handle)
                 result['following'][f] = result_f['you']
+        """
     return jsonify(result)
 
-@app.route('/analyse/user/network')
+@app.route('/count_urls/overall')
+@cross_origin()
+def get_overall_counts():
+    return jsonify(evaluate.get_overall_counts())
+
+"""
+@app.route('/count_urls/user/network')
 @cross_origin()
 def analyse_user_network():
     handle = request.args.get('handle')
@@ -218,6 +214,7 @@ def analyse_user_network():
         'unknown_urls_cnt': sum([el['unknown_urls_cnt'] for el in following_analysis.values()])
     }
     return jsonify(result)
+"""
 
 @app.route('/mappings')
 def get_redirect_for():
