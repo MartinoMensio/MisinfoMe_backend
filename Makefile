@@ -15,3 +15,6 @@ restore:
 
 import_compressed_dump: extract_dump restore
 	echo "done"
+
+clean:
+	rm dump.tar.gz && rm -rf dump

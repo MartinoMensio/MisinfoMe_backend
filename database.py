@@ -1,6 +1,16 @@
+import os
+
 from pymongo import MongoClient
 
-client = MongoClient()
+MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost:27017')
+MONGO_USER = os.environ.get('MONGO_USER', None)
+MONGO_PASS = os.environ.get('MONGO_PASS', None)
+if MONGO_USER and MONGO_PASS:
+    MONGO_URI = 'mongodb://{}:{}@{}'.format(MONGO_USER, MONGO_PASS, MONGO_HOST)
+else:
+    MONGO_URI = 'mongodb://{}'.format(MONGO_HOST)
+
+client = MongoClient(MONGO_URI)
 print('database OK')
 
 db = client['test_coinform']
