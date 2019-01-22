@@ -21,8 +21,8 @@ def evaluate_domain(url):
     reasons = []
     if not database_object:
         # look also without subdomain
-        shorter_domain = utils.get_url_domain_without_subdomains(domain)
-        database_object = database.get_domain_info(shorter_domain)
+        domain = utils.get_url_domain_without_subdomains(domain)
+        database_object = database.get_domain_info(domain)
     print('database_object', database_object)
     if database_object:
         # dataset_entry with domain match
@@ -32,7 +32,7 @@ def evaluate_domain(url):
         print('dataset_match', dataset_match.to_dict())
         rel_reason = results.RelationshipReason('matches', dataset_match)
         reasons.append(rel_reason)
-    result = results.DomainResult(reasons)
+    result = results.DomainResult(domain, reasons)
     print('result', result.to_dict())
     return result
 
@@ -51,33 +51,15 @@ def evaluate_url(url):
         dataset_match = results.DatasetMatch(dataset_entry)
         print('dataset_match', dataset_match.to_dict())
         rel_reason = results.RelationshipReason('matches', dataset_match)
-        reasons.append(dataset_match)
+        reasons.append(rel_reason)
     # TODO rebuttals
-    result = results.UrlResult(reasons)
+    result = results.UrlResult(url, reasons)
     print('result', result.to_dict)
     return result
 
-    if label:
-        label['reason'] = 'full URL match'
-        label['url'] = url
-    else:
-        domain = utils.get_url_domain(url)
-        label = database.get_domain_info(domain)
-        if not label and domain.startswith('www.'):
-            # try also without www.
-            label = database.get_domain_info(domain[4:])
-        if label:
-            label['reason'] = 'domain match'
-            label['url'] = url
-    if label:
-        label['found_in_tweet'] = url_info['found_in_tweet']
-        label['retweet'] = url_info['retweet']
-        #print(label)
-    return label
-
 def evaluate_tweet(tweet_id, twitter_api):
     # TODO check tweet_id?
-    print(tweet_id)
+    print('tweet_id', tweet_id)
     tweet_objects = twitter_api.get_statuses_lookup([tweet_id])
     #print('tweet_object', tweet_objects)
     if not tweet_objects:
@@ -86,9 +68,30 @@ def evaluate_tweet(tweet_id, twitter_api):
     print('urls', urls)
     reasons = [results.RelationshipReason('contains_url', evaluate_url(url['resolved'])) for url in urls]
 
-    result = results.TweetResult(reasons)
+    # TODO pass the tweet object instead
+    result = results.TweetResult(tweet_objects[0], reasons)
     print('result', result.to_dict())
     return result
+
+def evaluate_twitter_user(user_id, twitter_api):
+    # TODO check twitter_id?
+    print('user_id', user_id)
+    users = twitter_api.get_users_lookup([user_id])
+    tweets = twitter_api.get_user_tweets(user_id)
+    print('#len tweets', len(tweets))
+    reasons = [results.RelationshipReason('writes', evaluate_tweet(tweet['id'], twitter_api)) for tweet in tweets]
+
+    # TODO pass the user object instead
+    result = results.UserResult(users[0], len(tweets), reasons)
+    return result
+
+def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
+    print('screen_name', screen_name)
+    user = twitter_api.get_user_from_screen_name(screen_name)
+    if not user:
+        return evaluate_twitter_user(None, twitter_api)
+    return evaluate_twitter_user(user['id'], twitter_api)
+
 
 
 def count(shared_urls, tweets, handle):
@@ -117,16 +120,18 @@ def count(shared_urls, tweets, handle):
         'rebuttals': rebuttals_match
     }
     if len(tweets) and handle:
-        stats[handle] = you
-    save_stats()
-    sum_over_stats = lambda key: sum([el[key] for el in stats.values()])
+        pass
+        #stats[handle] = you
+    #save_stats()
+    #sum_over_stats = lambda key: sum([el[key] for el in stats.values()])
+    sum_over_stats = lambda key: 0
     overall = {
         'tweets_cnt': sum_over_stats('tweets_cnt'),
         'shared_urls_cnt': sum_over_stats('shared_urls_cnt'),
         'verified_urls_cnt': sum_over_stats('verified_urls_cnt'),
         'fake_urls_cnt': sum_over_stats('fake_urls_cnt'),
         'unknown_urls_cnt': sum_over_stats('unknown_urls_cnt'),
-        'users_cnt': len(stats)
+        'users_cnt': 0#len(stats)
     }
     return {
         'you': you,

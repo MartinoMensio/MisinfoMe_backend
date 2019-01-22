@@ -148,24 +148,35 @@ class TwitterAPI(object):
         return self.perform_get({'url': 'https://api.twitter.com/1.1/users/show.json', 'params': {'screen_name': screen_name}})
 
 
-    def get_user_tweets(self, user_handle):
-        print(user_handle)
-        user = database.get_twitter_user_from_screen_name(user_handle)
+    def get_user_tweets_from_screen_name(self, screen_name):
+        print(screen_name)
+        user = self.get_user_from_screen_name(screen_name)
+        if not user:
+            return []
+        return self.get_user_tweets(user['id'])
+
+    def get_user_from_screen_name(self, screen_name):
+        user = database.get_twitter_user_from_screen_name(screen_name)
         if not user:
             try:
-                user = self.get_user_lookup_from_screen_name(user_handle)
+                user = self.get_user_lookup_from_screen_name(screen_name)
                 database.save_twitter_user(user)
             except Exception as e:
                 print(e)
-                return []
+                return None
+
+        return user
+
+
+    def get_user_tweets(self, user_id):
         params = {
-            'user_id': user['id'],
+            'user_id': user_id,
             'max_count': 200,
             'tweet_mode': 'extended' # to get the full content and all the URLs
         }
         newest_saved = 0
         #print('user id', user['id'])
-        all_tweets = list(database.get_tweets_from_user_id(user['id']))
+        all_tweets = list(database.get_tweets_from_user_id(user_id))
         #print('tweets found', len(all_tweets))
         if all_tweets:
             newest_saved = max([t['id'] for t in all_tweets])

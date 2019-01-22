@@ -76,6 +76,19 @@ class MyEncoder(json.JSONEncoder):
     def default(self, o):
         return o.__dict__
 
+class MyEncoder(json.JSONEncoder):
+    def default(self, o):
+        return o.__dict__
+
+
+
+@app.route('/analyse/domain')
+def analyse_domain():
+    domain = request.args.get('domain')
+    print(domain)
+    result = evaluate.evaluate_domain(domain)
+    #return jsonify(result.to_dict())
+    return jsonify(json.loads(MyEncoder().encode(result)))
 
 
 @app.route('/analyse/domain')
@@ -94,11 +107,26 @@ def analyse_url():
     #return jsonify(result.to_dict())
     return jsonify(json.loads(MyEncoder().encode(result)))
 
-@app.route('/analyse/tweet/<tweet_id>')
+@app.route('/analyse/tweets/<tweet_id>')
 def analyse_tweet(tweet_id):
     result = evaluate.evaluate_tweet(tweet_id, twitter_api)
     return jsonify(json.loads(MyEncoder().encode(result)))
 
+@app.route('/analyse/users/<user_id>')
+def analyse_twitter_user(user_id):
+    result = evaluate.evaluate_twitter_user(user_id, twitter_api)
+    return jsonify(json.loads(MyEncoder().encode(result)))
+
+@app.route('/analyse/users')
+def analyse_twitter_user_from_screen_name():
+    screen_name = request.args.get('screen_name')
+    print(screen_name)
+    result = evaluate.evaluate_twitter_user_from_screen_name(screen_name, twitter_api)
+    return jsonify(json.loads(MyEncoder().encode(result)))
+
+@app.route('/about')
+def get_about():
+    pass
 
 
 
@@ -108,9 +136,9 @@ def analyse_tweet(tweet_id):
 
 
 @app.route('/tweets')
-def get_tweets_from_display_name2():
+def get_tweets_from_screen_name2():
     handle = request.args.get('handle')
-    tweets = twitter_api.get_user_tweets(handle)
+    tweets = twitter_api.get_user_tweets_from_screen_name(handle)
     return jsonify(tweets)
 
 @app.route('/followers')
@@ -128,14 +156,14 @@ def get_following():
 @app.route('/urls')
 def get_shared_urls():
     handle = request.args.get('handle')
-    tweets = twitter_api.get_user_tweets(handle)
+    tweets = twitter_api.get_user_tweets_from_screen_name(handle)
     urls = twitter.get_urls_from_tweets(tweets)
     return jsonify(urls)
 
 def get_tweets_wrap(handle):
-    return twitter_api.get_user_tweets(handle)
+    return twitter_api.get_user_tweets_from_screen_name(handle)
 
-@app.route('/analyse/tweets')
+@app.route('/analyse/tweets_old')
 @cross_origin()
 def analyse_tweets():
     """from a list of tweet IDs (comma-separated) retrieves and analyses them"""
@@ -152,7 +180,7 @@ def analyse_tweets():
 @cross_origin()
 def analyse_user():
     handle = request.args.get('handle')
-    tweets = twitter_api.get_user_tweets(handle)
+    tweets = twitter_api.get_user_tweets_from_screen_name(handle)
     urls = twitter.get_urls_from_tweets(tweets)
     result = evaluate.count(urls, tweets, handle)
     # evaluate also the following

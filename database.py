@@ -81,3 +81,8 @@ def get_tweet(id):
 
 def get_tweets_from_user_id(user_id):
     return twitter_tweets.find({'user.id': user_id})
+
+def get_stats():
+    return {
+
+    }
