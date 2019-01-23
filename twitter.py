@@ -266,7 +266,7 @@ def get_urls_scraper(tweet):
 def get_urls_from_tweets(tweets):
     all_urls = []
     for t in tweets:
-        urls = [{'url': u['expanded_url'], 'found_in_tweet': t['id'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
+        urls = [{'url': u['expanded_url'], 'found_in_tweet': str(t['id']), 'tweet_text': t['full_text'], 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
 
     for url in tqdm(all_urls):
