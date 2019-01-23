@@ -119,7 +119,8 @@ def count_user(screen_name, twitter_api):
         score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
         print('evaluating', score, len(verified), len(fake))
     else:
-        score = 0
+        # default to unknown
+        score = 50
 
     you = {
         'tweets_cnt': len(tweets),
