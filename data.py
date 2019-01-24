@@ -8,7 +8,7 @@ def classify_url(url_info):
     url = url_info['resolved']
     label = database.get_url_info(url)
     if label:
-        label['reason'] = 'full URL match'
+        label['reason'] = 'full_url_match'
         label['url'] = url
     else:
         domain = utils.get_url_domain(url)
@@ -17,7 +17,7 @@ def classify_url(url_info):
             # try also without www.
             label = database.get_domain_info(domain[4:])
         if label:
-            label['reason'] = 'domain match'
+            label['reason'] = 'domain_match'
             label['url'] = url
     if label:
         # attribution of the dataset

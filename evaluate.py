@@ -123,6 +123,7 @@ def count_user(screen_name, twitter_api):
         score = 50
 
     you = {
+        'screen_name': screen_name,
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
         'verified_urls_cnt': len(verified),
