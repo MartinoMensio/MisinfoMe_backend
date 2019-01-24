@@ -5,6 +5,8 @@ import tldextract
 def get_url_domain(url):
     #parsed_uri = urlparse(url)
     #return str(parsed_uri.netloc)
+    if not url:
+        return ''
     ext = tldextract.extract(url)
     result = '.'.join(part for part in ext if part)
     return result.lower()

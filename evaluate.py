@@ -94,18 +94,22 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 
 
 
-def count_user(screen_name, twitter_api):
+def count_user(screen_name, twitter_api, allow_cached):
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}
+
+    if allow_cached:
+        result = database.get_count_result(user['id'])
+        if result:
+            return result
     tweets = twitter_api.get_user_tweets(user['id'])
     shared_urls = twitter.get_urls_from_tweets(tweets)
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
-    results = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
-    #print(results)
-    matching = [el for el in results if el]
+    classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
+    matching = [el for el in classified_urls if el]
     #print(matching)
     verified = [el for el in matching if el['score']['label'] == 'true']
     fake = [el for el in matching if el['score']['label'] == 'fake']
@@ -122,7 +126,7 @@ def count_user(screen_name, twitter_api):
         # default to unknown
         score = 50
 
-    you = {
+    result = {
         'screen_name': screen_name,
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
@@ -135,15 +139,14 @@ def count_user(screen_name, twitter_api):
         'score': score
     }
     if len(tweets):
-        database.save_count_result(user['id'], you)
-        #stats[handle] = you
+        database.save_count_result(user['id'], result)
 
     # add after saving to mongo, because rebuttals have dotted heys
-    you['rebuttals'] = rebuttals_match
-    you['fake_urls'] = fake
-    you['verified_urls'] = verified
+    result['rebuttals'] = rebuttals_match
+    result['fake_urls'] = fake
+    result['verified_urls'] = verified
 
-    return you
+    return result
 
 def get_overall_counts():
     counts = database.get_all_counts()
@@ -155,4 +158,5 @@ def get_overall_counts():
         'fake_urls_cnt': sum(c.get('fake_urls_cnt', 0) for c in counts),
         'unknown_urls_cnt': sum(c.get('unknown_urls_cnt', 0) for c in counts),
         'score': sum(c.get('score', 0) for c in counts) / len(counts),
+        'twitter_profiles_cnt': len(counts)
     }

@@ -113,5 +113,8 @@ def save_count_result(user_id, count_result):
     count_result['_id'] = user_id
     return twitter_users_counts.replace_one({'_id': count_result['_id']}, count_result, upsert=True)
 
+def get_count_result(user_id):
+    return twitter_users_counts.find_one({'_id': user_id})
+
 def get_all_counts():
     return twitter_users_counts.find()

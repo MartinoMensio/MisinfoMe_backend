@@ -169,8 +169,10 @@ def analyse_tweets():
 @cross_origin()
 def analyse_user():
     handle = request.args.get('handle')
+    # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
+    allow_cached = request.args.get('allow_cached', False)
 
-    result = evaluate.count_user(handle, twitter_api)
+    result = evaluate.count_user(handle, twitter_api, allow_cached)
     # evaluate also the following
     include_following = request.args.get('include_following')
     print(include_following)
