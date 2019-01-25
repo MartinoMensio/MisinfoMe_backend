@@ -168,25 +168,18 @@ def analyse_tweets():
 @app.route('/count_urls/users')
 @cross_origin()
 def analyse_user():
-    handle = request.args.get('handle')
+    handles = request.args.get('handle')
     # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
     allow_cached = request.args.get('allow_cached', False)
+    # only get already evaluated profiles
+    only_cached = request.args.get('only_cached', False)
 
-    result = evaluate.count_user(handle, twitter_api, allow_cached)
-    # evaluate also the following
-    include_following = request.args.get('include_following')
-    print(include_following)
-    if include_following:
-        result['following'] = {}
-        following = twitter_api.get_following(handle)
-        print(len(following), 'following')
-        """
-        with concurrent.futures.ProcessPoolExecutor() as executor:
-            for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
-                urls_f = twitter.get_urls_from_tweets(tweets_f)
-                result_f = evaluate.count_user(urls_f, tweets_f, handle)
-                result['following'][f] = result_f['you']
-        """
+    handles_splitted = handles.split(',')
+    if len(handles_splitted) > 1:
+        result = evaluate.count_users(handles_splitted, twitter_api, allow_cached, only_cached)
+    else:
+        result = evaluate.count_user(handles_splitted[0], twitter_api, allow_cached, only_cached)
+
     return jsonify(result)
 
 @app.route('/count_urls/overall')

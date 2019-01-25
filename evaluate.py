@@ -93,15 +93,21 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
     return evaluate_twitter_user(user['id'], twitter_api)
 
 
+def count_users(screen_names, twitter_api, allow_cached, only_cached):
+    return {screen_name: count_user(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
 
-def count_user(screen_name, twitter_api, allow_cached):
+def count_user(screen_name, twitter_api, allow_cached, only_cached):
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}
 
     if allow_cached:
         result = database.get_count_result(user['id'])
+        if only_cached and not result:
+            # null
+            return {'cache': 'miss'}
         if result:
+            result['cache'] = 'hit'
             return result
     tweets = twitter_api.get_user_tweets(user['id'])
     shared_urls = twitter.get_urls_from_tweets(tweets)
