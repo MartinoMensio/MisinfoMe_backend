@@ -131,13 +131,19 @@ def get_tweets_from_screen_name2():
 @app.route('/followers')
 def get_followers():
     handle = request.args.get('handle')
-    followers = twitter_api.get_followers(handle)
+    limit = request.args.get('limit', None)
+    if limit:
+        limit = int(limit)
+    followers = twitter_api.get_followers(handle, limit)
     return jsonify(followers)
 
 @app.route('/following')
 def get_following():
     handle = request.args.get('handle')
-    following = twitter_api.get_following(handle)
+    limit = request.args.get('limit', None)
+    if limit:
+        limit = int(limit)
+    following = twitter_api.get_following(handle, limit)
     return jsonify(following)
 
 @app.route('/urls')
@@ -165,20 +171,29 @@ def analyse_tweets():
     return jsonify(result)
 '''
 
-@app.route('/count_urls/users')
+@app.route('/count_urls/users', methods = ['GET', 'POST'])
 @cross_origin()
 def analyse_user():
-    handles = request.args.get('handle')
     # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
     allow_cached = request.args.get('allow_cached', False)
     # only get already evaluated profiles
     only_cached = request.args.get('only_cached', False)
-
-    handles_splitted = handles.split(',')
-    if len(handles_splitted) > 1:
-        result = evaluate.count_users(handles_splitted, twitter_api, allow_cached, only_cached)
+    print(request.is_json)
+    if request.is_json:
+        # retrieve content from json POST content
+        content = request.get_json()
+        handles_splitted = content.get('screen_names', [])
+        allow_cached = content.get('allow_cached', allow_cached)
+        only_cached = content.get('only_cached', only_cached)
     else:
+        handles = request.args.get('handle')
+
+        handles_splitted = handles.split(',')
+
+    if len(handles_splitted) == 1:
         result = evaluate.count_user(handles_splitted[0], twitter_api, allow_cached, only_cached)
+    else:
+        result = evaluate.count_users(handles_splitted, twitter_api, allow_cached, only_cached)
 
     return jsonify(result)
 

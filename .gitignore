@@ -3,6 +3,7 @@ dump.tar.gz
 aggregated_*.json
 all_*.json
 cache/**
+.vscode/**
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

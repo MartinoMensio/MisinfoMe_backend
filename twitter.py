@@ -98,7 +98,7 @@ class TwitterAPI(object):
             raise Exception('all your twitter credentials have exceeded limits!!!')
         return magic
 
-    def _cursor_request(self, url, headers={}, params={}, partial_field_name='ids'):
+    def _cursor_request(self, url, headers={}, params={}, partial_field_name='ids', limit=None):
         """
         This function handles cursored requests, combining the partial results and giving back the combined result
         Cursored requests are followers/ids, friends/ids
@@ -108,7 +108,7 @@ class TwitterAPI(object):
 
         total_response = []
         params['cursor'] = -1
-        while params['cursor'] != 0:
+        while params['cursor'] != 0 and (not limit or len(total_response) < limit):
             try:
                 response = self.perform_get({'url': url, 'headers': headers, 'params': params})
             except:
@@ -117,7 +117,7 @@ class TwitterAPI(object):
             params['cursor'] = response['next_cursor']
             total_response.extend(response[partial_field_name])
 
-        return total_response
+        return total_response[:limit]
 
     @_check_rate_limit_exceeded
     def perform_get(self, parameters):
@@ -202,21 +202,21 @@ class TwitterAPI(object):
             database.save_new_tweets(all_tweets)
         return all_tweets
 
-    def get_followers(self, user_handle):
+    def get_followers(self, user_handle, limit=None):
         params = {
             'screen_name': user_handle,
             'count': 200 # TODO loop over groups of 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params)
+        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params, limit=limit)
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
 
-    def get_following(self, user_handle):
+    def get_following(self, user_handle, limit=None):
         params = {
             'screen_name': user_handle,
             'count': 200
         }
-        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params)
+        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, limit=limit)
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
 
