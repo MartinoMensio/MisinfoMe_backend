@@ -8,6 +8,7 @@ import results
 import model
 import utils
 import twitter
+import database
 
 
 def save_stats():
@@ -121,9 +122,29 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
     fake = [el for el in matching if el['score']['label'] == 'fake']
     # rebuttals
     #print(shared_urls)
-    rebuttals_match = {claim_url['resolved']: database.get_rebuttals(claim_url['resolved']) for claim_url in shared_urls}
+    rebuttals_match = {u['resolved']: database.get_rebuttals(u['resolved']) for u in shared_urls}
     rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
+    # attach the rebuttal links to the fake urls matching
     print(rebuttals_match)
+    for el in fake:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
+        #rebuttals_match.pop(f['url'])
+    for el in verified:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
+        #rebuttals_match.pop(f['url'])
+
+    # refactor rebuttals without label
+    rebuttals = [{
+        'found_in_tweet': 0, # TODO retrieve this, refactor how this method processes tweets
+        'retweet': False, # TODO
+        'reason': 'rebuttal_match',
+        'score': {'label': 'rebuttal'},
+        'rebuttals': el_v,
+        'url': el_k,
+        'sources': [database.get_dataset(s) for ss in el_v for s in ss['source']],
+    } for el_k, el_v in rebuttals_match.items()]
 
     if len(fake) + len(verified):
         score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
@@ -147,8 +168,9 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
     if len(tweets):
         database.save_count_result(user['id'], result)
 
-    # add after saving to mongo, because rebuttals have dotted heys
-    result['rebuttals'] = rebuttals_match
+    # add after saving to mongo, because rebuttals have dotted keys
+    result['rebuttals'] = rebuttals
+    result['rebuttals_old'] = rebuttals_match
     result['fake_urls'] = fake
     result['verified_urls'] = verified
 
