@@ -165,14 +165,14 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
         #'rebuttals': rebuttals_match
         'score': score
     }
-    if len(tweets):
-        database.save_count_result(user['id'], result)
 
     # add after saving to mongo, because rebuttals have dotted keys
     result['rebuttals'] = rebuttals
-    result['rebuttals_old'] = rebuttals_match
     result['fake_urls'] = fake
     result['verified_urls'] = verified
+
+    if len(tweets):
+        database.save_count_result(user['id'], result)
 
     return result
 

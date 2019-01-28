@@ -25,7 +25,6 @@ def classify_url(url_info):
         for s in label['score']['sources']:
             label['sources'].append(database.get_dataset(s))
         label['found_in_tweet'] = url_info['found_in_tweet']
-        label['tweet_text'] = url_info['tweet_text']
         label['retweet'] = url_info['retweet']
         #print(label)
     return label
