@@ -69,10 +69,10 @@ class Unshortener(object):
         self.csrf = csrf
 
     def unshorten(self, url, handle_error=True):
-        cached = database.get_url_redirect(url)
-        if not cached:
-            domain = utils.get_url_domain(url)
-            if domain in shortening_domains:
+        domain = utils.get_url_domain(url)
+        if domain in shortening_domains:
+            cached = database.get_url_redirect(url)
+            if not cached:
                 res_text = self.session.post(resolver_url, headers={'Referer': resolver_url}, data={'csrfmiddlewaretoken': self.csrf, 'url': url}).text
                 soup = BeautifulSoup(res_text, 'html.parser')
                 try:
@@ -89,11 +89,10 @@ class Unshortener(object):
                 #self.mappings[m[0]] = m[1]
                 database.save_url_redirect(url, source_url)
             else:
-                # not doing it!
-                source_url = url
-
+                source_url = cached['to']
         else:
-            source_url = cached['to']
+            # not doing it!
+            source_url = url
         return source_url
 
 def func(params):
