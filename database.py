@@ -113,6 +113,12 @@ def get_collections_stats():
 def get_dataset(dataset_key):
     return datasets_collection.find_one({'_id': dataset_key})
 
+def get_datasets():
+    return datasets_collection.find()
+
+def get_domains():
+    return domains_collection.find()
+
 def save_count_result(user_id, count_result):
     count_result['_id'] = user_id
     return twitter_users_counts.replace_one({'_id': count_result['_id']}, count_result, upsert=True)

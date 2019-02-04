@@ -111,9 +111,23 @@ def analyse_twitter_user_from_screen_name():
     result = evaluate.evaluate_twitter_user_from_screen_name(screen_name, twitter_api)
     return jsonify(json.loads(MyEncoder().encode(result)))
 
+
+
+
 @app.route('/about')
+@cross_origin()
 def get_about():
     return jsonify(database.get_collections_stats())
+
+@app.route('/about/datasets')
+@cross_origin()
+def get_datasets():
+    return jsonify([el for el in database.get_datasets()])
+
+@app.route('/about/domains')
+@cross_origin()
+def get_domains():
+    return jsonify([el for el in database.get_domains()])
 
 
 
