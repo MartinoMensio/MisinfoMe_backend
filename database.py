@@ -13,29 +13,33 @@ else:
 client = MongoClient(MONGO_URI)
 print('database OK')
 
-db = client['test_coinform']
+db_twitter = client['test_coinform']
+db_twitter_analysis = client['test_coinform']
+db_redirects = client['test_coinform']
+db_datasets = client['datasets_resources']
 
 # domain key is the domain itself
-domains_collection = db['domains']
+domains_collection = db_datasets['domains']
 # url key is the url itself
-urls_collection = db['urls']
+urls_collection = db_datasets['urls']
 # rebuttal key is the url of provenience
-rebuttals_collection = db['rebuttals']
+rebuttals_collection = db_datasets['rebuttals']
 # dataset key is a string defined in sources.json of the repo 'datasets'
-datasets_collection = db['datasets']
+datasets_collection = db_datasets['datasets']
 # the same applies to fact_checkers
-fact_checkers_collection = db['fact_checkers']
-claimReviews_collection = db['claim_reviews']
+fact_checkers_collection = db_datasets['fact_checkers']
+claimReviews_collection = db_datasets['claim_reviews']
+
 # the key is the url itself
-url_redirects_collection = db['url_redirects']
+url_redirects_collection = db_redirects['url_redirects']
 
 # the key of a twitter user is the twitter id (long int)
-twitter_users = db['twitter_users']
-twitter_tweets = db['twitter_tweets']
+twitter_users = db_twitter['twitter_users']
+twitter_tweets = db_twitter['twitter_tweets']
 
 
 # stored analysis (for stats overall pie chart)
-twitter_users_counts = db['twitter_users_counts']
+twitter_users_counts = db_twitter_analysis['twitter_users_counts']
 
 
 
