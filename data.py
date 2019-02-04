@@ -3,15 +3,21 @@ import copy
 
 import database
 import utils
+import unshortener
+
+unshortener = unshortener.Unshortener()
 
 def classify_url(url_info):
     url = url_info['resolved']
+    domain = utils.get_url_domain(url)
+    unshortened_url = unshortener.unshorten(url)
     label = database.get_url_info(url)
+    if not label:
+        label = database.get_url_info(unshortened_url)
     if label:
         label['reason'] = 'full_url_match'
         label['url'] = url
     else:
-        domain = utils.get_url_domain(url)
         label = database.get_domain_info(domain)
         if not label and domain.startswith('www.'):
             # try also without www.
