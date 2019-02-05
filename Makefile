@@ -11,7 +11,7 @@ extract_dump:
 	tar -xvzf dump.tar.gz && echo "extracted"
 
 restore:
-	mongorestore --db test_coinform dump/test_coinform && mongorestore datasets_resources dump/dataset_resources && echo "restored"
+	mongorestore --db test_coinform dump/test_coinform && mongorestore --db datasets_resources dump/datasets_resources && echo "restored"
 
 import_compressed_dump: extract_dump restore
 	echo "done"
