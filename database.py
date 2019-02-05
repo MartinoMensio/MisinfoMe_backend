@@ -10,6 +10,8 @@ if MONGO_USER and MONGO_PASS:
 else:
     MONGO_URI = 'mongodb://{}'.format(MONGO_HOST)
 
+print('MONGO_URI', MONGO_URI)
+
 client = MongoClient(MONGO_URI)
 print('database OK')
 

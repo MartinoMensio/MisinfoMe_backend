@@ -30,6 +30,7 @@ ma = Marshmallow(app)
 twitter_api = twitter.TwitterAPI()
 
 BASE_URL = os.environ.get('BASE_URL', '/misinfo')
+print('BASE_URL', BASE_URL)
 API_URL = BASE_URL + '/api'
 APP_URL = BASE_URL + '/app'
 
