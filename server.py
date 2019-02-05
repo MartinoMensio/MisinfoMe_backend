@@ -3,7 +3,7 @@ import json
 
 import concurrent.futures
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
 #from flask_restful import Resource, Api
 from json import dumps
 from dotenv import load_dotenv, find_dotenv
@@ -20,6 +20,7 @@ import twitter
 import evaluate
 import url_redirect_manager
 import model
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -27,6 +28,11 @@ ma = Marshmallow(app)
 #api = Api(app)
 
 twitter_api = twitter.TwitterAPI()
+
+BASE_URL = os.environ.get('BASE_URL', '/misinfo')
+API_URL = BASE_URL + '/api'
+APP_URL = BASE_URL + '/app'
+
 
 
 # Marshmallow schemas
@@ -114,17 +120,17 @@ def analyse_twitter_user_from_screen_name():
 
 
 
-@app.route('/about')
+@app.route(API_URL + '/about')
 @cross_origin()
 def get_about():
     return jsonify(database.get_collections_stats())
 
-@app.route('/about/datasets')
+@app.route(API_URL + '/about/datasets')
 @cross_origin()
 def get_datasets():
     return jsonify([el for el in database.get_datasets()])
 
-@app.route('/about/domains')
+@app.route(API_URL + '/about/domains')
 @cross_origin()
 def get_domains():
     return jsonify([el for el in database.get_domains()])
@@ -151,7 +157,7 @@ def get_followers():
     followers = twitter_api.get_followers(handle, limit)
     return jsonify(followers)
 
-@app.route('/following')
+@app.route(API_URL + '/following')
 def get_following():
     handle = request.args.get('handle')
     limit = request.args.get('limit', None)
@@ -185,7 +191,7 @@ def analyse_tweets():
     return jsonify(result)
 '''
 
-@app.route('/count_urls/users', methods = ['GET', 'POST'])
+@app.route(API_URL + '/count_urls/users', methods = ['GET', 'POST'])
 @cross_origin()
 def analyse_user():
     # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
@@ -211,7 +217,7 @@ def analyse_user():
 
     return jsonify(result)
 
-@app.route('/count_urls/overall')
+@app.route(API_URL + '/count_urls/overall')
 @cross_origin()
 def get_overall_counts():
     return jsonify(evaluate.get_overall_counts())
@@ -245,6 +251,27 @@ def get_redirect_for():
     url = request.args.get('url')
     url_redirect_manager.get_redirect_for(url)
     return jsonify(mappings)
+
+@app.route(BASE_URL + '/static/<path:path>')
+def static_proxy(path):
+    # the static files
+    print(path)
+    return send_from_directory('app', path)
+
+
+@app.route(BASE_URL + '/app/<path:path>')
+@app.route(BASE_URL + '/app/')
+def deep_linking(path=None):
+    # send the angular application, mantaining the state informations (no redirects)
+    return send_from_directory('app', 'index.html')
+
+@app.route('/')
+@app.route(BASE_URL)
+@app.route(BASE_URL + '/')
+@app.route(BASE_URL + '/app')
+def redirect_home():
+    # this route is for sending the user to the homepage
+    return redirect(BASE_URL + '/app/home')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

@@ -1,3 +1,5 @@
+app/*
+
 dump/**
 dump.tar.gz
 aggregated_*.json
