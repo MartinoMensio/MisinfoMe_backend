@@ -16,7 +16,7 @@ client = MongoClient(MONGO_URI)
 print('database OK')
 
 db_twitter = client['test_coinform']
-db_twitter_analysis = client['test_coinform']
+db_twitter_analysis = client['stored_analysis']
 db_redirects = client['test_coinform']
 db_datasets = client['datasets_resources']
 

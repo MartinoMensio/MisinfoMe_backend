@@ -67,7 +67,7 @@ class TwitterAPI(object):
                         # this has to be retrieved
                         new_ids.append(id)
                 # call the decorated function on the reduced list of ids
-                print('crazy decorator: already there', len(all_results), 'to be retrieved', len(new_ids))
+                #print('crazy decorator: already there', len(all_results), 'to be retrieved', len(new_ids))
                 new_args = (other, new_ids)
                 new_results = f(*new_args)
                 # and merge the results in the combined results
@@ -75,7 +75,8 @@ class TwitterAPI(object):
                     all_results[id] = item
                     # saving them in the database too
                     save_item_to_db_fn(item)
-                return [all_results[id] for id in ids]
+                # return the merged results (there can be cases where the profiles do not exist anymore, just check that)
+                return [all_results[id] for id in ids if id in all_results]
             return wrapped_f
         return wrap
 
@@ -127,7 +128,7 @@ class TwitterAPI(object):
         The header Authorization is retrieved from the self.bearer_tokens, so it will be overwritten
         This function is decorated so that on rate exceeded a new bearer token will be used
         """
-        print(parameters)
+        #print(parameters)
         token = self.bearer_tokens[self.active]
         url = parameters['url']
         headers = parameters.get('headers', {})
@@ -192,7 +193,6 @@ class TwitterAPI(object):
             new_tweets = [t for t in response if t['id'] > newest_saved]
             all_tweets.extend(new_tweets)
             if not len(new_tweets):
-                print('done')
                 break
             # set the maximum id allowed from the last tweet, and -1 to avoid duplicates
             max_id = new_tweets[-1]['id'] - 1
@@ -228,8 +228,11 @@ class TwitterAPI(object):
             params = {
                 'id': ','.join([str(el) for el in chunk])
             }
-            response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/lookup.json', 'params': params})
-            result.extend(response)
+            try:
+                response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/lookup.json', 'params': params})
+                result.extend(response)
+            except:
+                pass
         #print(result)
         return result
 
@@ -241,8 +244,11 @@ class TwitterAPI(object):
             params = {
                 'user_id': ','.join([str(el) for el in chunk])
             }
-            response = self.perform_get({'url': 'https://api.twitter.com/1.1/users/lookup.json', 'params': params})
-            result.extend(response)
+            try:
+                response = self.perform_get({'url': 'https://api.twitter.com/1.1/users/lookup.json', 'params': params})
+                result.extend(response)
+            except:
+                pass
         #print(result)
         return result
 

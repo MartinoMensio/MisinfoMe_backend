@@ -78,13 +78,13 @@ class Unshortener(object):
                 try:
                     source_url = soup.select('section[id="features"] h3 code')[0].get_text()
                 except:
-                    print('ERROR for', url)
+                    #print('ERROR for', url)
                     if handle_error:
                         source_url = url
                     else:
                         source_url = None
                 m = (url, source_url)
-                print('unshortened', url, source_url)
+                #print('unshortened', url, source_url)
                 #print(m)
                 #self.mappings[m[0]] = m[1]
                 database.save_url_redirect(url, source_url)

@@ -1,6 +1,8 @@
 import data
 import json
 import os
+import multiprocessing
+import tqdm
 
 import database
 
@@ -9,6 +11,8 @@ import model
 import utils
 import twitter
 import database
+
+pool_size = 8
 
 
 def save_stats():
@@ -115,10 +119,15 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
-    classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
+    #classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
+    with multiprocessing.Pool(pool_size) as pool:
+            classified_urls = []
+            for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
+                classified_urls.append(classified)
     matching = [el for el in classified_urls if el]
     #print(matching)
     verified = [el for el in matching if el['score']['label'] == 'true']
+    mixed = [el for el in matching if el['score']['label'] == 'mixed']
     fake = [el for el in matching if el['score']['label'] == 'fake']
     # rebuttals
     #print(shared_urls)
@@ -130,6 +139,9 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
         rebuttals = rebuttals_match.get(el['url'], None)
         el['rebuttals'] = rebuttals
         #rebuttals_match.pop(f['url'])
+    for el in mixed:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
     for el in verified:
         rebuttals = rebuttals_match.get(el['url'], None)
         el['rebuttals'] = rebuttals
@@ -158,18 +170,17 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
         'verified_urls_cnt': len(verified),
+        'mixed_urls_cnt': len(mixed),
         'fake_urls_cnt': len(fake),
-        #'fake_urls': fake,
-        #'verified_urls': verified,
         'unknown_urls_cnt': len(shared_urls) - len(matching),
-        #'rebuttals': rebuttals_match
-        'score': score
+        'score': score,
+        # add after saving to mongo, because rebuttals have dotted keys
+        'rebuttals': rebuttals,
+        'fake_urls': fake,
+        'mixed_urls': mixed,
+        'verified_urls': verified
     }
 
-    # add after saving to mongo, because rebuttals have dotted keys
-    result['rebuttals'] = rebuttals
-    result['fake_urls'] = fake
-    result['verified_urls'] = verified
 
     if len(tweets):
         database.save_count_result(user['id'], result)
@@ -186,6 +197,7 @@ def get_overall_counts():
         'tweets_cnt': sum(c.get('tweets_cnt', 0) for c in counts),
         'shared_urls_cnt': sum(c.get('shared_urls_cnt', 0) for c in counts),
         'verified_urls_cnt': sum(c.get('verified_urls_cnt', 0) for c in counts),
+        'mixed_urls_cnt': sum(c.get('mixed_urls_cnt', 0) for c in counts),
         'fake_urls_cnt': sum(c.get('fake_urls_cnt', 0) for c in counts),
         'unknown_urls_cnt': sum(c.get('unknown_urls_cnt', 0) for c in counts),
         'score': score,
