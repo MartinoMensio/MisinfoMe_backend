@@ -5,6 +5,7 @@ python-dotenv
 pylint
 requests
 gunicorn
+gevent
 bs4
 twitterscraper
 tqdm
