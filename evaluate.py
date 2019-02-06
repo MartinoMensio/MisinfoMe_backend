@@ -121,9 +121,9 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
     #fake = [el for el in matching if el['label'] == 'fake']
     #classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
     with multiprocessing.Pool(pool_size) as pool:
-            classified_urls = []
-            for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
-                classified_urls.append(classified)
+        classified_urls = []
+        for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
+            classified_urls.append(classified)
     matching = [el for el in classified_urls if el]
     #print(matching)
     verified = [el for el in matching if el['score']['label'] == 'true']
