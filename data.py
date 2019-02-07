@@ -7,10 +7,14 @@ import unshortener
 
 unshortener = unshortener.Unshortener()
 
-def classify_url(url_info):
-    url = url_info['resolved']
+def classify_url(url_info, unshorten=True):
+    url = url_info['url']
     domain = utils.get_url_domain(url)
-    unshortened_url = unshortener.unshorten(url)
+    if unshorten:
+        unshortened_url = unshortener.unshorten(url)
+    else:
+        unshortened_url = url
+    url_info['resolved'] = unshortened_url
     label = database.get_url_info(url)
     if not label:
         label = database.get_url_info(unshortened_url)

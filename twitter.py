@@ -8,7 +8,6 @@ from bs4 import BeautifulSoup
 from twitterscraper.query import query_tweets_from_user
 
 from requests.auth import HTTPBasicAuth
-from tqdm import tqdm
 
 import database
 import url_redirect_manager
@@ -150,7 +149,7 @@ class TwitterAPI(object):
 
 
     def get_user_tweets_from_screen_name(self, screen_name):
-        print(screen_name)
+        #print(screen_name)
         user = self.get_user_from_screen_name(screen_name)
         if not user:
             return []
@@ -274,9 +273,6 @@ def get_urls_from_tweets(tweets):
     for t in tweets:
         urls = [{'url': u['expanded_url'], 'found_in_tweet': str(t['id']), 'retweet': 'retweeted_status' in t} for u in t['entities']['urls']]
         all_urls.extend(urls)
-
-    for url in tqdm(all_urls):
-        url['resolved'] = url_redirect_manager.get_url_redirect_for(url['url'])
 
     return all_urls
 

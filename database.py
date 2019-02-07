@@ -92,7 +92,6 @@ def save_new_tweets(tweets):
         if '_id' not in t:
             t['_id'] = t['id']
             to_save.append(t)
-    print(len(to_save))
     if to_save:
         return twitter_tweets.insert_many(to_save)
     else:

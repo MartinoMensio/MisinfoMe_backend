@@ -199,7 +199,7 @@ def analyse_user():
     allow_cached = request.args.get('allow_cached', False)
     # only get already evaluated profiles
     only_cached = request.args.get('only_cached', False)
-    print(request.is_json)
+    #print(request.is_json)
     if request.is_json:
         # retrieve content from json POST content
         content = request.get_json()
@@ -232,7 +232,7 @@ def get_redirect_for():
 @app.route(BASE_URL + '/static/<path:path>')
 def static_proxy(path):
     # the static files
-    print(path)
+    #print(path)
     return send_from_directory('app', path)
 
 

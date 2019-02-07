@@ -101,7 +101,7 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 def count_users(screen_names, twitter_api, allow_cached, only_cached):
     return {screen_name: count_user(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
 
-def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess=False):
+def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess=True):
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}
@@ -121,7 +121,7 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess
     #fake = [el for el in matching if el['label'] == 'fake']
     #classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
     if multiprocess:
-        with multiprocessing.Pool(pool_size) as pool:
+        with multiprocessing.pool.ThreadPool(pool_size) as pool:
             classified_urls = []
             for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
                 classified_urls.append(classified)
@@ -137,7 +137,7 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess
     rebuttals_match = {u['resolved']: database.get_rebuttals(u['resolved']) for u in shared_urls}
     rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
     # attach the rebuttal links to the fake urls matching
-    print(rebuttals_match)
+    #print(rebuttals_match)
     for el in fake:
         rebuttals = rebuttals_match.get(el['url'], None)
         el['rebuttals'] = rebuttals
@@ -163,7 +163,7 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess
 
     if len(fake) + len(verified):
         score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
-        print('evaluating', score, len(verified), len(fake))
+        #print('evaluating', score, len(verified), len(fake))
     else:
         # default to unknown
         score = 50
