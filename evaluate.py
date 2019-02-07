@@ -101,7 +101,7 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 def count_users(screen_names, twitter_api, allow_cached, only_cached):
     return {screen_name: count_user(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
 
-def count_user(screen_name, twitter_api, allow_cached, only_cached):
+def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess=False):
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}
@@ -120,10 +120,13 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
     #classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
-    with multiprocessing.Pool(pool_size) as pool:
+    if multiprocess:
+        with multiprocessing.Pool(pool_size) as pool:
             classified_urls = []
             for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
                 classified_urls.append(classified)
+    else:
+        classified_urls = [data.classify_url(url) for url in shared_urls]
     matching = [el for el in classified_urls if el]
     #print(matching)
     verified = [el for el in matching if el['score']['label'] == 'true']
@@ -167,6 +170,7 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached):
 
     result = {
         'screen_name': screen_name,
+        'profile_image_url': user['profile_image_url'],
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
         'verified_urls_cnt': len(verified),

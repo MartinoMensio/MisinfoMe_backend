@@ -223,30 +223,6 @@ def analyse_user():
 def get_overall_counts():
     return jsonify(evaluate.get_overall_counts())
 
-"""
-@app.route('/count_urls/user/network')
-@cross_origin()
-def analyse_user_network():
-    handle = request.args.get('handle')
-    # evaluate the following
-    following_analysis = {}
-    following = twitter_api.get_following(handle)
-    print(len(following), 'following')
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        for f, tweets_f in zip(following, executor.map(get_tweets_wrap, following)):
-            urls_f = twitter.get_urls_from_tweets(tweets_f)
-            result_f = evaluate.count(urls_f, tweets_f, handle)
-            following_analysis[f] = result_f['you']
-    result = {
-        'fake_urls_cnt': sum([el['fake_urls_cnt'] for el in following_analysis.values()]),
-        'shared_urls_cnt': sum([el['shared_urls_cnt'] for el in following_analysis.values()]),
-        'verified_urls_cnt': sum([el['verified_urls_cnt'] for el in following_analysis.values()]),
-        'tweets_cnt': sum([el['tweets_cnt'] for el in following_analysis.values()]),
-        'unknown_urls_cnt': sum([el['unknown_urls_cnt'] for el in following_analysis.values()])
-    }
-    return jsonify(result)
-"""
-
 @app.route('/mappings')
 def get_redirect_for():
     url = request.args.get('url')
