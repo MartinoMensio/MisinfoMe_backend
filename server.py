@@ -136,6 +136,19 @@ def get_datasets():
 def get_domains():
     return jsonify([el for el in database.get_domains()])
 
+@app.route(API_URL + '/about/domains_vs_datasets_table')
+def get_domains_vs_datasets():
+    return jsonify(data.get_domains_vs_datasets_table())
+
+@app.route(API_URL + '/about/fact_checkers')
+def get_fact_checkers():
+    return jsonify(data.get_fact_checkers())
+
+@app.route(API_URL + '/about/fact_checkers_table')
+def get_fact_checkers_table():
+    return jsonify(data.get_fact_checkers_table())
+
+
 
 
 
