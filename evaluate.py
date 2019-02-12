@@ -170,7 +170,7 @@ def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess
 
     result = {
         'screen_name': screen_name,
-        'profile_image_url': user['profile_image_url'],
+        'profile_image_url': user['profile_image_url_https'],
         'tweets_cnt': len(tweets),
         'shared_urls_cnt': len(shared_urls),
         'verified_urls_cnt': len(verified),
