@@ -12,7 +12,7 @@ import utils
 import twitter
 import database
 
-pool_size = 8
+pool_size = 32
 
 
 def save_stats():

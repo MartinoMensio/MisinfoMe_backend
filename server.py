@@ -18,9 +18,9 @@ import data
 import database
 import twitter
 import evaluate
-import url_redirect_manager
 import model
-import os
+import unshortener
+
 
 app = Flask(__name__)
 CORS(app)
@@ -35,51 +35,10 @@ API_URL = BASE_URL + '/api'
 APP_URL = BASE_URL + '/app'
 
 
-
-# Marshmallow schemas
-class ScoreSchema(ma.Schema):
-    class Meta:
-        fields = ('aggregated_score',)
-
-class ReasonSchema(ma.Schema):
-    class Meta:
-        fields = ('description',)
-
-class AnalysisResultSchema(ma.Schema):
-    class Meta:
-        # fields to expose
-        fields = ('score', 'reason', 'resource_type', '_links')
-    score = ma.Nested(ScoreSchema)
-    reason = ma.Nested(ReasonSchema)
-    _links = ma.Hyperlinks({
-        'self': ma.URLFor('analyse_fake')
-    })
-analysisResultSchema = AnalysisResultSchema()
-
-
-'''
-@app.route('/analyse/tweet/<tweet_id>')
-#@cross_origin()
-def analyse_tweet(tweet_id):
-    """from a tweet IDs retrieves and analyses it"""
-    tweets = twitter_api.get_statuses_lookup([tweet_id])
-    # this whole has to be changed and simplified
-    urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tweets, None)
-    you = result['you']
-    # TODO use TweetScore instead of this mess
-    score = 0.5-0.5*you['fake_urls_cnt']/you['shared_urls_cnt']+0.5*you['verified_urls_cnt']/you['shared_urls_cnt']
-    analysis = model.AnalysisResult(model.Score(score), model.Reason('bla'), 'tweet')
-    return analysisResultSchema.jsonify(analysis)
-'''
-
 class MyEncoder(json.JSONEncoder):
-    def default(self, o):
+    def default(self, o): # pylint: disable=method-hidden
         return o.__dict__
 
-class MyEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__
 
 
 
@@ -236,11 +195,11 @@ def analyse_user():
 def get_overall_counts():
     return jsonify(evaluate.get_overall_counts())
 
-@app.route('/mappings')
+@app.route(API_URL + '/mappings')
 def get_redirect_for():
     url = request.args.get('url')
-    url_redirect_manager.get_redirect_for(url)
-    return jsonify(mappings)
+    unshortened = unshortener.unshorten(url)
+    return jsonify(unshortened)
 
 @app.route(BASE_URL + '/static/<path:path>')
 def static_proxy(path):

@@ -6,8 +6,6 @@ import database
 import utils
 import unshortener
 
-unshortener = unshortener.Unshortener()
-
 def classify_url(url_info, unshorten=True):
     url = url_info['url']
     domain = utils.get_url_domain(url)
