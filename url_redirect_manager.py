@@ -3,6 +3,7 @@ import validators
 import database
 import utils
 
+"""
 def get_url_redirect_for(from_url):
     # TODO clean and check url
     from_url = clear_url(from_url)
@@ -24,9 +25,10 @@ def filter_need_redirect_check(url_list):
     return [el['to'] for el in alread_stored]
 
 def get_redirect_info_remote(url):
-    """Interrogate the webservice for getting the redirect informations"""
+    '''Interrogate the webservice for getting the redirect informations'''
     # TODO
     raise NotImplementedError()
+"""
 
 def clear_url(url):
     url = url[:1000] # mongo limit
@@ -63,8 +65,12 @@ def analyse_redirects():
         to_url = redirect_info['to']
         if from_url != to_url:
             different_redirects.append([from_url, to_url])
-            from_domain = utils.get_url_domain(from_url)
-            to_domain = utils.get_url_domain(to_url)
+            try:
+                from_domain = utils.get_url_domain(from_url)
+                to_domain = utils.get_url_domain(to_url)
+            except Exception as e:
+                print(from_url, to_url)
+                raise e
             if from_domain != to_domain:
                 redirecting_domains.add(from_domain)
     print(redirecting_domains)

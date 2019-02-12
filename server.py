@@ -18,9 +18,9 @@ import data
 import database
 import twitter
 import evaluate
-import url_redirect_manager
 import model
-import os
+import unshortener
+
 
 app = Flask(__name__)
 CORS(app)
@@ -35,51 +35,10 @@ API_URL = BASE_URL + '/api'
 APP_URL = BASE_URL + '/app'
 
 
-
-# Marshmallow schemas
-class ScoreSchema(ma.Schema):
-    class Meta:
-        fields = ('aggregated_score',)
-
-class ReasonSchema(ma.Schema):
-    class Meta:
-        fields = ('description',)
-
-class AnalysisResultSchema(ma.Schema):
-    class Meta:
-        # fields to expose
-        fields = ('score', 'reason', 'resource_type', '_links')
-    score = ma.Nested(ScoreSchema)
-    reason = ma.Nested(ReasonSchema)
-    _links = ma.Hyperlinks({
-        'self': ma.URLFor('analyse_fake')
-    })
-analysisResultSchema = AnalysisResultSchema()
-
-
-'''
-@app.route('/analyse/tweet/<tweet_id>')
-#@cross_origin()
-def analyse_tweet(tweet_id):
-    """from a tweet IDs retrieves and analyses it"""
-    tweets = twitter_api.get_statuses_lookup([tweet_id])
-    # this whole has to be changed and simplified
-    urls = twitter.get_urls_from_tweets(tweets)
-    result = evaluate.count(urls, tweets, None)
-    you = result['you']
-    # TODO use TweetScore instead of this mess
-    score = 0.5-0.5*you['fake_urls_cnt']/you['shared_urls_cnt']+0.5*you['verified_urls_cnt']/you['shared_urls_cnt']
-    analysis = model.AnalysisResult(model.Score(score), model.Reason('bla'), 'tweet')
-    return analysisResultSchema.jsonify(analysis)
-'''
-
 class MyEncoder(json.JSONEncoder):
-    def default(self, o):
+    def default(self, o): # pylint: disable=method-hidden
         return o.__dict__
 
-class MyEncoder(json.JSONEncoder):
-    def default(self, o):
-        return o.__dict__
 
 
 
@@ -135,6 +94,19 @@ def get_datasets():
 @cross_origin()
 def get_domains():
     return jsonify([el for el in database.get_domains()])
+
+@app.route(API_URL + '/about/domains_vs_datasets_table')
+def get_domains_vs_datasets():
+    return jsonify(data.get_domains_vs_datasets_table())
+
+@app.route(API_URL + '/about/fact_checkers')
+def get_fact_checkers():
+    return jsonify(data.get_fact_checkers())
+
+@app.route(API_URL + '/about/fact_checkers_table')
+def get_fact_checkers_table():
+    return jsonify(data.get_fact_checkers_table())
+
 
 
 
@@ -199,7 +171,7 @@ def analyse_user():
     allow_cached = request.args.get('allow_cached', False)
     # only get already evaluated profiles
     only_cached = request.args.get('only_cached', False)
-    print(request.is_json)
+    #print(request.is_json)
     if request.is_json:
         # retrieve content from json POST content
         content = request.get_json()
@@ -223,16 +195,16 @@ def analyse_user():
 def get_overall_counts():
     return jsonify(evaluate.get_overall_counts())
 
-@app.route('/mappings')
+@app.route(API_URL + '/mappings')
 def get_redirect_for():
     url = request.args.get('url')
-    url_redirect_manager.get_redirect_for(url)
-    return jsonify(mappings)
+    unshortened = unshortener.unshorten(url)
+    return jsonify(unshortened)
 
 @app.route(BASE_URL + '/static/<path:path>')
 def static_proxy(path):
     # the static files
-    print(path)
+    #print(path)
     return send_from_directory('app', path)
 
 

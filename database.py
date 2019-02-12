@@ -92,7 +92,6 @@ def save_new_tweets(tweets):
         if '_id' not in t:
             t['_id'] = t['id']
             to_save.append(t)
-    print(len(to_save))
     if to_save:
         return twitter_tweets.insert_many(to_save)
     else:
@@ -108,12 +107,16 @@ def get_collections_stats():
     return {
         'urls': urls_collection.count(),
         'domains': domains_collection.count(),
-        'rebuttals': rebuttals_collection.count(),
+        #'rebuttals': rebuttals_collection.count(),
+        'fact_checking': fact_checkers_collection.count(),
         'datasets': datasets_collection.count()
     }
 
 def get_dataset(dataset_key):
     return datasets_collection.find_one({'_id': dataset_key})
+
+def get_fact_checkers():
+    return fact_checkers_collection.find()
 
 def get_datasets():
     return datasets_collection.find()
