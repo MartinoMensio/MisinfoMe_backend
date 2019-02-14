@@ -1,6 +1,6 @@
 import os
 
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 
 MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost:27017')
 MONGO_USER = os.environ.get('MONGO_USER', None)
@@ -45,12 +45,21 @@ twitter_users_counts = db_twitter_analysis['twitter_users_counts']
 
 
 
+def replace_safe(collection, document, key_property='_id'):
+    # the upsert sometimes fails, mongo does not perform it atomically
+    # https://jira.mongodb.org/browse/SERVER-14322
+    # https://stackoverflow.com/questions/29305405/mongodb-impossible-e11000-duplicate-key-error-dup-key-when-upserting
+    try:
+        collection.replace_one({'_id': document[key_property]}, document, upsert=True)
+    except errors.DuplicateKeyError:
+        collection.replace_one({'_id': document[key_property]}, document, upsert=True)
+
 def get_url_redirect(url):
     return url_redirects_collection.find_one({'_id': url})
 
 def save_url_redirect(from_url, to_url):
     url_mapping = {'_id': from_url, 'to': to_url}
-    return url_redirects_collection.replace_one({'_id': url_mapping['_id']}, url_mapping, upsert=True)
+    return replace_safe(url_redirects_collection, url_mapping)
 
 def get_url_redirects():
     return url_redirects_collection.find()
@@ -69,7 +78,7 @@ def get_rebuttals(url):
 
 def save_twitter_user(user):
     user['_id'] = user['id']
-    return twitter_users.replace_one({'_id': user['_id']}, user, upsert=True)
+    return replace_safe(twitter_users, user)
 
 def save_twitter_users(users):
     for u in users:
@@ -84,7 +93,7 @@ def get_twitter_user_from_screen_name(screen_name):
 
 def save_tweet(tweet):
     tweet['_id'] = tweet['id']
-    return twitter_tweets.replace_one({'_id': tweet['_id']}, tweet, upsert=True)
+    return replace_safe(twitter_tweets, tweet)
 
 def save_new_tweets(tweets):
     to_save = []
@@ -126,7 +135,7 @@ def get_domains():
 
 def save_count_result(user_id, count_result):
     count_result['_id'] = user_id
-    return twitter_users_counts.replace_one({'_id': count_result['_id']}, count_result, upsert=True)
+    return replace_safe(twitter_users_counts, count_result)
 
 def get_count_result(user_id):
     return twitter_users_counts.find_one({'_id': user_id})
