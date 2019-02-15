@@ -127,6 +127,9 @@ def get_dataset(dataset_key):
 def get_fact_checkers():
     return fact_checkers_collection.find()
 
+def get_fact_checker(key):
+    return fact_checkers_collection.find_one({'_id': key})
+
 def get_datasets():
     return datasets_collection.find()
 

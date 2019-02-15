@@ -6,33 +6,59 @@ import database
 import utils
 import unshortener
 
+fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
+
 def classify_url(url_info, unshorten=True):
     url = url_info['url']
     domain = utils.get_url_domain(url)
     if unshorten:
         unshortened_url = unshortener.unshorten(url)
+        domain = utils.get_url_domain(unshortened_url)
     else:
         unshortened_url = url
     url_info['resolved'] = unshortened_url
-    label = database.get_url_info(url)
-    if not label:
-        label = database.get_url_info(unshortened_url)
-    if label:
-        label['reason'] = 'full_url_match'
-        label['url'] = url
+    label_url = database.get_url_info(url)
+    if not label_url:
+        label_url = database.get_url_info(unshortened_url)
+    label_domain = database.get_domain_info(domain)
+    if not label_domain and domain.startswith('www.'):
+        # try also without www.
+        label_domain = database.get_domain_info(domain[4:])
+
+    if label_domain and 'ifcn' in label_domain['score']['sources']:
+        label_domain['reason'] = 'fact_checker'
+        label_domain['url'] = url
+        label = label_domain
+        print('there', label_domain)
+
+    elif label_url:
+        label_url['reason'] = 'full_url_match'
+        for s in label_url['score']['sources']:
+            if s in fact_checkers.keys():
+                label_url['reason'] = 'fact_checking'
+                label_url['score']['sources'] = [s]
+                break
+        label_url['url'] = url
+        label = label_url
+
     else:
-        label = database.get_domain_info(domain)
-        if not label and domain.startswith('www.'):
-            # try also without www.
-            label = database.get_domain_info(domain[4:])
-        if label:
-            label['reason'] = 'domain_match'
-            label['url'] = url
+        if label_domain:
+            label_domain['reason'] = 'domain_match'
+            label_domain['url'] = url
+            label = label_domain
+        else:
+            label = None
+
     if label:
         # attribution of the dataset
         label['sources'] = []
         for s in label['score']['sources']:
-            label['sources'].append(database.get_dataset(s))
+            dataset = database.get_dataset(s)
+            if not dataset.get('name', None):
+                # TODO fix that when you understand how to manage fact-checkers as datasets
+                # wanted properties to display in frontend: {'name': s, 'url': s}
+                dataset = database.get_fact_checker(s)
+            label['sources'].append(dataset)
         label['found_in_tweet'] = url_info['found_in_tweet']
         label['retweet'] = url_info['retweet']
         #print(label)
