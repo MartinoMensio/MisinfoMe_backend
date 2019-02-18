@@ -29,7 +29,7 @@ def classify_url(url_info, unshorten=True):
         label_domain['reason'] = 'fact_checker'
         label_domain['url'] = url
         label = label_domain
-        print('there', label_domain)
+        #print('there', label_domain)
 
     elif label_url:
         label_url['reason'] = 'full_url_match'
