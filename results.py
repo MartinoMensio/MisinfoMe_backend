@@ -121,7 +121,7 @@ class UrlResult(Result):
 
 class TweetResult(Result):
     def __init__(self, tweet, reasons=[], related=[]):
-        description = '"{}"'.format(tweet['full_text'])
+        description = '"{}"'.format(tweet.get('full_text', ''))
         super().__init__('tweet_analysis', '/data/tweets/{}'.format(tweet['id']), 'https://twitter.com/statuses/{}'.format(tweet['id']), description, reasons, related)
 
 class UserResult(Result):
