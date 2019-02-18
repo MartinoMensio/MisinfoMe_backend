@@ -71,7 +71,7 @@ def evaluate_tweet(tweet_id, twitter_api):
         return None
     urls = twitter.get_urls_from_tweets(tweet_objects)
     print('urls', urls)
-    reasons = [results.RelationshipReason('contains_url', evaluate_url(url['resolved'])) for url in urls]
+    reasons = [results.RelationshipReason('contains_url', evaluate_url(url['url'])) for url in urls]
 
     # TODO pass the tweet object instead
     result = results.TweetResult(tweet_objects[0], reasons)

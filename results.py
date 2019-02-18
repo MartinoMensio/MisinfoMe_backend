@@ -95,7 +95,7 @@ class DatasetMatch(Result):
         # TODO check the URLs
         description = 'A record in the dataset'
         super().__init__('dataset_match', '/data/datasets/{}/{}'.format(dataset_entry.type, dataset_entry.key), None, description)
-        score = 0
+        score = Score(0)
         if dataset_entry.label == 'fake':
             score = Score(-1)
         elif dataset_entry.label == 'true':
@@ -130,4 +130,3 @@ class UserResult(Result):
         description = '{}'.format(user['name'])
         self.tweet_cnt = tweet_cnt
         super().__init__('user_analysis', '/data/user/{}'.format(user['id']), 'https://twitter.com/intent/user?user_id={}'.format(user['id']), description, reasons, related)
-

@@ -10,7 +10,7 @@ dump_all: dump_datasets dump_twitter
 compress_dump:
 	tar -zcvf dump.tar.gz dump && echo "compressed dump"
 
-create_compressed_dump: dump_db_datasets compress_dump
+create_compressed_dump: dump_datasets compress_dump
 	echo "done"
 
 extract_dump:
