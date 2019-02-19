@@ -25,7 +25,7 @@ def classify_url(url_info, unshorten=True):
         # try also without www.
         label_domain = database.get_domain_info(domain[4:])
 
-    if label_domain and 'ifcn' in label_domain['score']['sources']:
+    if label_domain and label_domain['score'].get('is_fact_checker', False):
         label_domain['reason'] = 'fact_checker'
         label_domain['url'] = url
         label = label_domain
