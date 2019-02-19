@@ -99,9 +99,13 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 
 
 def count_users(screen_names, twitter_api, allow_cached, only_cached):
-    return {screen_name: count_user(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
+    return {screen_name: count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
 
-def count_user(screen_name, twitter_api, allow_cached, only_cached, multiprocess=True):
+def count_user(user_id, twitter_api, allow_cached, only_cached, multiprocess=True):
+    user = twitter_api.get_users_lookup([user_id])[0]
+    return count_user_from_screen_name(user['screen_name'], twitter_api, allow_cached, only_cached, multiprocess)
+
+def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, multiprocess=True):
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}

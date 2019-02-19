@@ -152,7 +152,7 @@ def get_shared_urls():
 
 @app.route(API_URL + '/count_urls/users', methods = ['GET', 'POST'])
 @cross_origin()
-def analyse_user():
+def count_user():
     # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
     allow_cached = request.args.get('allow_cached', False)
     # only get already evaluated profiles
@@ -170,16 +170,27 @@ def analyse_user():
         screen_names_splitted = screen_names.split(',')
 
     if len(screen_names_splitted) == 1:
-        result = evaluate.count_user(screen_names_splitted[0], twitter_api, allow_cached, only_cached)
+        result = evaluate.count_user_from_screen_name(screen_names_splitted[0], twitter_api, allow_cached, only_cached)
     else:
         result = evaluate.count_users(screen_names_splitted, twitter_api, allow_cached, only_cached)
 
+    return jsonify(result)
+
+@app.route(API_URL + '/count_urls/users/<user_id>')
+def count_user_from_id(user_id):
+    user_id = int(user_id)
+    result = evaluate.count_user(user_id, twitter_api, True, False)
     return jsonify(result)
 
 @app.route(API_URL + '/count_urls/overall')
 @cross_origin()
 def get_overall_counts():
     return jsonify(evaluate.get_overall_counts())
+
+@app.route(API_URL + '/users_stored')
+def get_users_stored():
+    return jsonify([el['_id'] for el in database.get_users_id()])
+
 
 
 # Other useful APIs

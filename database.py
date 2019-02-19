@@ -145,3 +145,6 @@ def get_count_result(user_id):
 
 def get_all_counts():
     return twitter_users_counts.find()
+
+def get_users_id():
+    return twitter_users.find(projection={'_id': True})
