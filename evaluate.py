@@ -3,6 +3,8 @@ import json
 import os
 import multiprocessing
 import tqdm
+import itertools
+from collections import defaultdict
 
 import database
 
@@ -211,3 +213,101 @@ def get_overall_counts():
         'score': score,
         'twitter_profiles_cnt': len(counts)
     }
+
+def get_factchecking_by_domain():
+    all_factchecking = [el for el in database.get_all_factchecking()]
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
+    result = {}
+    for k, values in by_fact_checker_domain.items():
+        urls = set(v['url'] for v in values)
+        claim_urls = set(v.get('claim_url', None) for v in values)
+        result[k] = {
+            'len': len(values),
+            'urls_cnt': len(urls),
+            'claim_urls_cnt': len(claim_urls),
+            #'urls': list(urls),
+            #'claim_urls': list(claim_urls)
+        }
+    return result
+
+def get_factchecking_by_one_domain(domain, twitter_api):
+    all_factchecking = [el for el in database.get_all_factchecking()]
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
+    k = domain
+    values = by_fact_checker_domain[k]
+
+    values_with_claim_url = [el for el in values if el.get('claim_url', None)]
+
+    # TODO undeduping urls and claimm_urls
+
+    print('retrieved from dataset')
+
+    overall_counts = {
+        'factchecking_urls': len(values),
+        'claim_urls': len(values_with_claim_url),
+        'factchecking_urls_with_claim_urls': len(values_with_claim_url),
+        'factchecking_shares_count': 0,
+        'claims_shares_count': 0,
+        'by_label': defaultdict(lambda: defaultdict(lambda: 0))
+    }
+    by_url = []
+    urls = set() # TODO this is a temporary solution to avoid duplication of counts
+    for fcu in values_with_claim_url:
+        factchecking_url = fcu['url']
+        tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url, twitter_api)
+        claim_url = fcu['claim_url']
+        tweet_ids_sharing_claim = data.get_tweets_containing_url(claim_url, twitter_api)
+
+        by_url.append({
+            'factchecking_url': factchecking_url,
+            'claim_url': claim_url,
+            'factchecking_shares': len(tweet_ids_sharing_factchecking),
+            'claim_shares': len(tweet_ids_sharing_claim)
+        })
+        if not (factchecking_url in urls):
+            overall_counts['factchecking_shares_count'] += len(tweet_ids_sharing_factchecking)
+            overall_counts['by_label'][fcu['label'] or 'unknown']['factchecking_shares_count'] += len(tweet_ids_sharing_factchecking)
+            urls.add(factchecking_url)
+        if not (claim_url in urls):
+            overall_counts['claims_shares_count'] += len(tweet_ids_sharing_claim)
+            overall_counts['by_label'][fcu['label'] or 'unknown']['claims_shares_count'] += len(tweet_ids_sharing_claim)
+            urls.add(claim_url)
+
+    """
+    urls = set(v['url'] for v in values_with_claim_url)
+    urls_shares = {}
+    tot_shares = 0
+    for url in urls:
+        tweets = data.get_tweets_containing_url(url, twitter_api)
+        urls_shares[url] = len(tweets)
+        tot_shares += len(tweets)
+
+    print('urls done')
+    claim_urls = set(v.get('claim_url', None) for v in values_with_claim_url)
+    claim_urls_shares = {}
+    tot_claim_shares = 0
+    for url in claim_urls:
+        if url:
+            tweets = data.get_tweets_containing_url(url, twitter_api)
+            claim_urls_shares[url] = len(tweets)
+            tot_claim_shares += len(tweets)
+    print('claim_urls done')
+
+
+    result = {
+        'len': len(values),
+        'urls_cnt': len(urls),
+        'claim_urls_cnt': len(claim_urls),
+        'tot_urls_shares': tot_shares,
+        'tot_claim_shares': tot_claim_shares,
+        'urls': urls_shares,
+        'claim_urls': claim_urls_shares
+    }
+    """
+    result = {
+        #'by_url': by_url,
+        'counts': overall_counts
+    }
+    return result

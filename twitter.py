@@ -4,6 +4,8 @@ import base64
 import json
 #from lxml import etree
 from bs4 import BeautifulSoup
+import twitterscraper
+import logging
 
 from twitterscraper.query import query_tweets_from_user
 
@@ -11,6 +13,9 @@ from requests.auth import HTTPBasicAuth
 
 import database
 import url_redirect_manager
+
+scraper_logger = logging.getLogger('twitterscraper')
+scraper_logger.setLevel(logging.WARNING)
 
 class TwitterAPI(object):
 
@@ -225,12 +230,14 @@ class TwitterAPI(object):
         result = []
         for chunk in split_in_chunks(tweet_ids, 100):
             params = {
-                'id': ','.join([str(el) for el in chunk])
+                'id': ','.join([str(el) for el in chunk]),
+                'tweet_mode': 'extended' # no truncated tweets
             }
             try:
                 response = self.perform_get({'url': 'https://api.twitter.com/1.1/statuses/lookup.json', 'params': params})
                 result.extend(response)
             except:
+                print('failed get_statuses_lookup', response)
                 pass
         #print(result)
         return result
@@ -250,6 +257,16 @@ class TwitterAPI(object):
                 pass
         #print(result)
         return result
+
+    def search(self, query):
+        # The twitter API is limited in time, let's use the twitterscraper
+        response = {'statuses': twitterscraper.query_tweets(query)}
+        # params = {
+        #     'q': query,
+        #     'count': 100
+        # }
+        # response = self.perform_get({'url': 'https://api.twitter.com/1.1/search/tweets.json', 'params': params})
+        return response
 
 
 """

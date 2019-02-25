@@ -32,6 +32,12 @@ datasets_collection = db_datasets['datasets']
 fact_checkers_collection = db_datasets['fact_checkers']
 claimReviews_collection = db_datasets['claim_reviews']
 
+# fact checking urls (kinda claimReview)
+fact_checking_urls = client['datasets_resources_new']['fact_checking_urls']
+
+#tweets_by_fact_checking = db_twitter_analysis['by_factchecker']
+tweets_by_url = db_twitter_analysis['tweets_by_url']
+
 # the key is the url itself
 url_redirects_collection = db_redirects['url_redirects']
 
@@ -148,3 +154,24 @@ def get_all_counts():
 
 def get_users_id():
     return twitter_users.find(projection={'_id': True})
+
+def get_all_factchecking():
+    return fact_checking_urls.find()
+
+
+"""
+def save_tweets_relevant_factchecking(factchecking_domain, tweets):
+    item = tweets
+    item['_id'] = factchecking_domain
+    return tweets_by_fact_checking.insert(item)
+
+def get_tweets_relevant_factchecking(factchecking_domain):
+    return tweets_by_fact_checking.find_one(factchecking_domain)
+"""
+
+def get_tweets_by_url(url):
+    return tweets_by_url.find_one({'_id': url})
+
+def save_tweets_by_url(url, tweets):
+    document = {'_id': url, 'url': url, 'tweets': tweets}
+    return tweets_by_url.replace_one({'_id': document['_id']}, document, upsert=True)

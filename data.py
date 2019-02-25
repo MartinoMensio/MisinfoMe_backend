@@ -139,3 +139,17 @@ def get_fact_checkers_table(create_tsv=False):
                 f.write('\t'.join([str(el) for el in row]) + '\n')
 
     return rows
+
+def get_tweets_containing_url(url, twitter_api):
+    result = database.get_tweets_by_url(url)
+    # TODO consider using the date comparison and only ask for newer tweets
+    if result:
+        return result['tweets']
+    else:
+        tweets_with_urls = twitter_api.search(url)
+        tweets_ids = [int(el.id) for el in tweets_with_urls['statuses']]
+        #result = twitter_api.get_statuses_lookup(tweets_ids)
+        result = tweets_ids
+        database.save_tweets_by_url(url, tweets_ids)
+
+        return result

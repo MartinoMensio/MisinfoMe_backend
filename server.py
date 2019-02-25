@@ -192,6 +192,22 @@ def get_users_stored():
     return jsonify([el['_id'] for el in database.get_users_id()])
 
 
+@app.route(API_URL + '/factchecking_by_domain')
+def get_factchecking_by_domain():
+    domain = request.args.get('from')
+    if domain:
+        result = evaluate.get_factchecking_by_one_domain(domain, twitter_api)
+    else:
+        result = evaluate.get_factchecking_by_domain()
+    return jsonify(result)
+
+@app.route(API_URL + '/tweets_from_url')
+def get_tweets_containing_url():
+    url = request.args.get('url')
+    if not url:
+        raise ValueError('no url')
+    result = data.get_tweets_containing_url(url, twitter_api)
+    return jsonify(result)
 
 # Other useful APIs
 
