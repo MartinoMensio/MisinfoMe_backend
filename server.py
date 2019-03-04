@@ -114,9 +114,10 @@ def get_fact_checkers_table():
 
 
 
+####################################################
+# Endpoints for the entities
 
-
-@app.route(API_URL + '/tweets')
+@app.route(API_URL + '/entities/tweets')
 def get_tweets_from_screen_name():
     screen_name = request.args.get('screen_name')
     tweets = twitter_api.get_user_tweets_from_screen_name(screen_name)

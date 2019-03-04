@@ -92,12 +92,12 @@ def unshorten_broken(url, referer=None, cookies=None):
     return url
 
 def unshorten(url):
-    result = url
+    result = utils.add_protocol(url)
     domain = utils.get_url_domain(url)
     if domain in shortening_domains:
         cached = database.get_url_redirect(url)
         if cached:
-            return cached['to']
+            result = cached['to']
         else:
             try:
                 res = requests.head(url, allow_redirects=True, timeout=1)
@@ -122,7 +122,7 @@ def unshorten(url):
                 print('error for',url)
 
         database.save_url_redirect(url, result)
-    return url
+    return result
 
 
 

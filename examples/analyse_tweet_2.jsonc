@@ -1,0 +1,58 @@
+// find a tweet to be analysed
+{
+    "_self": "/api/analysis/tweets/1099251789759635456",
+    "entity": {
+        "type": "Tweet",
+        "external_url": "https://twitter.com/newstutu/status/1099251789759635456",
+        "id": 1099251789759635456,
+        "user": {
+            "id": 834108455325749249,
+            "screen_name": "newstutu"
+        },
+        // ... other properties from twitter
+    },
+    "evaluation": {
+        "misinformation_score": 1.0, // this is the final aggregated score
+        "factors": {
+            "truthiness": 0.0 // derived from the fact_checking reason below
+        },
+        "confidence": 1.0
+    },
+    "reasons": [
+        {
+            "type": "related_analysis",
+            "relationship_type": "contains_url",
+            "related": {
+                "_self": "/api/analysis/urls?url=https://100percentfedup.com/report-illegal-caught-on-video-in-shootout-with-sheriffs-deputy-was-deported-three-times-video/?utm_source=dlvr.it&utm_medium=twitter",
+                "entity": {
+                    "type": "url",
+                    "external_url": "https://100percentfedup.com/report-illegal-caught-on-video-in-shootout-with-sheriffs-deputy-was-deported-three-times-video/?utm_source=dlvr.it&utm_medium=twitter",
+                    "url_contains": { // this field is specific to having an entity of type url
+                        "@context": "http://schema.org",
+                        "@type": "CreativeWork" // should be something to tell that this is a video
+                    }
+                },
+                "evaluation": {
+                    "misinformation_score": 1.0,
+                    "factors": {
+                        "truthiness": 0.0
+                    },
+                    "confidence": 0.9
+                },
+                "reasons": {
+                    "type": "credibility_based", // 100percentfedup.com is know to spread misinformation
+                    "entity_type": "domain",
+                    "entity_value": "100percentfedup.com",
+                    "misinformation_score": 1,
+                    "confidence": 0.9,
+                    "sources": [
+                        "openosurces",
+                        "mrisdal_fakenews",
+                        "melissa_zimdars"
+                    ]
+                }
+            }
+        }
+    ],
+    "explanation": "The Tweet contains a URL that belongs to a domain that is known to provide misinforming content"
+}

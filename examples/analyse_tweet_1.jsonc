@@ -1,0 +1,78 @@
+// find a tweet to be analysed
+{
+    "_self": "/api/analysis/tweets/1100526678617526272",
+    "entity": {
+        "type": "Tweet",
+        "external_url": "https://twitter.com/BernieSanders/status/1100526678617526272",
+        "id": 1100526678617526272,
+        "user": {
+            "id": 216776631,
+            "screen_name": "BernieSanders"
+        },
+        // ... other properties from twitter
+    },
+    "evaluation": {
+        "misinformation_score": 0.5, // this is the final aggregated score
+        "factors": {
+            "truthiness": 0.0 // derived from the fact_checking reason below
+        },
+        "confidence": 1.0 // the final confidence
+    },
+    "reasons": [
+        {
+            "type": "credibility_based", // in this case twitter.com/BernieSanders sometimes shares misinformation
+            "misinformation_score": 0.35, // not always BernieSanders has shared misinformation
+            "confidence": 0.3 // this confidence is lower than the confidence of the other reason
+        },
+        {
+            "type": "fact_checking", // the tweet itself has been factchecked
+            "misinformation_score": 0.5, // (ratingValue=4 - worstRating=1) / (bestRating=7 - worstRating=1)
+            "factors": {
+                "truthiness": 0.0
+            },
+            "confidence": 1.0, // this has been factchecked, not predicted. So the confidence is maximum
+            "checked_by": "/api/entitites/factchecking_organisation/politifact", // this URL can be used to look up information about snopes
+            "checking_url": "https://www.politifact.com/truth-o-meter/statements/2019/mar/01/bernie-sanders/fact-checking-bernie-sanders-15-minimum-wage/", // the field from the claimReview
+            "claimReviews": [ // the full claimReview from PolitiFact
+                {
+                    "@context": "http://schema.org",
+                    "@type": "ClaimReview",
+                    "datePublished": "2019-03-01 19:38:06 UTC",
+                    "author": {
+                        "type": "Organization",
+                        "@type": "Organization",
+                        "name": "PolitiFact",
+                        "url": "https://www.politifact.com",
+                        "image": "https://dhpikd1t89arn.cloudfront.net/logos/politifact_logo.png"
+                    },
+                    "reviewRating": {
+                        "type": "Rating",
+                        "@type": "Rating",
+                        "ratingValue": "4",
+                        "worstRating": "1",
+                        "bestRating": "7",
+                        "image": "https://dhpikd1t89arn.cloudfront.net/rating_images/politifact/tom-halftrue.jpg",
+                        "alternateName": "Half True"
+                    },
+                    "claimReviewed": "Raising the federal minimum wage to $15 \"would give more than 40 million low-wage workers a raise, more than 25 percent of the U.S. workforce.\"",
+                    "itemReviewed": {
+                        "type": "CreativeWork",
+                        "@type": "CreativeWork",
+                        "author": {
+                            "type": "Person",
+                            "@type": "Person",
+                            "name": "Bernie Sanders",
+                            "jobTitle": "Democratic presidential candidate",
+                            "sameAs": "https://twitter.com/BernieSanders/status/1100526678617526272"
+                        },
+                        "image": "https://static.politifact.com/politifact/mugs/Bernie_Sanders.jpg",
+                        "name": "a tweet",
+                        "datePublished": "2019-02-26"
+                    },
+                    "url": "https://www.politifact.com/truth-o-meter/statements/2019/mar/01/bernie-sanders/fact-checking-bernie-sanders-15-minimum-wage/"
+                }
+            ]
+        }
+    ],
+    "explanation": "The tweet has been factchecked by Politifact: this is Half True"
+}

@@ -1,6 +1,14 @@
 import json
 from urllib.parse import urlparse
 import tldextract
+import re
+
+def add_protocol(url):
+    """when the URL does not have http://"""
+    if not re.match(r'[a-z]+://.*', url):
+        # default protocol
+        url = 'https://' + url
+    return url
 
 def get_url_domain(url):
     #parsed_uri = urlparse(url)

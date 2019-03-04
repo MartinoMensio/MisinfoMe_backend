@@ -1,0 +1,67 @@
+{
+    "_self": "/api/analysis/urls?url=https://www.facebook.com/kenneth.buddin/posts/1552264144844018",
+    "entity": {
+        "type": "url",
+        "external_url": "https://www.facebook.com/kenneth.buddin/posts/1552264144844018",
+        "url_contains": { // this field is specific to having an entity of type url
+            "@context": "http://schema.org",
+            "@type": "CreativeWork" // should be something to tell that this is a facebook post
+        }
+    },
+    "evaluation": {
+        "misinformation_score": 1.0, // this is the final aggregated score
+        "factors": {
+            "truthiness": 0.0 // derived from the fact_checking reason below
+        },
+        "confidence": 1.0
+    },
+     "reasons": [
+    //    {
+    //         "type": "credibility_based", // in this case from facebook.com we don't have any idea about the credibility
+    //         "misinformation_score": 0.5,
+    //         "confidence": 0.0
+    //     },
+        {
+            "type": "fact_checking",
+            "misinformation_score": 1.0, // from the "False" alternateName
+            "factors": {
+                "truthiness": 0.0
+            },
+            "confidence": 1.0, // this has been factchecked, not predicted. So the confidence is maximum
+            "checked_by": "/api/entitites/factchecking_organisation/snopes", // this URL can be used to look up information about snopes
+            "checking_url": "https://www.snopes.com/fact-check/kfc-dearborn-shariah-law/", // the field from the claimReview
+            "claimReviews": [ // the full claimReview from Snopes
+                {
+                    "@context": "http://schema.org",
+                    "@type": "ClaimReview",
+                    "datePublished": "2017-06-29T10:37:15+00:00",
+                    "url": "https://www.snopes.com/fact-check/kfc-dearborn-shariah-law/",
+                    "author": {
+                        "@type": "Organization",
+                        "name": "Snopes",
+                        "url": "https://www.snopes.com",
+                        "logo": "https://www.snopes.com/content/themes/snopes/dist/images/logo-main.png",
+                        "sameAs": [
+                            "https://twitter.com/snopes",
+                            "https://www.facebook.com/snopes/",
+                            "https://www.linkedin.com/company/snopes.com"
+                        ]
+                    },
+                    "claimReviewed": "KFC in Dearborn uses separate lines for men and women, a menu written in Arabic, and abides by Shariah Law.",
+                    "reviewRating": {
+                        "@type": "Rating",
+                        "ratingValue": -1,
+                        "worstRating": -1,
+                        "bestRating": -1,
+                        "alternateName": "False",
+                        "image": "https://www.snopes.com/tachyon/2018/03/rating-false.png"
+                    },
+                    "itemReviewed": {
+                        "@type": "CreativeWork"
+                    }
+                }
+            ]
+        }
+    ],
+    "explanation": "The url has been factchecked by Snopes: this is false"
+}
