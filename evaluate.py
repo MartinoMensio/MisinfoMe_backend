@@ -264,7 +264,8 @@ def get_factchecking_by_one_domain(domain, twitter_api):
             'factchecking_url': factchecking_url,
             'claim_url': claim_url,
             'factchecking_shares': len(tweet_ids_sharing_factchecking),
-            'claim_shares': len(tweet_ids_sharing_claim)
+            'claim_shares': len(tweet_ids_sharing_claim),
+            'label': fcu['label']
         })
         if not (factchecking_url in urls):
             overall_counts['factchecking_shares_count'] += len(tweet_ids_sharing_factchecking)
@@ -307,7 +308,7 @@ def get_factchecking_by_one_domain(domain, twitter_api):
     }
     """
     result = {
-        #'by_url': by_url,
+        'by_url': by_url,
         'counts': overall_counts
     }
     return result

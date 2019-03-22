@@ -126,7 +126,7 @@ def get_domains_vs_datasets_table(create_tsv=False):
 def get_fact_checkers_table(create_tsv=False):
     fact_checkers = get_fact_checkers()
 
-    properties = ['belongs_to_ifcn', 'uses_claimreview']#, 'valid']
+    properties = ['belongs_to_ifcn', 'valid']#, 'uses_claimreview']
 
     rows = [['key', 'name', 'url', 'nationality'] + properties]
     for fc in fact_checkers:
