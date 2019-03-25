@@ -210,6 +210,23 @@ def get_tweets_containing_url():
     result = data.get_tweets_containing_url(url, twitter_api)
     return jsonify(result)
 
+
+
+@app.route(API_URL + '/tweets_time_distrib', methods = ['POST'])
+def get_tweets_time_distrib():
+    if request.is_json:
+        # retrieve content from json POST content
+        content = request.get_json()
+        tweet_ids = content.get('tweet_ids', [])
+        time_granularity = content.get('time_granularity', 'month')
+        mode = content.get('mode', 'absolute') # absolute means just time, relative is relative to reference_time (argument)
+        reference_time = content.get('reference_time', None)
+        result = evaluate.analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api)
+    else:
+        return jsonify({'error': 'not JSON request'})
+    return jsonify(result)
+
+
 # Other useful APIs
 
 @app.route(API_URL + '/resolve_url')

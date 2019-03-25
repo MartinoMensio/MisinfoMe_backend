@@ -13,3 +13,4 @@ flask-marshmallow
 pymongo
 validators
 tldextract
+dateparser

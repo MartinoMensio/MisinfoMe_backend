@@ -5,6 +5,7 @@ import multiprocessing
 import tqdm
 import itertools
 from collections import defaultdict
+import dateparser
 
 import database
 
@@ -219,6 +220,7 @@ def get_factchecking_by_domain():
     by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
     result = {}
+    # TODO also total stats
     for k, values in by_fact_checker_domain.items():
         urls = set(v['url'] for v in values)
         claim_urls = set(v.get('claim_url', None) for v in values)
@@ -254,18 +256,31 @@ def get_factchecking_by_one_domain(domain, twitter_api):
     }
     by_url = []
     urls = set() # TODO this is a temporary solution to avoid duplication of counts
-    for fcu in values_with_claim_url:
+    factchecking_tweets = []
+    claim_tweets = []
+    for fcu in tqdm.tqdm(values_with_claim_url):
         factchecking_url = fcu['url']
-        tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url, twitter_api)
         claim_url = fcu['claim_url']
+        print(factchecking_url, claim_url)
+        if 'http' not in claim_url:
+            # TODO bad data should not arrive here!
+            continue
+
+        tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url, twitter_api)
         tweet_ids_sharing_claim = data.get_tweets_containing_url(claim_url, twitter_api)
 
+        factchecking_tweets.extend(tweet_ids_sharing_factchecking)
+        claim_tweets.extend(tweet_ids_sharing_claim)
+
+        print(factchecking_url)
         by_url.append({
             'factchecking_url': factchecking_url,
             'claim_url': claim_url,
             'factchecking_shares': len(tweet_ids_sharing_factchecking),
             'claim_shares': len(tweet_ids_sharing_claim),
-            'label': fcu['label']
+            'label': fcu['label'],
+            #'claim_shares_ids': tweet_ids_sharing_claim,
+            #'factchecking_shares_ids': tweet_ids_sharing_factchecking
         })
         if not (factchecking_url in urls):
             overall_counts['factchecking_shares_count'] += len(tweet_ids_sharing_factchecking)
@@ -309,6 +324,32 @@ def get_factchecking_by_one_domain(domain, twitter_api):
     """
     result = {
         'by_url': by_url,
-        'counts': overall_counts
+        'counts': overall_counts,
+        'tweet_ids': {
+            'sharing_claim': claim_tweets,
+            'sharing_factchecking': factchecking_tweets
+        }
     }
     return result
+
+def analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api):
+    tweet_ids = [int(el) for el in tweet_ids]
+    tweets = twitter_api.get_statuses_lookup(tweet_ids)
+    print(tweets)
+    groups = defaultdict(lambda: 0)
+    # TODO fill with 0 in the middle
+    for t in tweets:
+        created_at = t['created_at']
+        print(created_at)
+        parsed_date = dateparser.parse(created_at.replace('+0000 ', ''))
+        if time_granularity == 'year':
+            time_group = '{}'.format(parsed_date.year)
+            groups[time_group] += 1
+        elif time_granularity == 'month':
+            time_group = '{}/{:02d}'.format(parsed_date.year, parsed_date.month)
+            groups[time_group] += 1
+
+    results = [{'name': k, 'value': v} for k,v in groups.items()]
+    results.sort(key=lambda el: el['name'])
+
+    return results
