@@ -6,6 +6,8 @@ import tqdm
 import itertools
 from collections import defaultdict
 import dateparser
+import datetime
+from dateutil.relativedelta import relativedelta
 
 import database
 
@@ -216,6 +218,7 @@ def get_overall_counts():
     }
 
 def get_factchecking_by_domain():
+    """grouped by domain of factchecking, better to use by_factchecker (see below)"""
     all_factchecking = [el for el in database.get_all_factchecking()]
     by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
@@ -233,12 +236,62 @@ def get_factchecking_by_domain():
         }
     return result
 
-def get_factchecking_by_one_domain(domain, twitter_api):
+def get_factchecking_by_factchecker():
+    all_factchecking = [el for el in database.get_all_factchecking()]
+    fact_checkers = [el for el in database.get_fact_checkers()]
+
+    result = {el['domain']: {
+        'name': el['name'],
+        'fact_checking': []
+    } for el in fact_checkers}
+
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
+
+    for k,v in result.items():
+        domain_name = utils.get_url_domain_without_www(k)
+        v['domain'] = domain_name
+
+        # group by finding
+        fact_checking_matching = []
+        for k2, v2 in by_fact_checker_domain.items():
+            if domain_name in k2:
+                fact_checking_matching.extend(v2)
+        fact_checking_urls = {el['url'] for el in fact_checking_matching}
+        fact_checking_matching_with_claim_url = [el for el in fact_checking_matching if el.get('claim_url', None)]
+        claim_urls = {el['url'] for el in fact_checking_matching_with_claim_url}
+        v['claim_urls_cnt'] = len(claim_urls)
+        v['factchecking_urls_cnt'] = len(fact_checking_urls)
+
+    return result
+    """
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
+    result = {}
+    # TODO also total stats
+    for k, values in by_fact_checker_domain.items():
+        urls = set(v['url'] for v in values)
+        claim_urls = set(v.get('claim_url', None) for v in values)
+        result[k] = {
+            'len': len(values),
+            'urls_cnt': len(urls),
+            'claim_urls_cnt': len(claim_urls),
+            #'urls': list(urls),
+            #'claim_urls': list(claim_urls)
+        }
+    return result
+    """
+
+#def get_factchecking_by_one_factchecker(factchecker, twitter_api)
+
+def get_factchecking_by_one_domain(domain, twitter_api, time_granularity='month'):
     all_factchecking = [el for el in database.get_all_factchecking()]
     by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
-    k = domain
-    values = by_fact_checker_domain[k]
+    values = []
+    for k2, v2 in by_fact_checker_domain.items():
+            if domain in k2:
+                values.extend(v2)
 
     values_with_claim_url = [el for el in values if el.get('claim_url', None)]
 
@@ -258,6 +311,8 @@ def get_factchecking_by_one_domain(domain, twitter_api):
     urls = set() # TODO this is a temporary solution to avoid duplication of counts
     factchecking_tweets = []
     claim_tweets = []
+    factchecking_tweets_relative = defaultdict(lambda: 0)
+    claim_tweets_relative = defaultdict(lambda: 0)
     for fcu in tqdm.tqdm(values_with_claim_url):
         factchecking_url = fcu['url']
         claim_url = fcu['claim_url']
@@ -266,13 +321,24 @@ def get_factchecking_by_one_domain(domain, twitter_api):
             # TODO bad data should not arrive here!
             continue
 
+        analyse_url_distribution(factchecking_url, twitter_api)
         tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url, twitter_api)
         tweet_ids_sharing_claim = data.get_tweets_containing_url(claim_url, twitter_api)
 
         factchecking_tweets.extend(tweet_ids_sharing_factchecking)
         claim_tweets.extend(tweet_ids_sharing_claim)
 
-        print(factchecking_url)
+        """
+        TODO this section has to be moved in another part, callable to obtain the plot
+        for k, v in analyse_tweet_time_relative(fcu, tweet_ids_sharing_factchecking, time_granularity, twitter_api).items():
+            factchecking_tweets_relative[k] += v
+
+        for k, v in analyse_tweet_time_relative(fcu, tweet_ids_sharing_claim, time_granularity, twitter_api).items():
+            claim_tweets_relative[k] += v
+        """
+
+
+        #print(factchecking_url)
         by_url.append({
             'factchecking_url': factchecking_url,
             'claim_url': claim_url,
@@ -328,28 +394,125 @@ def get_factchecking_by_one_domain(domain, twitter_api):
         'tweet_ids': {
             'sharing_claim': claim_tweets,
             'sharing_factchecking': factchecking_tweets
+        },
+        'relative_time': {
+            'factchecking': factchecking_tweets_relative,
+            'claim': claim_tweets_relative
         }
     }
     return result
 
+def analyse_url_distribution(url, twitter_api, reference_date=None, time_granularity='month'):
+    tweet_ids_sharing = data.get_tweets_containing_url(url, twitter_api)
+    if reference_date:
+        # this analysis is time relative to reference
+        tweets_relative = defaultdict(lambda: 0)
+        for k, v in analyse_tweet_time_relative(None, tweet_ids_sharing, time_granularity, twitter_api).items():
+            tweets_relative[k] += v
+        result = tweets_relative
+    else:
+        # absolute analysis
+        result = analyse_tweet_time(tweet_ids_sharing, time_granularity, 'absolute', None, twitter_api)
+
+    return result
+
+def get_url_publish_date(url):
+    matching = database.get_factchecking_from_url(url)
+    results = []
+    for m in matching:
+        date_str = m.get('date')
+        if date_str:
+            debunking_time = dateparser.parse(date_str).date()
+            results.append(debunking_time)
+    # some articles get updated, we want the lowest publication time
+    publishing_date = min(results)
+    return {
+        'date': publishing_date,
+        'round_month': round_date(publishing_date, 'month'),
+        'round_week': round_date(publishing_date, 'week'),
+        'round_day': round_date(publishing_date, 'day'),
+    }
+
+
+def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity, twitter_api):
+    date_str = fact_checking_url.get('date')
+    if date_str:
+        debunking_time = dateparser.parse(date_str)
+        #print('date found')
+    else:
+        #print(fact_checking_url)
+        #print('date not found')
+        return {}
+    tweet_ids = [int(el) for el in tweet_ids]
+    tweets = twitter_api.get_statuses_lookup(tweet_ids)
+    groups = defaultdict(lambda: 0)
+    for t in tweets:
+        created_at = t['created_at']
+        #print(created_at)
+        parsed_date = dateparser.parse(created_at.replace('+0000 ', ''))
+        time_interval = parsed_date - debunking_time
+        if time_granularity == 'year':
+            time_group = time_interval.days // 365
+            #time_group = parsed_date.year
+            groups[time_group] += 1
+        elif time_granularity == 'month':
+            time_group = time_interval.days * 12 // 365
+            #time_group = parsed_date.year * 12 + parsed_date.month
+            groups[time_group] += 1
+        elif time_granularity == 'week':
+            time_group = time_interval // 7
+            groups[time_group] += 1
+
+    #print(groups)
+    return groups
+
 def analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api):
     tweet_ids = [int(el) for el in tweet_ids]
     tweets = twitter_api.get_statuses_lookup(tweet_ids)
-    print(tweets)
+    #print(tweets)
     groups = defaultdict(lambda: 0)
-    # TODO fill with 0 in the middle
+    # fill with 0 in the middle
+    min_date = None
+    max_date = None
     for t in tweets:
         created_at = t['created_at']
-        print(created_at)
+        #print(created_at)
         parsed_date = dateparser.parse(created_at.replace('+0000 ', ''))
-        if time_granularity == 'year':
-            time_group = '{}'.format(parsed_date.year)
-            groups[time_group] += 1
+        if not min_date:
+            min_date = parsed_date
+        if not max_date:
+            max_date = parsed_date
+        min_date = min([min_date, parsed_date])
+        max_date = max([max_date, parsed_date])
+        time_group = round_date(parsed_date, time_granularity)
+        groups[time_group] += 1
+
+    # filling with 0
+    curr_date = min_date
+    while curr_date and curr_date < max_date:
+        group = round_date(curr_date, time_granularity)
+        groups[group] # this will populate the group because of defaultdict
+
+        if time_granularity == 'day':
+            curr_date += datetime.timedelta(days=1)
+        elif time_granularity == 'week':
+            curr_date += datetime.timedelta(weeks=1)
         elif time_granularity == 'month':
-            time_group = '{}/{:02d}'.format(parsed_date.year, parsed_date.month)
-            groups[time_group] += 1
+            curr_date += relativedelta(months=1)
+
 
     results = [{'name': k, 'value': v} for k,v in groups.items()]
     results.sort(key=lambda el: el['name'])
 
     return results
+
+def round_date(date, time_granularity):
+    if time_granularity == 'year':
+        time_group = '{}'.format(date.year)
+    elif time_granularity == 'month':
+        time_group = '{}/{:02d}'.format(date.year, date.month)
+    elif time_granularity == 'week':
+        time_group = '{}/w{:02}'.format(date.isocalendar()[0], date.isocalendar()[1])
+    elif time_granularity == 'day':
+        time_group = '{}/{:02d}/{:02d}'.format(date.year, date.month, date.day)
+    return time_group

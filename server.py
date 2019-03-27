@@ -202,6 +202,11 @@ def get_factchecking_by_domain():
         result = evaluate.get_factchecking_by_domain()
     return jsonify(result)
 
+@app.route(API_URL + '/factchecking_by_factchecker')
+def get_factchecking_by_factchecker():
+    result = evaluate.get_factchecking_by_factchecker()
+    return jsonify(result)
+
 @app.route(API_URL + '/tweets_from_url')
 def get_tweets_containing_url():
     url = request.args.get('url')
@@ -224,6 +229,19 @@ def get_tweets_time_distrib():
         result = evaluate.analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api)
     else:
         return jsonify({'error': 'not JSON request'})
+    return jsonify(result)
+
+@app.route(API_URL + '/url_time_distrib')
+def get_time_distrib():
+    url = request.args.get('url')
+    time_granularity = request.args.get('time_granularity', 'month')
+    result = evaluate.analyse_url_distribution(url, twitter_api, time_granularity=time_granularity)
+    return jsonify(result)
+
+@app.route(API_URL + '/url_time_published')
+def get_url_published_time():
+    url = request.args.get('url')
+    result = evaluate.get_url_publish_date(url)
     return jsonify(result)
 
 

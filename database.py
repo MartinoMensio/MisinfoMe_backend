@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from pymongo import MongoClient, errors
 
@@ -33,7 +34,7 @@ fact_checkers_collection = db_datasets['fact_checkers']
 claimReviews_collection = db_datasets['claim_reviews']
 
 # fact checking urls (kinda claimReview)
-fact_checking_urls = client['datasets_resources_new']['fact_checking_urls']
+fact_checking_urls = client['datasets_resources']['fact_checking_urls']
 
 #tweets_by_fact_checking = db_twitter_analysis['by_factchecker']
 tweets_by_url = db_twitter_analysis['tweets_by_url']
@@ -158,6 +159,9 @@ def get_users_id():
 def get_all_factchecking():
     return fact_checking_urls.find()
 
+def get_factchecking_from_url(url):
+    return fact_checking_urls.find({'url': url})
+
 
 """
 def save_tweets_relevant_factchecking(factchecking_domain, tweets):
@@ -173,5 +177,5 @@ def get_tweets_by_url(url):
     return tweets_by_url.find_one({'_id': url})
 
 def save_tweets_by_url(url, tweets):
-    document = {'_id': url, 'url': url, 'tweets': tweets}
+    document = {'_id': url, 'url': url, 'tweets': tweets, 'updated': datetime.datetime.now()}
     return tweets_by_url.replace_one({'_id': document['_id']}, document, upsert=True)
