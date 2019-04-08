@@ -1,4 +1,4 @@
-from flask_restful import Resource
+from flask_restplus import Resource
 import webargs
 import marshmallow
 from webargs.flaskparser import use_args, use_kwargs
@@ -48,21 +48,34 @@ class TwitterAccount(Resource):
 
 class TwitterAccountList(Resource):
     args = {
-        'followers_of': marshmallow.fields.Int(missing=None),
-        'friends_of': marshmallow.fields.Int(missing=None),
+        'relation': marshmallow.fields.Str(missing=None, validate=lambda r: r in ['followers', 'friends']),
         'screen_name': marshmallow.fields.Str(missing=None),
+        'account_id': marshmallow.fields.Int(missing=None),
         'limit': marshmallow.fields.Int(missing=500),
         'offset': marshmallow.fields.Int(missing=0)
     }
 
     @use_kwargs(args)
-    def get(self, followers_of, friends_of, screen_name, limit, offset):
-        if followers_of:
-            return entity_manager.get_twitter_account_followers_from_id(followers_of, limit, offset)
-        elif friends_of:
-            return entity_manager.get_twitter_account_friends_from_id(friends_of, limit, offset)
+    def get(self, relation, screen_name, account_id, limit, offset):
+        if relation == 'followers':
+            if account_id:
+                return entity_manager.get_twitter_account_followers_from_id(account_id, limit, offset)
+            elif screen_name:
+                return entity_manager.get_twitter_account_followers_from_screen_name(screen_name, limit, offset)
+            else:
+                return {'error': 'followers of?'}
+        elif relation == 'friends':
+            if account_id:
+                return entity_manager.get_twitter_account_friends_from_id(account_id, limit, offset)
+            elif screen_name:
+                return entity_manager.get_twitter_account_friends_from_screen_name(screen_name, limit, offset)
+            else:
+                return {'error': 'friends of?'}
+        # no relationship
         elif screen_name:
             return entity_manager.get_twitter_account_from_screen_name(screen_name)
+        elif account_id:
+            return entity_manager.get_twitter_account_from_id(account_id)
 
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
 
@@ -83,3 +96,41 @@ class FactcheckingOrganisationList(Resource):
     @use_kwargs(args)
     def get(self, belongs_to_ifcn, valid_ifcn, country):
         return entity_manager.get_factchecking_organisations(belongs_to_ifcn=belongs_to_ifcn, valid_ifcn=valid_ifcn, country=country)
+
+# Fact-checking reviews
+
+class FactcheckingReviewList(Resource):
+    args = {
+        'published_by_id': marshmallow.fields.String(missing=None),
+        'published_at_domain': marshmallow.fields.String(missing=None),
+        'published_at_url': marshmallow.fields.String(missing=None)
+    }
+
+    @use_kwargs(args)
+    def get(self, published_by_id, published_at_domain, published_at_url):
+        if published_by_id:
+            return entity_manager.get_factchecking_reviews_from_organisation_id(published_by_id)
+        elif published_at_domain:
+            return entity_manager.get_factchecking_reviews_at_domain(published_at_domain)
+        elif published_at_url:
+            return entity_manager.get_factchecking_reviews_at_url(published_at_url)
+        else:
+            return entity_manager.get_factchecking_reviews_by_factchecker()
+
+
+
+class DataStats(Resource):
+    def get(self):
+        return entity_manager.get_data_stats()
+
+class DomainsStats(Resource):
+    def get(self):
+        return entity_manager.get_domains()
+
+class DatasetsStats(Resource):
+    def get(self):
+        return entity_manager.get_datasets()
+
+class FactcheckersTable(Resource):
+    def get(self):
+        return entity_manager.get_factcheckers_table()

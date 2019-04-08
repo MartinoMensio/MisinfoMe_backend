@@ -101,16 +101,20 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 ### Count methods: just counting tweets, need refactoring
 
 def count_users(user_ids, twitter_api, allow_cached, only_cached):
-    return {user_id: count_user(user_id, twitter_api, allow_cached, only_cached) for user_id in user_ids}
+    return [count_user(user_id, twitter_api, allow_cached, only_cached) for user_id in user_ids]
 
 def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached):
-    return {screen_name: count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
+    return [count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names]
 
 def count_user(user_id, twitter_api, allow_cached, only_cached, multiprocess=True):
-    user = twitter_api.get_users_lookup([user_id])[0]
+    users = twitter_api.get_users_lookup([user_id])
+    if not users:
+        return None
+    user = users[0]
     return count_user_from_screen_name(user['screen_name'], twitter_api, allow_cached, only_cached, multiprocess)
 
 def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, multiprocess=True):
+    print(allow_cached, only_cached)
     user = twitter_api.get_user_from_screen_name(screen_name)
     if not user:
         return {}
@@ -119,7 +123,7 @@ def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cac
         result = database.get_count_result(user['id'])
         if only_cached and not result:
             # null
-            return {'cache': 'miss'}
+            return {'_id': user['id'], 'screen_name': screen_name, 'cache': 'miss'}
         if result:
             result['cache'] = 'hit'
             return result
@@ -455,6 +459,7 @@ def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity, 
 
 def analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api):
     tweet_ids = [int(el) for el in tweet_ids]
+    print(tweet_ids)
     tweets = twitter_api.get_statuses_lookup(tweet_ids)
     #print(tweets)
     groups = defaultdict(lambda: 0)

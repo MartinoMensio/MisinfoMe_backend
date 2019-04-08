@@ -6,29 +6,35 @@ from . import static_resources
 
 def configure_endpoints(app, api):
     base_url = '/misinfo'
-    api_url = base_url + '/api'
 
     # endpoints for the entities
-    api.add_resource(entity_views.Tweet, api_url + '/entities/tweets/<int:tweet_id>')
-    api.add_resource(entity_views.TweetList, api_url + '/entities/tweets')
-    api.add_resource(entity_views.TwitterAccount, api_url + '/entities/twitter_accounts/<int:account_id>')
-    api.add_resource(entity_views.TwitterAccountList, api_url + '/entities/twitter_accounts')
-    api.add_resource(entity_views.FactcheckingOrganisation, api_url + '/entities/factchecking_organisations/<string:org_id>')
-    api.add_resource(entity_views.FactcheckingOrganisationList, api_url + '/entities/factchecking_organisations')
+    api.add_resource(entity_views.Tweet, '/entities/tweets/<int:tweet_id>')
+    api.add_resource(entity_views.TweetList, '/entities/tweets')
+    api.add_resource(entity_views.TwitterAccount, '/entities/twitter_accounts/<int:account_id>')
+    api.add_resource(entity_views.TwitterAccountList, '/entities/twitter_accounts')
+    api.add_resource(entity_views.FactcheckingOrganisation, '/entities/factchecking_organisations/<string:org_id>')
+    api.add_resource(entity_views.FactcheckingOrganisationList, '/entities/factchecking_organisations')
+    api.add_resource(entity_views.FactcheckingReviewList, '/entities/factchecking_reviews')
+    # endpoints for dataset stats
+    api.add_resource(entity_views.DataStats, '/entities')
+    api.add_resource(entity_views.DomainsStats, '/entities/domains')
+    api.add_resource(entity_views.DatasetsStats, '/entities/datasets')
+    api.add_resource(entity_views.FactcheckersTable, '/entities/factcheckers_table')
 
     # endpoints for the analyses
-    # TODO
-    api.add_resource(analysis_views.UrlAnalysis, api_url + '/analysis/urls')
-    api.add_resource(analysis_views.TweetAnalysis, api_url + '/analysis/tweets')
-    api.add_resource(analysis_views.TwitterAccountAnalysis, api_url + '/analysis/twitter_accounts')
-    #api.add_resource(analysis_views.TwitterAccountAnalysis, api_url + '/analysis/twitter_accounts/<int:user_id>', endpoint='twitteraccountanalysis1')
+    api.add_resource(analysis_views.UrlAnalysis, '/analysis/urls')
+    api.add_resource(analysis_views.TweetAnalysis, '/analysis/tweets')
+    api.add_resource(analysis_views.TwitterAccountAnalysis, '/analysis/twitter_accounts')
+    # time-related analyses
+    api.add_resource(analysis_views.UrlTimeDistributionAnalysis, '/analysis/time_distribution_url')
+    api.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/analysis/time_distribution_tweets')
 
     # endpoints for the stats
-    api.add_resource(stats_views.TwitterAccountStats, api_url + '/stats/twitter_accounts')
+    api.add_resource(stats_views.TwitterAccountStats, '/stats/twitter_accounts')
 
     # endpoints for utils
-    api.add_resource(utils_views.UrlUnshortener, api_url + '/utils/unshorten')
-    api.add_resource(utils_views.TimePublished, api_url + '/utils/time_published')
+    api.add_resource(utils_views.UrlUnshortener, '/utils/unshorten')
+    api.add_resource(utils_views.TimePublished, '/utils/time_published')
 
     # endpoints for the static resources (frontend)
     static_resources.configure_static_resources(base_url, app)

@@ -53,6 +53,7 @@ twitter_users_counts = db_twitter_analysis['twitter_users_counts']
 
 
 def replace_safe(collection, document, key_property='_id'):
+    document['updated'] = datetime.datetime.now()
     # the upsert sometimes fails, mongo does not perform it atomically
     # https://jira.mongodb.org/browse/SERVER-14322
     # https://stackoverflow.com/questions/29305405/mongodb-impossible-e11000-duplicate-key-error-dup-key-when-upserting

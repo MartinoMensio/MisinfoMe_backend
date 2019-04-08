@@ -1,10 +1,11 @@
+# DEPRECATED: this module contains the API that still need to be migrated
 import os
 import json
 
 import concurrent.futures
 
 from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
-from flask_restful import Resource, Api
+from flask_restplus import Resource, Api
 from json import dumps
 from dotenv import load_dotenv, find_dotenv
 from flask_cors import CORS, cross_origin
@@ -82,24 +83,6 @@ def analyse_twitter_user_from_screen_name():
 
 
 
-# TODO:refactor
-@app.route(API_URL + '/about')
-@cross_origin()
-def get_about():
-    return jsonify(database.get_collections_stats())
-
-# TODO:refactor
-@app.route(API_URL + '/about/datasets')
-@cross_origin()
-def get_datasets():
-    return jsonify([el for el in database.get_datasets()])
-
-# TODO:refactor
-@app.route(API_URL + '/about/domains')
-@cross_origin()
-def get_domains():
-    return jsonify([el for el in database.get_domains()])
-
 @app.route(API_URL + '/about/domains_vs_datasets_table')
 def get_domains_vs_datasets():
     return jsonify(data.get_domains_vs_datasets_table())
@@ -107,12 +90,6 @@ def get_domains_vs_datasets():
 @app.route(API_URL + '/about/fact_checkers')
 def get_fact_checkers():
     return jsonify(data.get_fact_checkers())
-
-# TODO:refactor
-@app.route(API_URL + '/about/fact_checkers_table')
-def get_fact_checkers_table():
-    return jsonify(data.get_fact_checkers_table())
-
 
 
 
@@ -129,34 +106,6 @@ def get_shared_urls():
     urls = twitter.get_urls_from_tweets(tweets)
     return jsonify(urls)
 
-
-### Counting URLs API
-# TODO:refactor
-@app.route(API_URL + '/count_urls/users', methods = ['GET', 'POST'])
-@cross_origin()
-def count_user():
-    # allow_cached is useful when I would just like a result, so it does not update it if the analysis has been run already
-    allow_cached = request.args.get('allow_cached', False)
-    # only get already evaluated profiles
-    only_cached = request.args.get('only_cached', False)
-    #print(request.is_json)
-    if request.is_json:
-        # retrieve content from json POST content
-        content = request.get_json()
-        screen_names_splitted = content.get('screen_names', [])
-        allow_cached = content.get('allow_cached', allow_cached)
-        only_cached = content.get('only_cached', only_cached)
-    else:
-        screen_names = request.args.get('screen_names')
-
-        screen_names_splitted = screen_names.split(',')
-
-    if len(screen_names_splitted) == 1:
-        result = evaluate.count_user_from_screen_name(screen_names_splitted[0], twitter_api, allow_cached, only_cached)
-    else:
-        result = evaluate.count_users(screen_names_splitted, twitter_api, allow_cached, only_cached)
-
-    return jsonify(result)
 
 @app.route(API_URL + '/count_urls/users/<user_id>')
 def count_user_from_id(user_id):
@@ -177,41 +126,4 @@ def get_factchecking_by_domain():
         result = evaluate.get_factchecking_by_one_domain(domain, twitter_api)
     else:
         result = evaluate.get_factchecking_by_domain()
-    return jsonify(result)
-
-# TODO:refactor
-@app.route(API_URL + '/factchecking_by_factchecker')
-def get_factchecking_by_factchecker():
-    result = evaluate.get_factchecking_by_factchecker()
-    return jsonify(result)
-
-@app.route(API_URL + '/tweets_from_url')
-def get_tweets_containing_url():
-    url = request.args.get('url')
-    if not url:
-        raise ValueError('no url')
-    result = data.get_tweets_containing_url(url, twitter_api)
-    return jsonify(result)
-
-
-# TODO:refactor
-@app.route(API_URL + '/tweets_time_distrib', methods = ['POST'])
-def get_tweets_time_distrib():
-    if request.is_json:
-        # retrieve content from json POST content
-        content = request.get_json()
-        tweet_ids = content.get('tweet_ids', [])
-        time_granularity = content.get('time_granularity', 'month')
-        mode = content.get('mode', 'absolute') # absolute means just time, relative is relative to reference_time (argument)
-        reference_time = content.get('reference_time', None)
-        result = evaluate.analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api)
-    else:
-        return jsonify({'error': 'not JSON request'})
-    return jsonify(result)
-
-@app.route(API_URL + '/url_time_distrib')
-def get_time_distrib():
-    url = request.args.get('url')
-    time_granularity = request.args.get('time_granularity', 'month')
-    result = evaluate.analyse_url_distribution(url, twitter_api, time_granularity=time_granularity)
     return jsonify(result)

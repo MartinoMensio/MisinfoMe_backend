@@ -1,10 +1,31 @@
-from flask_restful import Resource
+from flask_restplus import Resource, marshal_with, marshal
 import marshmallow
 import webargs
+import flask_restplus
 from webargs.flaskparser import use_args, use_kwargs
 
 from ..model import analysis_manager
 
+
+### types of output
+count_analysis_fields = {
+    'id': flask_restplus.fields.Integer(attribute='_id'),
+    'screen_name': flask_restplus.fields.String,
+    'profile_image_url': flask_restplus.fields.String,
+    'tweets_cnt': flask_restplus.fields.Integer,
+    'shared_urls_cnt': flask_restplus.fields.Integer,
+    'verified_urls_cnt': flask_restplus.fields.Integer,
+    'mixed_urls_cnt': flask_restplus.fields.Integer,
+    'fake_urls_cnt': flask_restplus.fields.Integer,
+    'unknown_urls_cnt': flask_restplus.fields.Integer,
+    'score': flask_restplus.fields.Integer,
+    'rebuttals': flask_restplus.fields.Raw,
+    'fake_urls': flask_restplus.fields.Raw,
+    'mixed_urls': flask_restplus.fields.Raw,
+    'verified_urls': flask_restplus.fields.Raw,
+    'updated': flask_restplus.fields.DateTime(dt_format='rfc822'),
+    'cache': flask_restplus.fields.String
+}
 
 class UrlAnalysis(Resource):
     args = {
@@ -54,19 +75,37 @@ class TwitterAccountAnalysis(Resource):
         'user_ids': webargs.fields.DelimitedList(marshmallow.fields.Int(), missing=[]),
         'screen_name': marshmallow.fields.Str(missing=None),
         'screen_names': webargs.fields.DelimitedList(marshmallow.fields.Str(), missing=[]),
-        'allow_cached': marshmallow.fields.Bool(missing=True),
+        'allow_cached': marshmallow.fields.Bool(missing=False),
         'only_cached': marshmallow.fields.Bool(missing=False)
     }
 
     # TODO let it also be a path parameter
     @use_kwargs(args)
+    @marshal_with(count_analysis_fields)
     def get(self, user_id, user_ids, screen_name, screen_names, allow_cached, only_cached):
         """GET is for cached results"""
-        return self.post(user_id=user_id, user_ids=user_ids, screen_name=screen_name, screen_names=screen_names, allow_cached=True, only_cached=True)
+        allow_cached=True
+        only_cached=True
+        if user_id or screen_name:
+            if user_id:
+                result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
+            elif screen_name:
+                result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
+            return result
+        else:
+            # multiple objects
+            if user_ids:
+                result = analysis_manager.analyse_twitter_accounts(user_ids, allow_cached=allow_cached, only_cached=only_cached)
+            elif screen_names:
+                result = analysis_manager.analyse_twitter_accounts_from_screen_name(screen_names, allow_cached=allow_cached, only_cached=only_cached)
+            return result
+        return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 
     @use_kwargs(args)
+    @marshal_with(count_analysis_fields)
     def post(self, user_id, user_ids, screen_name, screen_names, allow_cached, only_cached):
         """POST runs the analysis again"""
+        print(allow_cached)
         if user_id:
             return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
         elif user_ids:
@@ -77,7 +116,26 @@ class TwitterAccountAnalysis(Resource):
             return analysis_manager.analyse_twitter_accounts_from_screen_name(screen_names, allow_cached=allow_cached, only_cached=only_cached)
         return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 
-class TimeAnalysisDistribution(Resource):
+class UrlTimeDistributionAnalysis(Resource):
     args = {
-        'url': marshmallow.fields.Str(missing=None)
+        'url': marshmallow.fields.Str(missing=None),
+        'time_granularity': marshmallow.fields.Str(missing='month', validate=lambda tg: tg in ['year', 'month', 'week', 'day'])
     }
+
+    @use_kwargs(args)
+    def get(self, url, time_granularity):
+        if not url:
+            return {'error': 'missing parameter url'}, 400
+        return analysis_manager.analyse_time_distribution_url(url, time_granularity)
+
+class TweetsTimeDistributionAnalysis(Resource):
+    args = {
+        'tweets_ids': webargs.fields.DelimitedList(marshmallow.fields.Int(), missing=[]),
+        'time_granularity': marshmallow.fields.Str(missing='month', validate=lambda tg: tg in ['year', 'month', 'week', 'day']),
+        'mode': marshmallow.fields.Str(missing='absolute', validate=lambda m: m in ['absolute', 'relative']),
+        'reference_date': marshmallow.fields.Date(missing=None)
+    }
+
+    @use_kwargs(args)
+    def get(self, tweets_ids, time_granularity, mode, reference_date):
+        return analysis_manager.analyse_time_distribution_tweets(tweets_ids, time_granularity, mode, reference_date)

@@ -1,5 +1,6 @@
 flask
 flask-restful
+flask-restplus
 flask-cors
 python-dotenv
 pylint

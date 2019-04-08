@@ -1,5 +1,7 @@
 from ..data import twitter
 from ..data import data
+from ..data import database
+from ..evaluation import evaluate
 
 # Tweet
 
@@ -56,10 +58,10 @@ def get_twitter_account_friends_from_id(user_id, limit=None, offset=0):
     return twitter.get_instance().get_following(user_id, limit)
 
 def get_twitter_account_followers_from_screen_name(screen_name, limit=None, offset=0):
-    raise NotImplementedError()
+    return twitter.get_instance().get_followers_from_screen_name(screen_name, limit)
 
 def get_twitter_account_friends_from_screen_name(screen_name, limit=None, offset=0):
-    raise NotImplementedError()
+    return twitter.get_instance().get_following_from_screen_name(screen_name, limit)
 
 # FactcheckingOrganisation
 
@@ -81,9 +83,16 @@ def get_factchecking_reviews_from_organisation_id(factchecking_organisation_id, 
     """Returns the factchecking reviews that have been published by the specified factchecking organisation"""
     raise NotImplementedError()
 
+def get_factchecking_reviews_at_domain(factchecking_domain, from_date=None):
+    """Returns the factchecking reviews that have been published by the specified factchecking domain"""
+    raise NotImplementedError()
+
 def get_factchecking_reviews_at_url(publishing_url):
     """Returns the factchecking reviews that have been published at the specified url. It is a many2many between url and reviews"""
     raise NotImplementedError()
+
+def get_factchecking_reviews_by_factchecker():
+    return evaluate.get_factchecking_by_factchecker()
 
 # Dataset
 
@@ -93,4 +102,14 @@ def get_dataset_from_id(dataset_id):
 
 def get_datasets():
     """Returns the information about all the datasets"""
-    raise NotImplementedError()
+    return [el for el in database.get_datasets()]
+
+def get_data_stats():
+    """Returns general data stats"""
+    return database.get_collections_stats()
+
+def get_domains():
+    return [el for el in database.get_domains()]
+
+def get_factcheckers_table():
+    return data.get_fact_checkers_table()

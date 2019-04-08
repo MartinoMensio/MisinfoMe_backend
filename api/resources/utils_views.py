@@ -1,4 +1,4 @@
-from flask_restful import Resource
+from flask_restplus import Resource
 import marshmallow
 from webargs.flaskparser import use_args, use_kwargs
 
