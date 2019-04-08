@@ -1,0 +1,39 @@
+---
+# Every test file has one or more tests...
+test_name: tweets
+
+includes:
+- !include includes.yaml
+
+# ...and each test has one or more stages (e.g. an HTTP request)
+stages:
+  - name: test that we don't get the whole collection
+
+    # Define the request to be made...
+    request:
+      url: "{api_url}/entities/twitter_accounts"
+      method: GET
+
+    # ...and the expected response code and body
+    response:
+      status_code: 400
+---
+test_name: single test
+stages:
+  - name: get single tweet
+    request:
+      url: "{api_url}/entities/twitter_accounts/{user_id}"
+      method: GET
+    response:
+      status_code: 200
+      body:
+        id: !int "{user_id:d}"
+---
+test_name: tweets from screen name
+stages:
+  - name: asd
+    request:
+      url: "{api_url}/entities/twitter_accounts?screen_name={screen_name}"
+      method: GET
+    response:
+      status_code: 200

@@ -14,3 +14,6 @@ pymongo
 validators
 tldextract
 dateparser
+webargs
+pytest
+tavern

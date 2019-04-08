@@ -1,14 +1,16 @@
 # Backend
 
-The backend is a REST service that:
+This is a REST service that acts as backend.
 
-- receives requests for a specific twitter account (username/tokens)
-- retrieves the tweets for the specified user
-- compares them with the aggregated dataset of fake/true
-- provides back a measure of gullibility
+## Structure
 
-Things to consider:
+The folders are organised in the following way:
 
-- which platform
-  - free, fast, languages
-- caching / storing results
+- api: contains the implementation of the REST service
+- app (unversioned): contains the transpiled frontend
+- examples: contains some json examples of the responses provided
+- test: some tests
+
+## Installation
+
+You can use the Dockerfile, or install this by creating a venv and installing the requirements. Use python3

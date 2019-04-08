@@ -1,7 +1,7 @@
 import validators
 
-import database
-import utils
+from . import database
+from . import utils
 
 """
 def get_url_redirect_for(from_url):

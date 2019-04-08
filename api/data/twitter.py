@@ -11,8 +11,8 @@ from twitterscraper.query import query_tweets_from_user
 
 from requests.auth import HTTPBasicAuth
 
-import database
-import url_redirect_manager
+from . import database
+from . import url_redirect_manager
 
 scraper_logger = logging.getLogger('twitterscraper')
 scraper_logger.setLevel(logging.WARNING)
@@ -206,7 +206,7 @@ class TwitterAPI(object):
             database.save_new_tweets(all_tweets)
         return all_tweets
 
-    def get_followers(self, user_handle, limit=None):
+    def get_followers_from_screen_name(self, user_handle, limit=None):
         params = {
             'screen_name': user_handle,
             'count': 200 # TODO loop over groups of 200
@@ -215,7 +215,16 @@ class TwitterAPI(object):
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
 
-    def get_following(self, user_handle, limit=None):
+    def get_followers(self, user_id, limit=None):
+        params = {
+            'user_id': user_id,
+            'count': 200
+        }
+        response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params, limit=limit)
+        users = self.get_users_lookup(response)
+        return [u for u in users]
+
+    def get_following_from_screen_name(self, user_handle, limit=None):
         params = {
             'screen_name': user_handle,
             'count': 200
@@ -223,6 +232,15 @@ class TwitterAPI(object):
         response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, limit=limit)
         users = self.get_users_lookup(response)
         return [u['screen_name'] for u in users]
+
+    def get_following(self, user_id, limit=None):
+        params = {
+            'user_id': user_id,
+            'count': 200
+        }
+        response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, limit=limit)
+        users = self.get_users_lookup(response)
+        return [u for u in users]
 
     @_cached_database_list(database.get_tweet, database.save_tweet)
     def get_statuses_lookup(self, tweet_ids):
@@ -283,6 +301,13 @@ def get_urls_scraper(tweet):
     return urls
 """
 
+# singleton instance
+_instance = None
+def get_instance():
+    global _instance
+    if not _instance:
+        _instance = TwitterAPI()
+    return _instance
 
 
 def get_urls_from_tweets(tweets):

@@ -11,8 +11,8 @@ import re
 from bs4 import BeautifulSoup
 
 
-import database
-import utils
+from . import database
+from . import utils
 
 resolver_url = 'https://unshorten.me/'
 

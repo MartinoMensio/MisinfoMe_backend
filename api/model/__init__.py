@@ -1,0 +1,1 @@
+### This package is the model, that manages data as entities and analysis

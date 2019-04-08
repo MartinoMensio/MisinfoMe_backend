@@ -4,7 +4,7 @@ import json
 import concurrent.futures
 
 from flask import Flask, request, jsonify, send_from_directory, redirect, url_for
-#from flask_restful import Resource, Api
+from flask_restful import Resource, Api
 from json import dumps
 from dotenv import load_dotenv, find_dotenv
 from flask_cors import CORS, cross_origin
@@ -14,18 +14,19 @@ import json
 
 load_dotenv()
 
-import data
-import database
-import twitter
-import evaluate
-import model
-import unshortener
+from api.data import data
+from api.data import database
+from api.data import twitter
+from api.evaluation import evaluate
+from api.evaluation import model
+from api.data import unshortener
 
 
 app = Flask(__name__)
 CORS(app)
 ma = Marshmallow(app)
-#api = Api(app)
+api = Api(app)
+
 
 twitter_api = twitter.TwitterAPI()
 
@@ -81,16 +82,19 @@ def analyse_twitter_user_from_screen_name():
 
 
 
+# TODO:refactor
 @app.route(API_URL + '/about')
 @cross_origin()
 def get_about():
     return jsonify(database.get_collections_stats())
 
+# TODO:refactor
 @app.route(API_URL + '/about/datasets')
 @cross_origin()
 def get_datasets():
     return jsonify([el for el in database.get_datasets()])
 
+# TODO:refactor
 @app.route(API_URL + '/about/domains')
 @cross_origin()
 def get_domains():
@@ -104,6 +108,7 @@ def get_domains_vs_datasets():
 def get_fact_checkers():
     return jsonify(data.get_fact_checkers())
 
+# TODO:refactor
 @app.route(API_URL + '/about/fact_checkers_table')
 def get_fact_checkers_table():
     return jsonify(data.get_fact_checkers_table())
@@ -117,30 +122,6 @@ def get_fact_checkers_table():
 ####################################################
 # Endpoints for the entities
 
-@app.route(API_URL + '/entities/tweets')
-def get_tweets_from_screen_name():
-    screen_name = request.args.get('screen_name')
-    tweets = twitter_api.get_user_tweets_from_screen_name(screen_name)
-    return jsonify(tweets)
-
-@app.route(API_URL + '/followers')
-def get_followers():
-    screen_name = request.args.get('screen_name')
-    limit = request.args.get('limit', None)
-    if limit:
-        limit = int(limit)
-    followers = twitter_api.get_followers(screen_name, limit)
-    return jsonify(followers)
-
-@app.route(API_URL + '/following')
-def get_following():
-    screen_name = request.args.get('screen_name')
-    limit = request.args.get('limit', None)
-    if limit:
-        limit = int(limit)
-    following = twitter_api.get_following(screen_name, limit)
-    return jsonify(following)
-
 @app.route(API_URL + '/urls')
 def get_shared_urls():
     screen_name = request.args.get('screen_name')
@@ -150,7 +131,7 @@ def get_shared_urls():
 
 
 ### Counting URLs API
-
+# TODO:refactor
 @app.route(API_URL + '/count_urls/users', methods = ['GET', 'POST'])
 @cross_origin()
 def count_user():
@@ -183,16 +164,12 @@ def count_user_from_id(user_id):
     result = evaluate.count_user(user_id, twitter_api, True, False)
     return jsonify(result)
 
-@app.route(API_URL + '/count_urls/overall')
-@cross_origin()
-def get_overall_counts():
-    return jsonify(evaluate.get_overall_counts())
-
 @app.route(API_URL + '/users_stored')
 def get_users_stored():
     return jsonify([el['_id'] for el in database.get_users_id()])
 
 
+# TODO:refactor
 @app.route(API_URL + '/factchecking_by_domain')
 def get_factchecking_by_domain():
     domain = request.args.get('from')
@@ -202,6 +179,7 @@ def get_factchecking_by_domain():
         result = evaluate.get_factchecking_by_domain()
     return jsonify(result)
 
+# TODO:refactor
 @app.route(API_URL + '/factchecking_by_factchecker')
 def get_factchecking_by_factchecker():
     result = evaluate.get_factchecking_by_factchecker()
@@ -216,7 +194,7 @@ def get_tweets_containing_url():
     return jsonify(result)
 
 
-
+# TODO:refactor
 @app.route(API_URL + '/tweets_time_distrib', methods = ['POST'])
 def get_tweets_time_distrib():
     if request.is_json:
@@ -237,42 +215,3 @@ def get_time_distrib():
     time_granularity = request.args.get('time_granularity', 'month')
     result = evaluate.analyse_url_distribution(url, twitter_api, time_granularity=time_granularity)
     return jsonify(result)
-
-@app.route(API_URL + '/url_time_published')
-def get_url_published_time():
-    url = request.args.get('url')
-    result = evaluate.get_url_publish_date(url)
-    return jsonify(result)
-
-
-# Other useful APIs
-
-@app.route(API_URL + '/resolve_url')
-def get_redirect_for():
-    url = request.args.get('url')
-    unshortened = unshortener.unshorten(url)
-    return jsonify(unshortened)
-
-@app.route(BASE_URL + '/static/<path:path>')
-def static_proxy(path):
-    # the static files
-    #print(path)
-    return send_from_directory('app', path)
-
-
-@app.route(BASE_URL + '/app/<path:path>')
-@app.route(BASE_URL + '/app/')
-def deep_linking(path=None):
-    # send the angular application, mantaining the state informations (no redirects)
-    return send_from_directory('app', 'index.html')
-
-@app.route('/')
-@app.route(BASE_URL)
-@app.route(BASE_URL + '/')
-@app.route(BASE_URL + '/app')
-def redirect_home():
-    # this route is for sending the user to the homepage
-    return redirect(BASE_URL + '/app/home')
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)

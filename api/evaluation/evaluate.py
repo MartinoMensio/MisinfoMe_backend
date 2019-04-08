@@ -1,4 +1,3 @@
-import data
 import json
 import os
 import multiprocessing
@@ -9,13 +8,9 @@ import dateparser
 import datetime
 from dateutil.relativedelta import relativedelta
 
-import database
 
-import results
-import model
-import utils
-import twitter
-import database
+from . import results, model
+from ..data import utils, twitter, database, data
 
 pool_size = 32
 
@@ -23,6 +18,7 @@ pool_size = 32
 def save_stats():
     raise NotImplementedError()
 
+### Tree evaluations: with reasons
 
 def evaluate_domain(url):
     domain = utils.get_url_domain(url)
@@ -102,8 +98,12 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
         return evaluate_twitter_user(None, twitter_api)
     return evaluate_twitter_user(user['id'], twitter_api)
 
+### Count methods: just counting tweets, need refactoring
 
-def count_users(screen_names, twitter_api, allow_cached, only_cached):
+def count_users(user_ids, twitter_api, allow_cached, only_cached):
+    return {user_id: count_user(user_id, twitter_api, allow_cached, only_cached) for user_id in user_ids}
+
+def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached):
     return {screen_name: count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names}
 
 def count_user(user_id, twitter_api, allow_cached, only_cached, multiprocess=True):
@@ -200,22 +200,7 @@ def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cac
 
     return result
 
-def get_overall_counts():
-    counts = database.get_all_counts()
-    counts = [el for el in counts]
-    score = 50
-    if len(counts):
-        score = sum(c.get('score', 0) for c in counts) / len(counts)
-    return {
-        'tweets_cnt': sum(c.get('tweets_cnt', 0) for c in counts),
-        'shared_urls_cnt': sum(c.get('shared_urls_cnt', 0) for c in counts),
-        'verified_urls_cnt': sum(c.get('verified_urls_cnt', 0) for c in counts),
-        'mixed_urls_cnt': sum(c.get('mixed_urls_cnt', 0) for c in counts),
-        'fake_urls_cnt': sum(c.get('fake_urls_cnt', 0) for c in counts),
-        'unknown_urls_cnt': sum(c.get('unknown_urls_cnt', 0) for c in counts),
-        'score': score,
-        'twitter_profiles_cnt': len(counts)
-    }
+### Methods for grouping database entries
 
 def get_factchecking_by_domain():
     """grouped by domain of factchecking, better to use by_factchecker (see below)"""
@@ -424,10 +409,12 @@ def get_url_publish_date(url):
         if date_str:
             debunking_time = dateparser.parse(date_str).date()
             results.append(debunking_time)
+    if not results:
+        return None
     # some articles get updated, we want the lowest publication time
     publishing_date = min(results)
     return {
-        'date': publishing_date,
+        'date': publishing_date.strftime('%d/%m/%Y'),
         'round_month': round_date(publishing_date, 'month'),
         'round_week': round_date(publishing_date, 'week'),
         'round_day': round_date(publishing_date, 'day'),

@@ -2,9 +2,9 @@ import json
 import copy
 from collections import defaultdict
 
-import database
-import utils
-import unshortener
+from . import database
+from . import utils
+from . import unshortener
 
 fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
 
@@ -70,8 +70,30 @@ def get_datasets():
 def get_domains():
     return [el for el in database.get_domains()]
 
-def get_fact_checkers():
-    return [el for el in database.get_fact_checkers()]
+def get_fact_checker(org_id):
+    return database.get_fact_checker(org_id)
+
+def get_fact_checkers(belongs_to_ifcn=None, valid_ifcn=None, selected_country=None):
+    result = []
+    for el in database.get_fact_checkers():
+        belonging = el['properties']['belongs_to_ifcn']
+        valid = el['properties']['valid']
+        country = el['nationality']
+        accept = True
+        if belongs_to_ifcn != None:
+            if belonging != belongs_to_ifcn:
+                accept = False
+        if valid_ifcn != None:
+            if valid != valid_ifcn:
+                accept = False
+        if selected_country != None:
+            if selected_country != country:
+                accept = False
+        if accept:
+            result.append(el)
+
+    return result
+
 
 def get_domains_vs_datasets_table(create_tsv=False):
     """With create_tsv, this method saves tsv files"""
