@@ -1,7 +1,7 @@
 ### This package is the View part, interfacing with web requests
 from flask_cors import CORS
 
-from . import entity_views, static_resources, stats_views, analysis_views, utils_views
+from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views
 from . import static_resources
 
 def configure_endpoints(app, api):
@@ -28,6 +28,9 @@ def configure_endpoints(app, api):
     # time-related analyses
     api.add_resource(analysis_views.UrlTimeDistributionAnalysis, '/analysis/time_distribution_url')
     api.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/analysis/time_distribution_tweets')
+
+    # endpoints for the credibility graph
+    api.add_resource(credibility_views.CredibilityGraph, '/credibility')
 
     # endpoints for the stats
     api.add_resource(stats_views.TwitterAccountStats, '/stats/twitter_accounts')

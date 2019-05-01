@@ -20,6 +20,7 @@ db_twitter = client['test_coinform']
 db_twitter_analysis = client['stored_analysis']
 db_redirects = client['test_coinform']
 db_datasets = client['datasets_resources']
+db_credibility = client['credibility']
 
 # domain key is the domain itself
 domains_collection = db_datasets['domains']
@@ -32,6 +33,8 @@ datasets_collection = db_datasets['datasets']
 # the same applies to fact_checkers
 fact_checkers_collection = db_datasets['fact_checkers']
 claimReviews_collection = db_datasets['claim_reviews']
+datasets_graph_nodes_collection = db_datasets['graph_nodes']
+datasets_graph_links_collection = db_datasets['graph_links']
 
 # fact checking urls (kinda claimReview)
 fact_checking_urls = client['datasets_resources']['fact_checking_urls']
@@ -49,6 +52,11 @@ twitter_tweets = db_twitter['twitter_tweets']
 
 # stored analysis (for stats overall pie chart)
 twitter_users_counts = db_twitter_analysis['twitter_users_counts']
+
+
+# credibility collections
+credibility_nodes = db_credibility['nodes']
+credibility_computed = db_credibility['computed']
 
 
 
@@ -180,3 +188,38 @@ def get_tweets_by_url(url):
 def save_tweets_by_url(url, tweets):
     document = {'_id': url, 'url': url, 'tweets': tweets, 'updated': datetime.datetime.now()}
     return tweets_by_url.replace_one({'_id': document['_id']}, document, upsert=True)
+
+
+
+def credibility_add_node(node_id, node):
+    document = node
+    document['_id'] = node_id
+    return credibility_nodes.insert_one(document)
+
+def credibility_remove_node(node_id):
+    return credibility_nodes.delete_one({'_id': node_id})
+
+def credibility_get_nodes():
+    return credibility_nodes.find()
+
+def credibility_get_outgoing_links_from_node_id(node_id):
+    return db_credibility[node_id].find()
+
+def credibility_reset():
+    return client.drop_database('credibility')
+
+def credibility_add_link(source_id, dest_id, link):
+    print(source_id, dest_id, link)
+    document = link
+    document['from'] = source_id
+    document['to'] = dest_id
+    # TODO check source_id and dest_id exist
+    return db_credibility[source_id].insert_one(document)
+
+def get_dataset_graph():
+    nodes = datasets_graph_nodes_collection.find()
+    links = datasets_graph_links_collection.find()
+    return {
+        'nodes': {n['id']: n for n in nodes},
+        'links': [l for l in links]
+    }

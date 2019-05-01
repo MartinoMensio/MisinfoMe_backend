@@ -76,8 +76,8 @@ def get_fact_checker(org_id):
 def get_fact_checkers(belongs_to_ifcn=None, valid_ifcn=None, selected_country=None):
     result = []
     for el in database.get_fact_checkers():
-        belonging = el['properties']['belongs_to_ifcn']
-        valid = el['properties']['valid']
+        belonging = el['belongs_to_ifcn']
+        valid = el['valid_ifcn']
         country = el['nationality']
         accept = True
         if belongs_to_ifcn != None:
