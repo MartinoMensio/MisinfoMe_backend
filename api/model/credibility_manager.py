@@ -1,4 +1,5 @@
 from ..data import database
+from ..credibility import graph
 
 def get_credibility_graph():
     """Returns the graph of credibility, as set of links and nodes"""
@@ -18,6 +19,9 @@ def get_credibility_graph():
 
 def recreate_credibility_graph():
     database.credibility_reset()
+
+    graph.update()
+
     # create the head and default nodes
     database.credibility_add_node('head', {'name': 'The head of credibility. Customisable'})
     database.credibility_add_node('default', {'name': 'The default credibility'})
