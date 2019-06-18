@@ -2,6 +2,8 @@ from flask import Flask, Blueprint
 from flask_restplus import Api
 from flask.json import JSONEncoder
 import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 from . import resources
 
