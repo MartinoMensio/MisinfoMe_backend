@@ -1,4 +1,5 @@
-from flask_restplus import Resource
+from flask_restplus import Resource, marshal_with
+import flask_restplus
 import webargs
 import marshmallow
 from webargs.flaskparser import use_args, use_kwargs
@@ -6,8 +7,14 @@ from webargs.flaskparser import use_args, use_kwargs
 from ..model import entity_manager
 from . import statuses
 
+tweet_object = {
+    'id': flask_restplus.fields.Integer,
+    'text': flask_restplus.fields.String(attribute='full_text')
+}
+
 
 class Tweet(Resource):
+    @marshal_with(tweet_object)
     def get(self, tweet_id):
         tweet = entity_manager.get_tweet_from_id(tweet_id)
         if tweet:
@@ -25,6 +32,7 @@ class TweetList(Resource):
         'from_date': marshmallow.fields.Date(missing=None)
     }
 
+    @marshal_with(tweet_object)
     @use_kwargs(args)
     def get(self, tweets_ids, screen_name, user_id, url, cached_only, from_date):
         print(tweets_ids, screen_name, user_id, url, cached_only, from_date)
