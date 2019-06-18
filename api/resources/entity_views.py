@@ -127,9 +127,9 @@ class DomainsStats(Resource):
     def get(self):
         return entity_manager.get_domains()
 
-class DatasetsStats(Resource):
+class SourcesStats(Resource):
     def get(self):
-        return entity_manager.get_datasets()
+        return entity_manager.get_sources()
 
 class FactcheckersTable(Resource):
     def get(self):

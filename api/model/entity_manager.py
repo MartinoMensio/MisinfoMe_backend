@@ -100,9 +100,9 @@ def get_dataset_from_id(dataset_id):
     """Returns the dataset corresponding to the id"""
     raise NotImplementedError()
 
-def get_datasets():
-    """Returns the information about all the datasets"""
-    return [el for el in database.get_datasets()]
+def get_sources():
+    """Returns the information about all the sources"""
+    return [el for el in database.get_sources()]
 
 def get_data_stats():
     """Returns general data stats"""

@@ -24,12 +24,14 @@ db_credibility = client['credibility']
 
 # domain key is the domain itself
 domains_collection = db_datasets['domains']
+# domain assessments
+domain_assessments = db_datasets['domain_assessments']
 # url key is the url itself
 urls_collection = db_datasets['urls']
 # rebuttal key is the url of provenience
 rebuttals_collection = db_datasets['rebuttals']
 # dataset key is a string defined in sources.json of the repo 'datasets'
-datasets_collection = db_datasets['datasets']
+sources_collection = db_datasets['sources']
 # the same applies to fact_checkers
 fact_checkers_collection = db_datasets['fact_checkers']
 claimReviews_collection = db_datasets['claim_reviews']
@@ -86,6 +88,9 @@ def get_url_redirects_in(url_list):
 def get_domain_info(domain):
     return domains_collection.find_one({'_id': domain})
 
+def get_domain_assessments():
+    return domain_assessments.find()
+
 def get_url_info(url):
     return urls_collection.find_one({'_id': url})
 
@@ -130,15 +135,15 @@ def get_tweets_from_user_id(user_id):
 
 def get_collections_stats():
     return {
+        'sources': sources_collection.count(),
         'urls': urls_collection.count(),
         'domains': domains_collection.count(),
         #'rebuttals': rebuttals_collection.count(),
         'fact_checking': fact_checkers_collection.count(),
-        'datasets': datasets_collection.count()
     }
 
 def get_dataset(dataset_key):
-    return datasets_collection.find_one({'_id': dataset_key})
+    return sources_collection.find_one({'_id': dataset_key})
 
 def get_fact_checkers():
     return fact_checkers_collection.find()
@@ -146,8 +151,8 @@ def get_fact_checkers():
 def get_fact_checker(key):
     return fact_checkers_collection.find_one({'_id': key})
 
-def get_datasets():
-    return datasets_collection.find()
+def get_sources():
+    return sources_collection.find()
 
 def get_domains():
     return domains_collection.find()

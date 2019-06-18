@@ -18,7 +18,7 @@ def configure_endpoints(app, api):
     # endpoints for dataset stats
     api.add_resource(entity_views.DataStats, '/entities')
     api.add_resource(entity_views.DomainsStats, '/entities/domains')
-    api.add_resource(entity_views.DatasetsStats, '/entities/datasets')
+    api.add_resource(entity_views.SourcesStats, '/entities/sources')
     api.add_resource(entity_views.FactcheckersTable, '/entities/factcheckers_table')
 
     # endpoints for the analyses
