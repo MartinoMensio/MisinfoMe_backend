@@ -160,8 +160,11 @@ class TwitterAPI(object):
             return []
         return self.get_user_tweets(user['id'])
 
-    def get_user_from_screen_name(self, screen_name):
-        user = database.get_twitter_user_from_screen_name(screen_name)
+    def get_user_from_screen_name(self, screen_name, cached=False):
+        if cached:
+            user = database.get_twitter_user_from_screen_name(screen_name)
+        else:
+            user = None
         if not user:
             try:
                 user = self.get_user_lookup_from_screen_name(screen_name)
@@ -213,7 +216,7 @@ class TwitterAPI(object):
         }
         response = self._cursor_request('https://api.twitter.com/1.1/followers/ids.json', params=params, limit=limit)
         users = self.get_users_lookup(response)
-        return [u['screen_name'] for u in users]
+        return [u for u in users]
 
     def get_followers(self, user_id, limit=None):
         params = {
@@ -231,7 +234,7 @@ class TwitterAPI(object):
         }
         response = self._cursor_request('https://api.twitter.com/1.1/friends/ids.json', params=params, limit=limit)
         users = self.get_users_lookup(response)
-        return [u['screen_name'] for u in users]
+        return [u for u in users]
 
     def get_following(self, user_id, limit=None):
         params = {

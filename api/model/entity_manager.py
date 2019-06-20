@@ -29,12 +29,14 @@ def get_tweets_from_screen_name(screen_name, cached_only=False, from_date=None, 
 def get_tweets_containing_url(url, cached_only=False, from_date=None, limit=None, offset=0):
     """Returns a list of tweets that contain a certain URL. cached_only is to avoid searching for newer tweets, from_date limits the search to tweets published after a certain date. limit and offset for paging"""
     twitter_api = twitter.get_instance()
-    return data.get_tweets_containing_url(url, twitter_api)
+    tweets_ids = data.get_tweets_containing_url(url, twitter_api)
+    return [{'id': id} for id in tweets_ids]
 
 # TwitterAccount
 
-def get_twitter_account_from_id(user_id):
+def get_twitter_account_from_id(user_id, cached=False):
     """Returns the twitter account corresponding to the user_id, or None if t is not retrievable"""
+    # TODO handle cached
     users = get_twitter_accounts_from_ids([user_id])
     if not users:
         return None
@@ -45,9 +47,9 @@ def get_twitter_account_from_id(user_id):
 def get_twitter_accounts_from_ids(user_ids):
     return twitter.get_instance().get_users_lookup(user_ids)
 
-def get_twitter_account_from_screen_name(screen_name):
+def get_twitter_account_from_screen_name(screen_name, cached=False):
     """Returns the twitter account corresponding to the user_id, or None if t is not retrievable"""
-    return twitter.get_instance().get_user_from_screen_name(screen_name)
+    return twitter.get_instance().get_user_from_screen_name(screen_name, cached)
 
 def get_twitter_account_followers_from_id(user_id, limit=None, offset=0):
     """Returns the twitter accounts that follow the specified user"""

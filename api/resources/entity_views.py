@@ -9,7 +9,16 @@ from . import statuses
 
 tweet_object = {
     'id': flask_restplus.fields.Integer,
-    'text': flask_restplus.fields.String(attribute='full_text')
+    'text': flask_restplus.fields.String(attribute='full_text'),
+    'error': flask_restplus.fields.String
+}
+
+twitter_account_object = {
+    'id': flask_restplus.fields.Integer,
+    'name': flask_restplus.fields.String,
+    'screen_name': flask_restplus.fields.String,
+    'profile_image_url_https': flask_restplus.fields.String,
+    'error': flask_restplus.fields.String
 }
 
 
@@ -48,6 +57,7 @@ class TweetList(Resource):
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
 
 class TwitterAccount(Resource):
+    @marshal_with(twitter_account_object)
     def get(self, account_id):
         twitter_account = entity_manager.get_twitter_account_from_id(account_id)
         if twitter_account:
@@ -60,11 +70,13 @@ class TwitterAccountList(Resource):
         'screen_name': marshmallow.fields.Str(missing=None),
         'account_id': marshmallow.fields.Int(missing=None),
         'limit': marshmallow.fields.Int(missing=500),
-        'offset': marshmallow.fields.Int(missing=0)
+        'offset': marshmallow.fields.Int(missing=0),
+        'cached': marshmallow.fields.Int(missing=False)
     }
 
+    @marshal_with(twitter_account_object)
     @use_kwargs(args)
-    def get(self, relation, screen_name, account_id, limit, offset):
+    def get(self, relation, screen_name, account_id, limit, offset, cached):
         if relation == 'followers':
             if account_id:
                 return entity_manager.get_twitter_account_followers_from_id(account_id, limit, offset)
@@ -81,9 +93,9 @@ class TwitterAccountList(Resource):
                 return {'error': 'friends of?'}
         # no relationship
         elif screen_name:
-            return entity_manager.get_twitter_account_from_screen_name(screen_name)
+            return entity_manager.get_twitter_account_from_screen_name(screen_name, cached)
         elif account_id:
-            return entity_manager.get_twitter_account_from_id(account_id)
+            return entity_manager.get_twitter_account_from_id(account_id, cached)
 
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
 

@@ -54,6 +54,9 @@ def classify_url(url_info, unshorten=True):
         label['sources'] = []
         for s in label['score']['sources']:
             dataset = database.get_dataset(s)
+            if not dataset:
+                print('WARNING: not found', s)
+                continue
             if not dataset.get('name', None):
                 # TODO fix that when you understand how to manage fact-checkers as datasets
                 # wanted properties to display in frontend: {'name': s, 'url': s}
