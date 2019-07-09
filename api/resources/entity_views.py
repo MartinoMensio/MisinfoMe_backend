@@ -93,9 +93,15 @@ class TwitterAccountList(Resource):
                 return {'error': 'friends of?'}
         # no relationship
         elif screen_name:
-            return entity_manager.get_twitter_account_from_screen_name(screen_name, cached)
+            result = entity_manager.get_twitter_account_from_screen_name(screen_name, cached)
+            if 'errors' in result:
+                return {'error': result['errors'][0]['message']}
+            return result
         elif account_id:
-            return entity_manager.get_twitter_account_from_id(account_id, cached)
+            result = entity_manager.get_twitter_account_from_id(account_id, cached)
+            if 'errors' in result:
+                return {'error': result['errors'][0]['message']}
+            return result
 
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
 

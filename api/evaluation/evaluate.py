@@ -116,8 +116,9 @@ def count_user(user_id, twitter_api, allow_cached, only_cached, multiprocess=Tru
 def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, multiprocess=True):
     print(allow_cached, only_cached)
     user = twitter_api.get_user_from_screen_name(screen_name)
-    if not user:
-        return {}
+    if not user or 'id' not in user:
+        # TODO handle other status codes (user not existent or suspended, with error code and message)
+        return {'screen_name': screen_name}
 
     if allow_cached:
         result = database.get_count_result(user['id'])

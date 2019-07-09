@@ -171,7 +171,8 @@ class TwitterAPI(object):
                 database.save_twitter_user(user)
             except Exception as e:
                 print(e)
-                return None
+                print(e.args[0], screen_name)
+                return e.args[0]
 
         return user
 
