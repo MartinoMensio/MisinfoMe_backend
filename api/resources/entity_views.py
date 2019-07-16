@@ -104,6 +104,24 @@ class TwitterAccountList(Resource):
             return result
 
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
+"""
+class TwitterFriends(Resource):
+    args = {
+        'screen_name': marshmallow.fields.Str(missing=None),
+        'account_id': marshmallow.fields.Int(missing=None),
+        'limit': marshmallow.fields.Int(missing=500),
+        'offset': marshmallow.fields.Int(missing=0),
+        #'cached': marshmallow.fields.Int(missing=False)
+    }
+    @use_kwargs(args)
+    def get(self, screen_name, account_id, limit, offset):
+        if account_id:
+            return entity_manager.get_twitter_account_friends_from_id(account_id, limit, offset)
+        elif screen_name:
+            return entity_manager.get_twitter_account_friends_from_screen_name(screen_name, limit, offset)
+        else:
+            return {'error': 'friends of?'}
+"""
 
 class FactcheckingOrganisation(Resource):
     def get(self, org_id):

@@ -1,5 +1,5 @@
 from ..evaluation import evaluate
-from ..data import twitter
+from ..data import twitter, twitter_old
 
 def analyse_url(url, allow_cached=False, only_cached=False):
     pass
@@ -8,27 +8,49 @@ def analyse_tweet(tweet_id, allow_cached=False, only_cached=False):
     pass
 
 def analyse_twitter_account(twitter_id, allow_cached=True, only_cached=False):
-    twitter_api = twitter.get_instance()
-    print(allow_cached)
-    return evaluate.count_user(twitter_id, twitter_api, allow_cached, only_cached)
+    user = twitter.get_twitter_user(twitter_id)
+    tweets = twitter.get_user_tweets(user['id'])
+    return evaluate.count_user(user, tweets, allow_cached, only_cached)
 
 def analyse_twitter_account_from_screen_name(twitter_screen_name, allow_cached=True, only_cached=False):
-    twitter_api = twitter.get_instance()
-    return evaluate.count_user_from_screen_name(twitter_screen_name, twitter_api, allow_cached, only_cached)
+    user = twitter.search_twitter_user_from_screen_name(twitter_screen_name)
+    tweets = twitter.get_user_tweets(user['id'])
+    result = evaluate.count_user(user, tweets, allow_cached, only_cached)
+    print(result)
+    return result
 
-def analyse_twitter_accounts(twitter_ids, allow_cached=True, only_cached=True):
-    twitter_api = twitter.get_instance()
-    return evaluate.count_users(twitter_ids, twitter_api, allow_cached, only_cached)
+def analyse_friends_from_screen_name(screen_name, limit):
+    allow_cached=True
+    only_cached=True
+    friends = twitter.search_friends_from_screen_name(screen_name)
+    if limit:
+        friends = friends[:limit]
+    result = []
+    for friend in friends:
+        user_cnt = evaluate.count_user(friend, [], allow_cached, only_cached)
+        result.append(user_cnt)
+    return result
 
 def analyse_twitter_accounts_from_screen_name(twitter_screen_names, allow_cached=True, only_cached=True):
-    twitter_api = twitter.get_instance()
-    return evaluate.count_users_from_screen_name(twitter_screen_names, twitter_api, allow_cached, only_cached)
+    result = []
+    for screen_name in twitter_screen_names:
+        user = twitter.search_twitter_user_from_screen_name(screen_name)
+        if not user:
+            continue
+        if not allow_cached:
+            print('retrieving tweets')
+            tweets = twitter.get_user_tweets(user['id'])
+        else:
+            tweets = []
+        user_cnt = evaluate.count_user(user, tweets, allow_cached, only_cached)
+        result.append(user_cnt)
+    return result
 
 
 def analyse_time_distribution_url(url, time_granularity):
-    twitter_api = twitter.get_instance()
+    twitter_api = twitter_old.get_instance()
     return evaluate.analyse_url_distribution(url, twitter_api, time_granularity=time_granularity)
 
 def analyse_time_distribution_tweets(tweet_ids, time_granularity, mode, reference_date):
-    twitter_api = twitter.get_instance()
+    twitter_api = twitter_old.get_instance()
     return evaluate.analyse_tweet_time(tweet_ids, time_granularity, mode, reference_date, twitter_api)

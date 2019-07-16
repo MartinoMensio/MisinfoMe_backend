@@ -63,7 +63,8 @@ def get_twitter_account_followers_from_screen_name(screen_name, limit=None, offs
     return twitter.get_instance().get_followers_from_screen_name(screen_name, limit)
 
 def get_twitter_account_friends_from_screen_name(screen_name, limit=None, offset=0):
-    return twitter.get_instance().get_following_from_screen_name(screen_name, limit)
+    friends = twitter.search_friends_from_screen_name(screen_name)
+    return friends
 
 # FactcheckingOrganisation
 

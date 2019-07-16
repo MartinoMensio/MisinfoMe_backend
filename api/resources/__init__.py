@@ -8,10 +8,11 @@ def configure_endpoints(app, api):
     base_url = '/misinfo'
 
     # endpoints for the entities
-    api.add_resource(entity_views.Tweet, '/entities/tweets/<int:tweet_id>')
-    api.add_resource(entity_views.TweetList, '/entities/tweets')
-    api.add_resource(entity_views.TwitterAccount, '/entities/twitter_accounts/<int:account_id>')
-    api.add_resource(entity_views.TwitterAccountList, '/entities/twitter_accounts')
+    #api.add_resource(entity_views.Tweet, '/entities/tweets/<int:tweet_id>')
+    #api.add_resource(entity_views.TweetList, '/entities/tweets')
+    #api.add_resource(entity_views.TwitterAccount, '/entities/twitter_accounts/<int:account_id>')
+    #api.add_resource(entity_views.TwitterAccountList, '/entities/twitter_accounts')
+    #api.add_resource(entity_views.TwitterFriends, '/entities/search/friends')
     api.add_resource(entity_views.FactcheckingOrganisation, '/entities/factchecking_organisations/<string:org_id>')
     api.add_resource(entity_views.FactcheckingOrganisationList, '/entities/factchecking_organisations')
     api.add_resource(entity_views.FactcheckingReviewList, '/entities/factchecking_reviews')
@@ -40,7 +41,7 @@ def configure_endpoints(app, api):
     api.add_resource(utils_views.TimePublished, '/utils/time_published')
 
     # endpoints for the static resources (frontend)
-    static_resources.configure_static_resources(base_url, app)
+    static_resources.configure_static_resources(base_url, app, api)
 
 def configure_cors(app):
     # define here rules for the CORS and endpoints. Remember that in deployment the requests come from the same domain

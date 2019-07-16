@@ -98,7 +98,93 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
         return evaluate_twitter_user(None, twitter_api)
     return evaluate_twitter_user(user['id'], twitter_api)
 
+
+
 ### Count methods: just counting tweets, need refactoring
+
+def count_user(user, tweets, allow_cached, only_cached, multiprocess=False):
+    print(user['screen_name'], allow_cached, only_cached)
+    if not user or 'id' not in user:
+        # TODO handle other status codes (user not existent or suspended, with error code and message)
+        return {'screen_name': user['screen_name']}
+    if allow_cached:
+        result = database.get_count_result(user['id'])
+        if only_cached and not result:
+            # null
+            return {'_id': user['id'], 'screen_name': user['screen_name'], 'cache': 'miss'}
+        if result:
+            result['cache'] = 'hit'
+            return result
+    shared_urls = twitter.get_urls_from_tweets(tweets)
+    #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
+    #verified = [el for el in matching if el['label'] == 'true']
+    #fake = [el for el in matching if el['label'] == 'fake']
+    #classified_urls = [data.classify_url(url) for url in shared_urls] # NEED TWEET ID here
+    if multiprocess:
+        with multiprocessing.pool.ThreadPool(pool_size) as pool:
+            classified_urls = []
+            for classified in tqdm.tqdm(pool.imap_unordered(data.classify_url, shared_urls), total=len(shared_urls)):
+                classified_urls.append(classified)
+    else:
+        classified_urls = [data.classify_url(url) for url in shared_urls]
+    matching = [el for el in classified_urls if el]
+    #print(matching)
+    verified = [el for el in matching if el['score']['label'] == 'true']
+    mixed = [el for el in matching if el['score']['label'] == 'mixed']
+    fake = [el for el in matching if el['score']['label'] == 'fake']
+    # rebuttals
+    #print(shared_urls)
+    rebuttals_match = {u['resolved']: database.get_rebuttals(u['resolved']) for u in shared_urls}
+    rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
+    # attach the rebuttal links to the fake urls matching
+    #print(rebuttals_match)
+    for el in fake:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
+        #rebuttals_match.pop(f['url'])
+    for el in mixed:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
+    for el in verified:
+        rebuttals = rebuttals_match.get(el['url'], None)
+        el['rebuttals'] = rebuttals
+        #rebuttals_match.pop(f['url'])
+
+    # refactor rebuttals without label
+    rebuttals = [{
+        'found_in_tweet': 0, # TODO retrieve this, refactor how this method processes tweets
+        'retweet': False, # TODO
+        'reason': 'rebuttal_match',
+        'score': {'label': 'rebuttal'},
+        'rebuttals': el_v,
+        'url': el_k,
+        'sources': [database.get_dataset(s) for ss in el_v for s in ss['source']],
+    } for el_k, el_v in rebuttals_match.items()]
+
+    if len(fake) + len(verified):
+        score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
+        #print('evaluating', score, len(verified), len(fake))
+    else:
+        # default to unknown
+        score = 50
+
+    result = {
+        'screen_name': user['screen_name'],
+        'profile_image_url': user['image'],
+        'tweets_cnt': len(tweets),
+        'shared_urls_cnt': len(shared_urls),
+        'verified_urls_cnt': len(verified),
+        'mixed_urls_cnt': len(mixed),
+        'fake_urls_cnt': len(fake),
+        'unknown_urls_cnt': len(shared_urls) - len(matching),
+        'score': score,
+        # add after saving to mongo, because rebuttals have dotted keys
+        'rebuttals': rebuttals,
+        'fake_urls': fake,
+        'mixed_urls': mixed,
+        'verified_urls': verified
+    }
+    return result
 
 def count_users(user_ids, twitter_api, allow_cached, only_cached):
     return [count_user(user_id, twitter_api, allow_cached, only_cached) for user_id in user_ids]
@@ -106,7 +192,7 @@ def count_users(user_ids, twitter_api, allow_cached, only_cached):
 def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached):
     return [count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names]
 
-def count_user(user_id, twitter_api, allow_cached, only_cached, multiprocess=True):
+def count_user_old(user_id, twitter_api, allow_cached, only_cached, multiprocess=True):
     users = twitter_api.get_users_lookup([user_id])
     if not users:
         return None
