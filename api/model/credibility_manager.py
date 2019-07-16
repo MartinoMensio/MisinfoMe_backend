@@ -1,6 +1,7 @@
 from ..data import database
-from ..credibility import graph
+from ..credibility import credibility_connector
 
+'''
 def get_credibility_graph():
     """Returns the graph of credibility, as set of links and nodes"""
     nodes = database.credibility_get_nodes()
@@ -46,3 +47,7 @@ def recreate_credibility_graph():
     database.credibility_add_link('default', 'ifcncodeofprinciples.poynter.org', {'credibility': 1.0, 'confidence': 1.0})
 
     return get_credibility_graph()
+'''
+
+def get_source_credibility(source):
+    return credibility_connector.get_source_credibility(source)

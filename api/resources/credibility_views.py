@@ -6,6 +6,7 @@ import flask_restplus
 from webargs.flaskparser import use_args, use_kwargs
 
 from ..model import credibility_manager
+'''
 from . import statuses
 
 link = {
@@ -29,3 +30,9 @@ class CredibilityGraph(Resource):
     @marshal_with(graph)
     def post(self):
         return credibility_manager.recreate_credibility_graph(), 201
+'''
+
+class CredibilitySource(Resource):
+
+    def get(self, source):
+        return credibility_manager.get_source_credibility(source)

@@ -30,7 +30,7 @@ def configure_endpoints(app, api):
     api.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/analysis/time_distribution_tweets')
 
     # endpoints for the credibility graph
-    api.add_resource(credibility_views.CredibilityGraph, '/credibility')
+    api.add_resource(credibility_views.CredibilitySource, '/credibility/sources/<string:source>')
 
     # endpoints for the stats
     api.add_resource(stats_views.TwitterAccountStats, '/stats/twitter_accounts')

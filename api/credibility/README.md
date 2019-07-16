@@ -1,7 +1,3 @@
-# External sources
+# Credibility
 
-Each module manages a source of credibility assessmment.
-
-# API
-
-Each module follows the interface defined in TODO
+see https://github.com/MartinoMensio/credibility

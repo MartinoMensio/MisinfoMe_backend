@@ -135,7 +135,7 @@ def get_tweets_from_user_id(user_id):
 
 def get_collections_stats():
     return {
-        'sources': sources_collection.count(),
+        'origins': sources_collection.count(),
         'urls': urls_collection.count(),
         'domains': domains_collection.count(),
         #'rebuttals': rebuttals_collection.count(),
