@@ -1,6 +1,7 @@
 from flask import send_from_directory, redirect
+import flask_restplus
 
-def configure_static_resources(base_url, app):
+def configure_static_resources(base_url, app, api):
     #app_url = base_url + '/app'
     app_url = base_url
 
@@ -30,3 +31,9 @@ def configure_static_resources(base_url, app):
         print('here in redirect_home')
         # this route is for sending the user to the homepage
         return redirect(base_url + '/home')
+
+    # swagger fixes: the /misinfo/api otherwise get redirected to inexistent state of the app frontend
+    # swaggerui homepage
+    @app.route(base_url + 'api')
+    def get_swaggerui():
+        return flask_restplus.apidoc.ui_for(api)
