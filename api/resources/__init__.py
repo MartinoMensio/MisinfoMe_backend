@@ -1,44 +1,51 @@
 ### This package is the View part, interfacing with web requests
+import flask_restplus
+import flask
 from flask_cors import CORS
 
 from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views
 from . import static_resources
 
-def configure_endpoints(app, api):
+def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
     base_url = '/misinfo'
 
     # endpoints for the entities
-    #api.add_resource(entity_views.Tweet, '/entities/tweets/<int:tweet_id>')
-    #api.add_resource(entity_views.TweetList, '/entities/tweets')
-    #api.add_resource(entity_views.TwitterAccount, '/entities/twitter_accounts/<int:account_id>')
-    #api.add_resource(entity_views.TwitterAccountList, '/entities/twitter_accounts')
-    #api.add_resource(entity_views.TwitterFriends, '/entities/search/friends')
-    api.add_resource(entity_views.FactcheckingOrganisation, '/entities/factchecking_organisations/<string:org_id>')
-    api.add_resource(entity_views.FactcheckingOrganisationList, '/entities/factchecking_organisations')
-    api.add_resource(entity_views.FactcheckingReviewList, '/entities/factchecking_reviews')
+    entities_ns = api.namespace('entities', description='Basic entities stored in the service')
+    #entities_ns.add_resource(entity_views.Tweet, '/tweets/<int:tweet_id>')
+    #entities_ns.add_resource(entity_views.TweetList, '/tweets')
+    #entities_ns.add_resource(entity_views.TwitterAccount, '/twitter_accounts/<int:account_id>')
+    #entities_ns.add_resource(entity_views.TwitterAccountList, '/twitter_accounts')
+    #entities_ns.add_resource(entity_views.TwitterFriends, '/search/friends')
+    entities_ns.add_resource(entity_views.FactcheckingOrganisation, '/factchecking_organisations/<string:org_id>')
+    entities_ns.add_resource(entity_views.FactcheckingOrganisationList, '/factchecking_organisations')
+    entities_ns.add_resource(entity_views.FactcheckingReviewList, '/factchecking_reviews')
     # endpoints for dataset stats
-    api.add_resource(entity_views.DataStats, '/entities')
-    api.add_resource(entity_views.DomainsStats, '/entities/domains')
-    api.add_resource(entity_views.SourcesStats, '/entities/sources')
-    api.add_resource(entity_views.FactcheckersTable, '/entities/factcheckers_table')
+    entities_ns.add_resource(entity_views.DataStats, '/')
+    entities_ns.add_resource(entity_views.DomainsStats, '/domains')
+    entities_ns.add_resource(entity_views.OriginsStats, '/origins')
+    entities_ns.add_resource(entity_views.FactcheckersTable, '/factcheckers_table')
 
     # endpoints for the analyses
-    api.add_resource(analysis_views.UrlAnalysis, '/analysis/urls')
-    api.add_resource(analysis_views.TweetAnalysis, '/analysis/tweets')
-    api.add_resource(analysis_views.TwitterAccountAnalysis, '/analysis/twitter_accounts')
+    analysis_ns = api.namespace('analysis', description='Analysis of some entities')
+    analysis_ns.add_resource(analysis_views.UrlAnalysis, '/urls')
+    analysis_ns.add_resource(analysis_views.TweetAnalysis, '/tweets')
+    analysis_ns.add_resource(analysis_views.TwitterAccountAnalysis, '/twitter_accounts')
     # time-related analyses
-    api.add_resource(analysis_views.UrlTimeDistributionAnalysis, '/analysis/time_distribution_url')
-    api.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/analysis/time_distribution_tweets')
+    analysis_ns.add_resource(analysis_views.UrlTimeDistributionAnalysis, '/time_distribution_url')
+    analysis_ns.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/time_distribution_tweets')
 
     # endpoints for the credibility graph
-    api.add_resource(credibility_views.CredibilitySource, '/credibility/sources/<string:source>')
+    credibility_ns = api.namespace('credibility', description='Interfacing with the credibility component')
+    credibility_ns.add_resource(credibility_views.CredibilitySource, '/sources/<string:source>')
 
     # endpoints for the stats
-    api.add_resource(stats_views.TwitterAccountStats, '/stats/twitter_accounts')
+    stats_ns = api.namespace('stats', description='Some statistics')
+    stats_ns.add_resource(stats_views.TwitterAccountStats, '/twitter_accounts')
 
     # endpoints for utils
-    api.add_resource(utils_views.UrlUnshortener, '/utils/unshorten')
-    api.add_resource(utils_views.TimePublished, '/utils/time_published')
+    utils_ns = api.namespace('utils', description='Some utility functions')
+    utils_ns.add_resource(utils_views.UrlUnshortener, '/unshorten')
+    utils_ns.add_resource(utils_views.TimePublished, '/time_published')
 
     # endpoints for the static resources (frontend)
     static_resources.configure_static_resources(base_url, app, api)
