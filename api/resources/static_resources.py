@@ -1,7 +1,28 @@
-from flask import send_from_directory, redirect
+import flask
+from flask import send_from_directory, redirect, url_for
 import flask_restplus
+import os
 
-def configure_static_resources(base_url, app, api):
+# the swaggerui is usually served with static files with a path '/swaggerui'
+# but we can't serve that path because of the '/misinfo' prefix
+# so we need to modify the behaviour of the apidoc
+modified_apidoc = flask_restplus.apidoc.Apidoc('restplus_doc_modified',
+            __name__,
+            template_folder='templates',
+            # here lies the trick, to get the static files
+            static_folder=os.path.dirname(flask_restplus.__file__)+'/static',
+            # and serve with this new path
+            static_url_path='/misinfo/api/swaggerui',)
+
+# this will reply to the GET requests on the new path
+@modified_apidoc.add_app_template_global
+def swagger_static(filename):
+    #print('swagger_static', filename)
+    return url_for('restplus_doc_modified.static', filename=filename)
+
+
+
+def configure_static_resources(base_url, app: flask.Flask, api):
     #app_url = base_url + '/app'
     app_url = base_url
 
@@ -32,8 +53,6 @@ def configure_static_resources(base_url, app, api):
         # this route is for sending the user to the homepage
         return redirect(base_url + '/home')
 
-    # swagger fixes: the /misinfo/api otherwise get redirected to inexistent state of the app frontend
-    # swaggerui homepage
-    @app.route(base_url + 'api')
-    def get_swaggerui():
-        return flask_restplus.apidoc.ui_for(api)
+
+    # we need to register the newly created blueprint for the documentation
+    app.register_blueprint(modified_apidoc)
