@@ -10,7 +10,7 @@ from dateutil.relativedelta import relativedelta
 
 
 from . import results, model
-from ..data import utils, twitter, database, data
+from ..data import utils, twitter_connector, database, data
 
 pool_size = 32
 
@@ -70,7 +70,7 @@ def evaluate_tweet(tweet_id, twitter_api):
     #print('tweet_object', tweet_objects)
     if not tweet_objects:
         return None
-    urls = twitter.get_urls_from_tweets(tweet_objects)
+    urls = twitter_connector.get_urls_from_tweets(tweet_objects)
     print('urls', urls)
     reasons = [results.RelationshipReason('contains_url', evaluate_url(url['url'])) for url in urls]
 
@@ -115,7 +115,7 @@ def count_user(user, tweets, allow_cached, only_cached, multiprocess=False):
         if result:
             result['cache'] = 'hit'
             return result
-    shared_urls = twitter.get_urls_from_tweets(tweets)
+    shared_urls = twitter_connector.get_urls_from_tweets(tweets)
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']
@@ -215,7 +215,7 @@ def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cac
             result['cache'] = 'hit'
             return result
     tweets = twitter_api.get_user_tweets(user['id'])
-    shared_urls = twitter.get_urls_from_tweets(tweets)
+    shared_urls = twitter_connector.get_urls_from_tweets(tweets)
     #matching = [dataset_by_url[el] for el in shared_urls if el in dataset_by_url]
     #verified = [el for el in matching if el['label'] == 'true']
     #fake = [el for el in matching if el['label'] == 'fake']

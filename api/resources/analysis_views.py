@@ -73,8 +73,6 @@ class TwitterAccountAnalysis(Resource):
     args = {
         'user_id': marshmallow.fields.Int(missing=None),
         'screen_name': marshmallow.fields.Str(missing=None),
-        'allow_cached': marshmallow.fields.Bool(missing=False),
-        'only_cached': marshmallow.fields.Bool(missing=False),
         'relation': marshmallow.fields.String(missing=None),
         'limit': marshmallow.fields.Int(missing=500)
     }
@@ -82,7 +80,7 @@ class TwitterAccountAnalysis(Resource):
     # TODO let it also be a path parameter
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
-    def get(self, user_id, screen_name, allow_cached, only_cached, relation, limit):
+    def get(self, user_id, screen_name, relation, limit):
         """GET is for cached results"""
         allow_cached=True
         only_cached=True
@@ -90,19 +88,25 @@ class TwitterAccountAnalysis(Resource):
             return analysis_manager.analyse_friends_from_screen_name(screen_name, limit)
         if user_id:
             return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
-        elif screen_name:
+        if screen_name:
             return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
 
-        return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
+        return {'error': 'Provide a user_id or screen_name as parameter'}, 400
 
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
-    def post(self, user_id, screen_name, allow_cached, only_cached, relation, limit):
+    def post(self, user_id, screen_name, relation, limit):
         """POST runs the analysis again"""
-        print(allow_cached)
+        allow_cached=False
+        only_cached=False
+        if relation == 'friends':
+            if user_id:
+                return analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached)
+            if screen_name:
+                return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached)
         if user_id:
             return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
-        elif screen_name:
+        if screen_name:
             return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
         return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 

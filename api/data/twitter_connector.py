@@ -33,7 +33,15 @@ def search_friends_from_screen_name(screen_name):
     response = requests.get(f'{TWITTER_ENDPOINT}/search/friends', params={'screen_name': screen_name})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
-        return None
+        return []
+    return response.json()
+
+def search_tweets_with_url(url):
+    # TODO this is not implemented in twitter_connector
+    response = requests.get(f'{TWITTER_ENDPOINT}/search/tweets', params={'link': url})
+    if response.status_code != 200:
+        print('ERROR', url, response.status_code)
+        return []
     return response.json()
 
 

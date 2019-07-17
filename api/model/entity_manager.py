@@ -1,69 +1,26 @@
-from ..data import twitter
+from ..data import twitter_connector
 from ..data import data
 from ..data import database
 from ..evaluation import evaluate
 
 # Tweet
 
-def get_tweet_from_id(tweet_id):
-    """Returns a single tweet, given its ID or None if it is not retrievable"""
-    tweets = get_tweets_from_ids([tweet_id])
-    if not tweets:
-        return None
-    tweet = tweets[0]
-
-    return tweet
-
-def get_tweets_from_ids(tweets_ids):
-    """Returns the tweets corresponding to the ids provided"""
-    return twitter.get_instance().get_statuses_lookup(tweets_ids)
-
-def get_tweets_from_user_id(user_id, cached_only=False, from_date=None, limit=None, offset=0):
-    """Returns a list of tweets given a user_id. cached_only is to avoid searching for newer tweets, from_date limits the search to tweets published after a certain date. limit and offset for paging"""
-    return twitter.get_instance().get_user_tweets(user_id)
-
-def get_tweets_from_screen_name(screen_name, cached_only=False, from_date=None, limit=None, offset=0):
-    """Returns a list of tweets given a screen_name. cached_only is to avoid searching for newer tweets, from_date limits the search to tweets published after a certain date. limit and offset for paging"""
-    return twitter.get_instance().get_user_tweets_from_screen_name(screen_name)
-
 def get_tweets_containing_url(url, cached_only=False, from_date=None, limit=None, offset=0):
     """Returns a list of tweets that contain a certain URL. cached_only is to avoid searching for newer tweets, from_date limits the search to tweets published after a certain date. limit and offset for paging"""
-    twitter_api = twitter.get_instance()
-    tweets_ids = data.get_tweets_containing_url(url, twitter_api)
-    return [{'id': id} for id in tweets_ids]
+    tweets = twitter_connector.search_tweets_with_url(url)
+    # TODO check this
+    return tweets
 
 # TwitterAccount
 
-def get_twitter_account_from_id(user_id, cached=False):
-    """Returns the twitter account corresponding to the user_id, or None if t is not retrievable"""
-    # TODO handle cached
-    users = get_twitter_accounts_from_ids([user_id])
-    if not users:
-        return None
-    user = users[0]
-
-    return user
-
-def get_twitter_accounts_from_ids(user_ids):
-    return twitter.get_instance().get_users_lookup(user_ids)
-
 def get_twitter_account_from_screen_name(screen_name, cached=False):
     """Returns the twitter account corresponding to the user_id, or None if t is not retrievable"""
-    return twitter.get_instance().get_user_from_screen_name(screen_name, cached)
+    return twitter_connector.search_twitter_user_from_screen_name(screen_name)
 
-def get_twitter_account_followers_from_id(user_id, limit=None, offset=0):
-    """Returns the twitter accounts that follow the specified user"""
-    return twitter.get_instance().get_followers(user_id, limit)
-
-def get_twitter_account_friends_from_id(user_id, limit=None, offset=0):
-    """Returns the twitter accounts that the specified user is following"""
-    return twitter.get_instance().get_following(user_id, limit)
-
-def get_twitter_account_followers_from_screen_name(screen_name, limit=None, offset=0):
-    return twitter.get_instance().get_followers_from_screen_name(screen_name, limit)
 
 def get_twitter_account_friends_from_screen_name(screen_name, limit=None, offset=0):
-    friends = twitter.search_friends_from_screen_name(screen_name)
+    # TODO deprecate
+    friends = twitter_connector.search_friends_from_screen_name(screen_name)
     return friends
 
 # FactcheckingOrganisation
@@ -103,8 +60,9 @@ def get_dataset_from_id(dataset_id):
     """Returns the dataset corresponding to the id"""
     raise NotImplementedError()
 
-def get_sources():
+def get_origins():
     """Returns the information about all the sources"""
+    # TODO refactor sources --> origins
     return [el for el in database.get_sources()]
 
 def get_data_stats():

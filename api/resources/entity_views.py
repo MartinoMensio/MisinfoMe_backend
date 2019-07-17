@@ -21,21 +21,8 @@ twitter_account_object = {
     'error': flask_restplus.fields.String
 }
 
-
-class Tweet(Resource):
-    @marshal_with(tweet_object)
-    def get(self, tweet_id):
-        tweet = entity_manager.get_tweet_from_id(tweet_id)
-        if tweet:
-            return tweet
-        # TODO use twitter.def get_statuses_lookup(self, tweet_ids), use correct status codes for get old and retrieve new
-        return {'error': 'Tweet not found'}, 404
-
 class TweetList(Resource):
     args = {
-        'tweets_ids': webargs.fields.DelimitedList(marshmallow.fields.Int(), missing=[]),
-        'screen_name': marshmallow.fields.Str(missing=None),
-        'user_id': marshmallow.fields.Int(missing=None),
         'url': marshmallow.fields.Str(missing=None),
         'cached_only': marshmallow.fields.Bool(missing=False),
         'from_date': marshmallow.fields.Date(missing=None)
@@ -43,27 +30,25 @@ class TweetList(Resource):
 
     @marshal_with(tweet_object)
     @use_kwargs(args)
-    def get(self, tweets_ids, screen_name, user_id, url, cached_only, from_date):
-        print(tweets_ids, screen_name, user_id, url, cached_only, from_date)
-        if tweets_ids:
-            return entity_manager.get_tweets_from_ids(tweets_ids)
-        elif user_id:
-            return entity_manager.get_tweets_from_user_id(user_id, cached_only=cached_only, from_date=from_date)
-        elif screen_name:
-            return entity_manager.get_tweets_from_screen_name(screen_name, cached_only=cached_only, from_date=from_date)
-        elif url:
+    def get(self, url, cached_only, from_date):
+        if url:
             return entity_manager.get_tweets_containing_url(url, cached_only=cached_only, from_date=from_date)
 
-        return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
+        return {'error': 'Missing one of required params: url'}, 400
 
 class TwitterAccount(Resource):
+    args = {
+        'screen_name': marshmallow.fields.Str(missing=None)
+    }
     @marshal_with(twitter_account_object)
-    def get(self, account_id):
-        twitter_account = entity_manager.get_twitter_account_from_id(account_id)
+    @use_kwargs(args)
+    def get(self, screen_name):
+        twitter_account = entity_manager.get_twitter_account_from_screen_name(screen_name)
         if twitter_account:
             return twitter_account
         return {'error': 'User not found'}, 404
 
+"""
 class TwitterAccountList(Resource):
     args = {
         'relation': marshmallow.fields.Str(missing=None, validate=lambda r: r in ['followers', 'friends']),
@@ -104,6 +89,7 @@ class TwitterAccountList(Resource):
             return result
 
         return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
+"""
 """
 class TwitterFriends(Resource):
     args = {
@@ -171,9 +157,9 @@ class DomainsStats(Resource):
     def get(self):
         return entity_manager.get_domains()
 
-class SourcesStats(Resource):
+class OriginsStats(Resource):
     def get(self):
-        return entity_manager.get_sources()
+        return entity_manager.get_origins()
 
 class FactcheckersTable(Resource):
     def get(self):
