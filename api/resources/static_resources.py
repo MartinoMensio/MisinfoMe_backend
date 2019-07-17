@@ -22,7 +22,7 @@ def swagger_static(filename):
 
 
 
-def configure_static_resources(base_url, app: flask.Flask, api):
+def configure_static_resources(base_url, app: flask.Flask, api: flask_restplus.Api):
     #app_url = base_url + '/app'
     app_url = base_url
 
@@ -54,5 +54,20 @@ def configure_static_resources(base_url, app: flask.Flask, api):
         return redirect(base_url + '/home')
 
 
+
     # we need to register the newly created blueprint for the documentation
     app.register_blueprint(modified_apidoc)
+    # and overwrite this damn method, to have an internal url to specs_url (otherwise it weirdly creates a localhost in the template)
+    flask_restplus.apidoc.ui_for = lambda self: flask.render_template('swagger-ui.html',
+        title=api.title,
+        specs_url='/misinfo/api/swagger.json')
+
+    """
+    # some experiments
+    @app.route(base_url + '/apiaaaa')
+    def get_swaggerui():
+        print('get homepage of swaggerui')
+        return flask.render_template('swagger-ui.html', title=api.title,
+                           specs_url='/misinfo/api/swagger.json')
+        #return flask_restplus.apidoc.ui_for(api)
+    """
