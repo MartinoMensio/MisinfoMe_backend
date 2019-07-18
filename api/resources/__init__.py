@@ -6,7 +6,10 @@ from flask_cors import CORS
 from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views
 from . import static_resources
 
+
+
 def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
+    credibility_views.global_api = api
     base_url = '/misinfo'
 
     # endpoints for the entities
@@ -35,8 +38,7 @@ def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
     analysis_ns.add_resource(analysis_views.TweetsTimeDistributionAnalysis, '/time_distribution_tweets')
 
     # endpoints for the credibility graph
-    credibility_ns = api.namespace('credibility', description='Interfacing with the credibility component')
-    credibility_ns.add_resource(credibility_views.CredibilitySource, '/sources/<string:source>')
+    api.add_namespace(credibility_views.api)
 
     # endpoints for the stats
     stats_ns = api.namespace('stats', description='Some statistics')

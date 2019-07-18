@@ -10,7 +10,8 @@ from dateutil.relativedelta import relativedelta
 
 
 from . import results, model
-from ..data import utils, twitter_connector, database, data
+from ..data import utils, database, data
+from ..external import twitter_connector
 
 pool_size = 32
 

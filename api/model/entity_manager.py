@@ -1,4 +1,4 @@
-from ..data import twitter_connector
+from ..external import twitter_connector
 from ..data import data
 from ..data import database
 from ..evaluation import evaluate

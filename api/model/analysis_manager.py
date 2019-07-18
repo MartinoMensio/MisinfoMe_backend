@@ -1,5 +1,6 @@
 from ..evaluation import evaluate
-from ..data import twitter_connector, twitter_old
+from ..data import twitter_old
+from ..external import twitter_connector
 
 def analyse_url(url, allow_cached=False, only_cached=False):
     pass

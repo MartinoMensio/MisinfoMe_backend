@@ -44,8 +44,17 @@ def search_tweets_with_url(url):
         return []
     return response.json()
 
+def get_tweet(tweet_id):
+    response = requests.get(f'{TWITTER_CONNECTOR}tweets/{tweet_id}')
+    if response.status_code != 200:
+        return None
+    return response.json()
+
+
 
 def get_urls_from_tweets(tweets):
+    # this method extracts the urls contained in a tweet
+    # TODO this method does not belong here
     all_urls = []
     for t in tweets:
         urls = [{'url': u, 'found_in_tweet': str(t['id']), 'retweet': t['retweet']} for u in t['links']]
