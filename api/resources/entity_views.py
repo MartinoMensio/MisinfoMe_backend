@@ -1,4 +1,4 @@
-from flask_restplus import Resource, marshal_with
+from flask_restplus import Resource, marshal_with, Namespace
 import flask_restplus
 import webargs
 import marshmallow
@@ -6,6 +6,8 @@ from webargs.flaskparser import use_args, use_kwargs
 
 from ..model import entity_manager
 from . import statuses
+
+api = Namespace('entities', description='Basic entities stored in the service')
 
 tweet_object = {
     'id': flask_restplus.fields.Integer,
@@ -29,6 +31,9 @@ class TweetList(Resource):
     }
 
     @marshal_with(tweet_object)
+    @api.param('url', 'Search the tweets containing this URL')
+    @api.param('cached_only', 'Get only tweets that are already in the cache')
+    @api.param('from_date', 'Select tweets after a certain date')
     @use_kwargs(args)
     def get(self, url, cached_only, from_date):
         if url:
@@ -41,6 +46,7 @@ class TwitterAccount(Resource):
         'screen_name': marshmallow.fields.Str(missing=None)
     }
     @marshal_with(twitter_account_object)
+    @api.param('screen_name', 'The screen_name to look for')
     @use_kwargs(args)
     def get(self, screen_name):
         twitter_account = entity_manager.get_twitter_account_from_screen_name(screen_name)
@@ -109,6 +115,7 @@ class TwitterFriends(Resource):
             return {'error': 'friends of?'}
 """
 
+@api.route('/factchecking_organisations/<string:org_id>')
 class FactcheckingOrganisation(Resource):
     def get(self, org_id):
         organisation = entity_manager.get_factchecking_organisation_from_id(org_id)
@@ -116,6 +123,8 @@ class FactcheckingOrganisation(Resource):
             return organisation
         return {'error': 'Factchecking organisation not found'}, 404
 
+
+@api.route('/factchecking_organisations')
 class FactcheckingOrganisationList(Resource):
     args = {
         'belongs_to_ifcn': marshmallow.fields.Bool(missing=None),
@@ -123,12 +132,16 @@ class FactcheckingOrganisationList(Resource):
         'country': marshmallow.fields.Str(missing=None)
     }
 
+    @api.param('belongs_to_ifcn', 'Get only the factcheckers belonging to IFCN')
+    @api.param('valid_ifcn', 'Get only the factcheckers that have a valid (not expired) IFCN membership')
+    @api.param('country', 'Get only the factcheckers from a specific country code')
     @use_kwargs(args)
     def get(self, belongs_to_ifcn, valid_ifcn, country):
         return entity_manager.get_factchecking_organisations(belongs_to_ifcn=belongs_to_ifcn, valid_ifcn=valid_ifcn, country=country)
 
 # Fact-checking reviews
 
+@api.route('/factchecking_reviews')
 class FactcheckingReviewList(Resource):
     args = {
         'published_by_id': marshmallow.fields.String(missing=None),
@@ -136,6 +149,9 @@ class FactcheckingReviewList(Resource):
         'published_at_url': marshmallow.fields.String(missing=None)
     }
 
+    @api.param('published_by_id', 'Get the factchecking reviews published by a single organisation (identifier)')
+    @api.param('published_at_domain', 'Get the factchecking reviews published on a certain domain')
+    @api.param('published_at_url', 'Get the factchecking reviews published on a certain URL')
     @use_kwargs(args)
     def get(self, published_by_id, published_at_domain, published_at_url):
         if published_by_id:
@@ -149,18 +165,22 @@ class FactcheckingReviewList(Resource):
 
 
 
+@api.route('/')
 class DataStats(Resource):
     def get(self):
         return entity_manager.get_data_stats()
 
+@api.route('/domains')
 class DomainsStats(Resource):
     def get(self):
         return entity_manager.get_domains()
 
+@api.route('/origins')
 class OriginsStats(Resource):
     def get(self):
         return entity_manager.get_origins()
 
+@api.route('/factcheckers_table')
 class FactcheckersTable(Resource):
     def get(self):
         return entity_manager.get_factcheckers_table()

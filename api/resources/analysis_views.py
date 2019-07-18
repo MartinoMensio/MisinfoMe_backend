@@ -1,4 +1,4 @@
-from flask_restplus import Resource, marshal_with, marshal
+from flask_restplus import Resource, marshal_with, marshal, Namespace
 import marshmallow
 import webargs
 import flask_restplus
@@ -6,6 +6,7 @@ from webargs.flaskparser import use_args, use_kwargs
 
 from ..model import analysis_manager
 
+api = Namespace('analysis', description='Analysis of some entities')
 
 ### types of output
 count_analysis_fields = {
@@ -27,11 +28,13 @@ count_analysis_fields = {
     'cache': flask_restplus.fields.String
 }
 
+@api.route('/urls')
 class UrlAnalysis(Resource):
     args = {
         'url': marshmallow.fields.Str(missing=None),
     }
 
+    @api.param('url', 'The URL to be analysed')
     @use_kwargs(args)
     def get(self, url):
         """GET is for cached results"""
@@ -40,6 +43,8 @@ class UrlAnalysis(Resource):
             return {'error': 'Provide an url as parameter'}, 400
         pass
 
+
+    @api.param('url', 'The URL to be analysed')
     @use_kwargs(args)
     def post(self, url):
         """POST runs the analysis again"""
@@ -48,11 +53,13 @@ class UrlAnalysis(Resource):
             return {'error': 'Provide an url as parameter'}, 400
         pass
 
+@api.route('/tweets')
 class TweetAnalysis(Resource):
     args = {
         'tweet_id': marshmallow.fields.Int(missing=None),
     }
 
+    @api.param('tweet_id', 'The ID of the tweet to analyse')
     @use_kwargs(args)
     def get(self, tweet_id):
         """GET is for cached results"""
@@ -61,6 +68,8 @@ class TweetAnalysis(Resource):
             return {'error': 'Provide an tweet_id as parameter'}, 400
         pass
 
+
+    @api.param('tweet_id', 'The ID of the tweet to analyse')
     @use_kwargs(args)
     def post(self, tweet_id):
         """POST runs the analysis again"""
@@ -69,6 +78,7 @@ class TweetAnalysis(Resource):
             return {'error': 'Provide an tweet_id as parameter'}, 400
         pass
 
+@api.route('/twitter_accounts')
 class TwitterAccountAnalysis(Resource):
     args = {
         'user_id': marshmallow.fields.Int(missing=None),
@@ -77,7 +87,10 @@ class TwitterAccountAnalysis(Resource):
         'limit': marshmallow.fields.Int(missing=500)
     }
 
-    # TODO let it also be a path parameter
+    @api.param('user_id', 'The user ID to analyse')
+    @api.param('screen_namme', 'The screen_name to analyse')
+    @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
+    @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
     def get(self, user_id, screen_name, relation, limit):
@@ -93,6 +106,10 @@ class TwitterAccountAnalysis(Resource):
 
         return {'error': 'Provide a user_id or screen_name as parameter'}, 400
 
+    @api.param('user_id', 'The user ID to analyse')
+    @api.param('screen_namme', 'The screen_name to analyse')
+    @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
+    @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
     def post(self, user_id, screen_name, relation, limit):
@@ -110,18 +127,22 @@ class TwitterAccountAnalysis(Resource):
             return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
         return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 
+@api.route('/time_distribution_url')
 class UrlTimeDistributionAnalysis(Resource):
     args = {
         'url': marshmallow.fields.Str(missing=None),
         'time_granularity': marshmallow.fields.Str(missing='month', validate=lambda tg: tg in ['year', 'month', 'week', 'day'])
     }
 
+    @api.param('url', 'The url to analyse temporally')
+    @api.param('time_granularity', 'The time granularity wanted. Possible values are `year`, `month`, `week`, `day`')
     @use_kwargs(args)
     def get(self, url, time_granularity):
         if not url:
             return {'error': 'missing parameter url'}, 400
         return analysis_manager.analyse_time_distribution_url(url, time_granularity)
 
+@api.route('/time_distribution_tweets')
 class TweetsTimeDistributionAnalysis(Resource):
     args = {
         'tweets_ids': webargs.fields.DelimitedList(marshmallow.fields.Int(), missing=[]),
@@ -130,6 +151,9 @@ class TweetsTimeDistributionAnalysis(Resource):
         'reference_date': marshmallow.fields.Date(missing=None)
     }
 
+    @api.param('tweets_ids', 'The IDs of the tweets to analyse')
+    @api.param('time_granularity', 'The time granularity wanted. Possible values are `year`, `month`, `week`, `day`')
+    @api.param('mode', 'The mode for time. Possible values are `absolute`, `relative`')
     @use_kwargs(args)
     def get(self, tweets_ids, time_granularity, mode, reference_date):
         return analysis_manager.analyse_time_distribution_tweets(tweets_ids, time_granularity, mode, reference_date)
