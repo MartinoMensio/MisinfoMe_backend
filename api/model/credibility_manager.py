@@ -5,19 +5,14 @@ from ..external import twitter_connector, credibility_connector
 from ..data import utils, unshortener
 
 
-def get_credibility_weight(credibility):
-    """This provides a weight that accounts for:
-    - confidence
-    - more weight to negative credibility: from 1 (normal) to 100 (for -1)
-    """
-    credibility_value = credibility['value']
-    credibility_confidence = credibility['confidence']
+def get_credibility_weight(credibility_value):
+    """This provides a weight that gives more weight to negative credibility: from 1 (normal) to 100 (for -1)"""
 
-    shame_importance = 1
+    result = 1
     if credibility_value < 0:
-        shame_importance *= - credibility_value * 100
+        result *= - credibility_value * 100
 
-    return credibility_confidence * shame_importance
+    return result
 
 def get_source_credibility(source):
     return credibility_connector.get_source_credibility(source)
@@ -37,43 +32,57 @@ def get_tweets_credibility_from_ids(tweet_ids):
 
 def get_tweets_credibility(tweets):
     tweets_not_none = [t for t in tweets if t]
-    tweet_ids = [f"{t['id']}" for t in tweets]
     if not tweets_not_none:
         # no tweets retrieved. Wrong ids or deleted?
         return None
-    urls = twitter_connector.get_urls_from_tweets(tweets)
+    urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
     # let's count the domain appearances in all the tweets
-    domains_counts = defaultdict(lambda: 0)
+    domains_appearances = defaultdict(list)
     for url_object in urls:
         url = url_object['url']
         url_unshortened = unshortener.unshorten(url)
         domain = utils.get_url_domain(url_unshortened)
         # TODO URL matches, credibility_connector.get_url_credibility(url_unshortened)
-        domains_counts[domain] += 1
+        domains_appearances[domain].append(url_object['found_in_tweet'])
     credibility_sum = 0
     confidence_sum = 0
-    assessments = []
-    domain_assessments = credibility_connector.post_source_credibility_multiple(list(domains_counts.keys()))
+    weights_sum = 0
+    sources_assessments = []
+    domain_assessments = credibility_connector.post_source_credibility_multiple(list(domains_appearances.keys()))
     for domain, domain_credibility in domain_assessments.items():
-        appearance_cnt = domains_counts[domain]
-        print(domain, domain_credibility['credibility'])
-        credibility = domain_credibility['credibility']['value']
-        confidence = domain_credibility['credibility']['confidence']
-        credibility_weight = get_credibility_weight(domain_credibility['credibility'])
-        credibility_sum += credibility * credibility_weight * appearance_cnt
-        confidence_sum += credibility_weight * appearance_cnt
-        assessments.append(domain_credibility)
+        appearance_cnt = len(domains_appearances[domain])
+        credibility = domain_credibility['credibility']
+        print(domain, credibility)
+        credibility_value = credibility['value']
+        confidence = credibility['confidence']
+        credibility_weight = get_credibility_weight(credibility_value)
+        credibility_sum += credibility_value * credibility_weight * confidence * appearance_cnt
+        confidence_sum += credibility_weight * confidence * appearance_cnt
+        weights_sum += credibility_weight * appearance_cnt
+        sources_assessments.append({
+            'source': domain,
+            'credibility': credibility,
+            'tweets_containing': domains_appearances[domain],
+            'source_credibility': f'/misinfo/api/credibility/sources/{domain}',
+            'credibility_weight': credibility_weight
+        })
     if credibility_sum:
         credibility_weighted = credibility_sum / confidence_sum
-        confidence_weighted = confidence_sum / len(urls)
+        confidence_weighted = confidence_sum / weights_sum
     else:
         credibility_weighted = 0.
         confidence_weighted = 0.
     return {
-        'credibility': credibility_weighted,
-        'confidence': confidence_weighted,
-        'assessments': assessments,
-        'itemReviewed': tweet_ids # TODO a link to the tweets
+        'credibility': {
+            'value': credibility_weighted,
+            'confidence': confidence_weighted
+        },
+        'assessments': {
+            'sources': sources_assessments, # here matches at the source-level
+            'documents': [], # here matches at the document-level
+            'claims': [] # here matches at the claim-level
+        },
+        #'itemReviewed': tweet_ids # TODO a link to the tweets
     }
 
 def get_user_credibility_from_user_id(user_id):
