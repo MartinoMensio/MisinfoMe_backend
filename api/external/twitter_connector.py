@@ -26,11 +26,14 @@ def search_twitter_user_from_screen_name(screen_name):
     return response.json()
 
 def search_tweets_from_screen_name(screen_name):
+    print(f'getting tweets for {screen_name}')
     response = requests.get(f'{TWITTER_CONNECTOR}search/tweets', params={'screen_name': screen_name})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
         raise ExternalException(response.status_code, response.json())
-    return response.json()
+    result = response.json()
+    print(f'retrieved {len(result)} tweets for {screen_name}')
+    return result
 
 def search_friends_from_screen_name(screen_name):
     response = requests.get(f'{TWITTER_CONNECTOR}search/friends', params={'screen_name': screen_name})

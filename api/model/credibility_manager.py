@@ -38,21 +38,29 @@ def get_tweets_credibility(tweets):
     urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
     # let's count the domain appearances in all the tweets
     domains_appearances = defaultdict(list)
+    unshorten_list = []
+    url_objects = {}
     for url_object in urls:
         url = url_object['url']
-        url_unshortened = unshortener.unshorten(url)
+        url_objects[url] = url_object
+        unshorten_list.append(url)
+    unshortened = unshortener.unshorten_multiprocess(unshorten_list)
+
+    for url, url_unshortened in unshortened.items():
         domain = utils.get_url_domain(url_unshortened)
+        url_object = url_objects[url]
         # TODO URL matches, credibility_connector.get_url_credibility(url_unshortened)
         domains_appearances[domain].append(url_object['found_in_tweet'])
     credibility_sum = 0
     confidence_sum = 0
     weights_sum = 0
     sources_assessments = []
+    print(f'getting credibility for {len(domains_appearances)} domains')
     domain_assessments = credibility_connector.post_source_credibility_multiple(list(domains_appearances.keys()))
     for domain, domain_credibility in domain_assessments.items():
         appearance_cnt = len(domains_appearances[domain])
         credibility = domain_credibility['credibility']
-        print(domain, credibility)
+        #print(domain, credibility)
         credibility_value = credibility['value']
         confidence = credibility['confidence']
         credibility_weight = get_credibility_weight(credibility_value)
@@ -66,6 +74,7 @@ def get_tweets_credibility(tweets):
             'url': f'/misinfo/credibility/sources/{domain}',
             'credibility_weight': credibility_weight
         })
+    print(f'retrieved credibility for {len(sources_assessments)} domains')
     if credibility_sum:
         credibility_weighted = credibility_sum / confidence_sum
         confidence_weighted = confidence_sum / weights_sum
