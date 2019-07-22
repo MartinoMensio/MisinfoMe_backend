@@ -19,8 +19,7 @@ twitter_account_object = {
     'id': flask_restplus.fields.Integer,
     'name': flask_restplus.fields.String,
     'screen_name': flask_restplus.fields.String,
-    'profile_image_url_https': flask_restplus.fields.String,
-    'error': flask_restplus.fields.String
+    'profile_image_url_https': flask_restplus.fields.String
 }
 
 class TweetList(Resource):
@@ -41,18 +40,17 @@ class TweetList(Resource):
 
         return {'error': 'Missing one of required params: url'}, 400
 
+@api.route('/users/')
 class TwitterAccount(Resource):
     args = {
         'screen_name': marshmallow.fields.Str(missing=None)
     }
-    @marshal_with(twitter_account_object)
+    #@marshal_with(twitter_account_object)
     @api.param('screen_name', 'The screen_name to look for')
     @use_kwargs(args)
     def get(self, screen_name):
         twitter_account = entity_manager.get_twitter_account_from_screen_name(screen_name)
-        if twitter_account:
-            return twitter_account
-        return {'error': 'User not found'}, 404
+        return twitter_account
 
 """
 class TwitterAccountList(Resource):

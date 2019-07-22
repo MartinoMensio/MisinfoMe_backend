@@ -10,6 +10,14 @@ from ..model import credibility_manager
 api = Namespace('credibility', description='Interfacing with the credibility component')
 
 
+@api.route('/origins/')
+@api.doc(description='Get the origins of the assessments used')
+class CredibilityOrigins(Resource):
+    @api.response(200, 'Success')
+    def get(self):
+        return credibility_manager.get_credibility_origins()
+
+
 @api.route('/sources/<string:source>')
 @api.param('source', 'The source is a domain name (e.g., `snopes.com`)')
 @api.doc(description='Get the credibility of a certain source')

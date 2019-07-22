@@ -5,11 +5,16 @@ from flask_cors import CORS
 
 from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views
 from . import static_resources
+from ..external import ExternalException
 
 
 
 def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
     base_url = '/misinfo'
+
+    @api.errorhandler(ExternalException)
+    def default_error_handler(error: ExternalException):
+        return error.json_error, error.status_code
 
     # endpoints for the entities
     api.add_namespace(entity_views.api)

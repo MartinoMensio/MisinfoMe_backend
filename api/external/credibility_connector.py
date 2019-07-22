@@ -15,3 +15,9 @@ def post_source_credibility_multiple(sources):
     if response.status_code != 200:
         raise ValueError(response.status_code)
     return response.json()
+
+def get_origins():
+    response = requests.get(f'{CREDIBILITY_ENDPOINT}/origins/')
+    if response.status_code != 200:
+        raise ValueError(response.status_code)
+    return response.json()

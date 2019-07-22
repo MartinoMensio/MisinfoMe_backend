@@ -60,10 +60,10 @@ def get_tweets_credibility(tweets):
         confidence_sum += credibility_weight * confidence * appearance_cnt
         weights_sum += credibility_weight * appearance_cnt
         sources_assessments.append({
-            'source': domain,
+            'itemReviewed': domain,
             'credibility': credibility,
             'tweets_containing': domains_appearances[domain],
-            'source_credibility': f'/misinfo/api/credibility/sources/{domain}',
+            'url': f'/misinfo/credibility/sources/{domain}',
             'credibility_weight': credibility_weight
         })
     if credibility_sum:
@@ -77,11 +77,11 @@ def get_tweets_credibility(tweets):
             'value': credibility_weighted,
             'confidence': confidence_weighted
         },
-        'assessments': {
-            'sources': sources_assessments, # here matches at the source-level
-            'documents': [], # here matches at the document-level
-            'claims': [] # here matches at the claim-level
-        },
+        'assessments': sources_assessments##{
+            #'sources': sources_assessments, # here matches at the source-level
+            #'documents': [], # here matches at the document-level
+            #'claims': [] # here matches at the claim-level
+        #},
         #'itemReviewed': tweet_ids # TODO a link to the tweets
     }
 
@@ -92,3 +92,6 @@ def get_user_credibility_from_user_id(user_id):
 def get_user_credibility_from_screen_name(screen_name):
     tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
     return get_tweets_credibility(tweets)
+
+def get_credibility_origins():
+    return credibility_connector.get_origins()

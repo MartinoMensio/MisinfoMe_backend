@@ -1,6 +1,8 @@
 import os
 import requests
 
+from . import ExternalException
+
 TWITTER_CONNECTOR = os.environ.get('TWITTER_CONNECTOR', 'http://localhost:20200/')
 print('TWITTER_CONNECTOR', TWITTER_CONNECTOR)
 
@@ -20,21 +22,21 @@ def search_twitter_user_from_screen_name(screen_name):
     response = requests.get(f'{TWITTER_CONNECTOR}search/user', params={'screen_name': screen_name})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
-        return None
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def search_tweets_from_screen_name(screen_name):
     response = requests.get(f'{TWITTER_CONNECTOR}search/tweets', params={'screen_name': screen_name})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
-        return []
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def search_friends_from_screen_name(screen_name):
     response = requests.get(f'{TWITTER_CONNECTOR}search/friends', params={'screen_name': screen_name})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
-        return []
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def search_tweets_with_url(url):
@@ -42,14 +44,14 @@ def search_tweets_with_url(url):
     response = requests.get(f'{TWITTER_CONNECTOR}search/tweets', params={'link': url})
     if response.status_code != 200:
         print('ERROR', url, response.status_code)
-        return []
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def get_tweet(tweet_id):
     response = requests.get(f'{TWITTER_CONNECTOR}tweets/{tweet_id}')
     if response.status_code != 200:
         print('ERROR', tweet_id, response.status_code)
-        return None
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 
