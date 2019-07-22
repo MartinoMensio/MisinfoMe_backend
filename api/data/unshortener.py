@@ -162,20 +162,17 @@ class Unshortener(object):
             source_url = url
         return source_url
 
-def func(params):
-    url, uns = params
-    res = uns.unshorten(url)
+def func(url):
+    #url, uns = params
+    res = unshorten(url)
     #print(res)
     return (url, res)
 
 def unshorten_multiprocess(url_list, pool_size=4):
-    # one unshortener for each process
-    unshorteners =  [Unshortener() for _ in range(pool_size)]
-    args = [(url, unshorteners[idx % pool_size]) for (idx,url) in enumerate(url_list)]
     with multiprocessing.Pool(pool_size) as pool:
         # one-to-one with the url_list
         specific_results = {}
-        for result in tqdm.tqdm(pool.imap_unordered(func, args), total=len(args)):
+        for result in tqdm.tqdm(pool.imap_unordered(func, url_list), total=len(url_list)):
             url, resolved = result
             specific_results[url] = resolved
     return specific_results
