@@ -1,4 +1,5 @@
 app/*
+flask_monitoringdashboard.db
 
 dump/**
 dump.tar.gz

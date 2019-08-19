@@ -1,7 +1,9 @@
+import os
 from flask import Flask, Blueprint
 from flask_restplus import Api
 from flask.json import JSONEncoder
 import datetime
+import flask_monitoringdashboard as dashboard
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -19,3 +21,8 @@ app.register_blueprint(blueprint_api)
 
 resources.configure_endpoints(app, api)
 resources.configure_cors(app)
+
+# dashboard to analyse the API
+dashboard.config.link = 'misinfo/api/dashboard'
+dashboard.config.password = os.environ['DASHBOARD_PASSWORD']
+dashboard.bind(app)
