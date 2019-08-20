@@ -1,4 +1,5 @@
 from collections import defaultdict
+from tqdm import tqdm
 
 from ..data import database
 from ..external import twitter_connector, credibility_connector
@@ -44,9 +45,12 @@ def get_tweets_credibility(tweets):
         url = url_object['url']
         url_objects[url] = url_object
         unshorten_list.append(url)
-    #unshortened = unshortener.unshorten_multiprocess(unshorten_list)
+
     # TODO solve the pool+mongo issue
-    unshortened = {u:unshortener.unshorten(u) for u in unshorten_list}
+    print('unshortening')
+    #unshortened = unshortener.unshorten_multiprocess(unshorten_list)
+    unshortened = {u:unshortener.unshorten(u) for u in tqdm(unshorten_list)}
+    print('unshortened')
 
     for url, url_unshortened in unshortened.items():
         domain = utils.get_url_domain(url_unshortened)
