@@ -186,6 +186,7 @@ def unshorten_multiprocess(url_list, pool_size=20):
         results[match['_id']] = match['to']
     url_not_found = list(set(url_list) - set(results.keys()))
 
+    print('unshortening')
     with multiprocessing.Pool(pool_size) as pool:
         # one-to-one with the url_list
         for one_result in tqdm.tqdm(pool.imap_unordered(func, url_not_found), total=len(url_not_found)):
