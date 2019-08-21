@@ -14,8 +14,6 @@ from bs4 import BeautifulSoup
 from . import database
 from . import utils
 
-resolver_url = 'https://unshorten.me/'
-
 shortening_domains = [
     # https://bit.do/list-of-url-shorteners.php
     't.co',
@@ -91,14 +89,20 @@ def unshorten_broken(url, referer=None, cookies=None):
     #database.save_url_redirect(url, url)
     return url
 
-def unshorten(url):
+def unshorten(url, use_cache=True):
+    """If use_cache is False, does not use the cache"""
     result = utils.add_protocol(url)
     domain = utils.get_url_domain(url)
     if domain in shortening_domains:
-        cached = database.get_url_redirect(url)
+        if use_cache:
+            cached = database.get_url_redirect(url)
+        else:
+            cached = False
         if cached:
+            # match found
             result = cached['to']
         else:
+            # not found
             try:
                 res = requests.head(url, allow_redirects=True, timeout=1)
                 result = res.url
@@ -120,13 +124,16 @@ def unshorten(url):
             except Exception as e:
                 # something like http://ow.ly/yuFE8 that points to .
                 print('error for',url)
-
-        database.save_url_redirect(url, result)
+        if use_cache:
+            # save in the cache for next calls
+            database.save_url_redirect(url, result)
     return result
 
 
-
-class Unshortener(object):
+resolver_url = 'https://unshorten.me/'
+class UnshortenerRemote(object):
+    """This unshortener is based on the https://unshorten.me/ website.
+    Therefore it's deadly slow. Better to use the local unshortener"""
     def __init__(self):
         self.session = requests.Session()
         res_text = self.session.get(resolver_url).text
@@ -164,18 +171,29 @@ class Unshortener(object):
 
 def func(url):
     #url, uns = params
-    res = unshorten(url)
+    res = unshorten(url, use_cache=False)
     #print(res)
     return (url, res)
 
-def unshorten_multiprocess(url_list, pool_size=4):
+def unshorten_multiprocess(url_list, pool_size=20):
+    """Returns a dict, with one (url: resolved) for each url in url_list"""
+    # remove duplicates
+    url_list = list(set(url_list))
+    # check the cache all together
+    redirects_found = database.get_url_redirects_in(url_list)
+    results = {}
+    for match in redirects_found:
+        results[match['_id']] = match['to']
+    url_not_found = list(set(url_list) - set(results.keys()))
+
     with multiprocessing.Pool(pool_size) as pool:
         # one-to-one with the url_list
-        specific_results = {}
-        for result in tqdm.tqdm(pool.imap_unordered(func, url_list), total=len(url_list)):
-            url, resolved = result
-            specific_results[url] = resolved
-    return specific_results
+        for one_result in tqdm.tqdm(pool.imap_unordered(func, url_not_found), total=len(url_not_found)):
+            url, resolved = one_result
+            results[url] = resolved
+            # save here, in the main process
+            database.save_url_redirect(url, resolved)
+    return results
 
 
 if __name__ == "__main__":

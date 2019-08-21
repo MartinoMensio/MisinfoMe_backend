@@ -37,24 +37,12 @@ def get_tweets_credibility(tweets):
         # no tweets retrieved. Wrong ids or deleted?
         return None
     urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
+
     # let's count the domain appearances in all the tweets
     domains_appearances = defaultdict(list)
-    unshorten_list = []
-    url_objects = {}
     for url_object in urls:
-        url = url_object['url']
-        url_objects[url] = url_object
-        unshorten_list.append(url)
-
-    # TODO solve the pool+mongo issue
-    print('unshortening')
-    #unshortened = unshortener.unshorten_multiprocess(unshorten_list)
-    unshortened = {u:unshortener.unshorten(u) for u in tqdm(unshorten_list)}
-    print('unshortened')
-
-    for url, url_unshortened in unshortened.items():
+        url_unshortened = url_object['resolved']
         domain = utils.get_url_domain(url_unshortened)
-        url_object = url_objects[url]
         # TODO URL matches, credibility_connector.get_url_credibility(url_unshortened)
         domains_appearances[domain].append(url_object['found_in_tweet'])
     credibility_sum = 0

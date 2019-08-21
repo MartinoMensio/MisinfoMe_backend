@@ -18,7 +18,7 @@ print('database OK')
 
 db_twitter = client['test_coinform']
 db_twitter_analysis = client['stored_analysis']
-db_redirects = client['test_coinform']
+db_redirects = client['utilities']
 db_datasets = client['datasets_resources']
 db_credibility = client['credibility']
 

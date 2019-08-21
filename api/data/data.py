@@ -8,19 +8,13 @@ from . import unshortener
 
 fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
 
-def classify_url(url_info, unshorten=True):
-    url = url_info['url']
+def classify_url(url_info):
+    url = url_info['resolved']
     domain = utils.get_url_domain(url)
-    if unshorten:
-        unshortened_url = unshortener.unshorten(url)
-        domain = utils.get_url_domain(unshortened_url)
-    else:
-        unshortened_url = url
-    url_info['resolved'] = unshortened_url
+
     label_url = database.get_url_info(url)
-    if not label_url:
-        label_url = database.get_url_info(unshortened_url)
     label_domain = database.get_domain_info(domain)
+
     if not label_domain and domain.startswith('www.'):
         # try also without www.
         label_domain = database.get_domain_info(domain[4:])
