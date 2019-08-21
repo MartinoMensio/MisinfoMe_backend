@@ -117,41 +117,42 @@ def count_user(user, tweets, allow_cached, only_cached):
             return result
     shared_urls = twitter_connector.get_urls_from_tweets(tweets)
 
-    classified_urls = [data.classify_url(url) for url in shared_urls]
+    print('classifiying urls')
+    classified_urls = [data.classify_url(url) for url in tqdm.tqdm(shared_urls)]
 
     matching = [el for el in classified_urls if el]
     #print(matching)
     verified = [el for el in matching if el['score']['label'] == 'true']
     mixed = [el for el in matching if el['score']['label'] == 'mixed']
     fake = [el for el in matching if el['score']['label'] == 'fake']
-    # rebuttals
-    #print(shared_urls)
-    rebuttals_match = {u['resolved']: database.get_rebuttals(u['resolved']) for u in shared_urls}
-    rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
-    # attach the rebuttal links to the fake urls matching
-    #print(rebuttals_match)
-    for el in fake:
-        rebuttals = rebuttals_match.get(el['url'], None)
-        el['rebuttals'] = rebuttals
-        #rebuttals_match.pop(f['url'])
-    for el in mixed:
-        rebuttals = rebuttals_match.get(el['url'], None)
-        el['rebuttals'] = rebuttals
-    for el in verified:
-        rebuttals = rebuttals_match.get(el['url'], None)
-        el['rebuttals'] = rebuttals
-        #rebuttals_match.pop(f['url'])
+    # # rebuttals
+    # #print(shared_urls)
+    # rebuttals_match = {u['resolved']: database.get_rebuttals(u['resolved']) for u in shared_urls}
+    # rebuttals_match = {k:v['rebuttals'] for k,v in rebuttals_match.items() if v}
+    # # attach the rebuttal links to the fake urls matching
+    # #print(rebuttals_match)
+    # for el in fake:
+    #     rebuttals = rebuttals_match.get(el['url'], None)
+    #     el['rebuttals'] = rebuttals
+    #     #rebuttals_match.pop(f['url'])
+    # for el in mixed:
+    #     rebuttals = rebuttals_match.get(el['url'], None)
+    #     el['rebuttals'] = rebuttals
+    # for el in verified:
+    #     rebuttals = rebuttals_match.get(el['url'], None)
+    #     el['rebuttals'] = rebuttals
+    #     #rebuttals_match.pop(f['url'])
 
-    # refactor rebuttals without label
-    rebuttals = [{
-        'found_in_tweet': 0, # TODO retrieve this, refactor how this method processes tweets
-        'retweet': False, # TODO
-        'reason': 'rebuttal_match',
-        'score': {'label': 'rebuttal'},
-        'rebuttals': el_v,
-        'url': el_k,
-        'sources': [database.get_dataset(s) for ss in el_v for s in ss['source']],
-    } for el_k, el_v in rebuttals_match.items()]
+    # # refactor rebuttals without label
+    # rebuttals = [{
+    #     'found_in_tweet': 0, # TODO retrieve this, refactor how this method processes tweets
+    #     'retweet': False, # TODO
+    #     'reason': 'rebuttal_match',
+    #     'score': {'label': 'rebuttal'},
+    #     'rebuttals': el_v,
+    #     'url': el_k,
+    #     'sources': [database.get_dataset(s) for ss in el_v for s in ss['source']],
+    # } for el_k, el_v in rebuttals_match.items()]
 
     if len(fake) + len(verified):
         score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
@@ -171,7 +172,7 @@ def count_user(user, tweets, allow_cached, only_cached):
         'unknown_urls_cnt': len(shared_urls) - len(matching),
         'score': score,
         # add after saving to mongo, because rebuttals have dotted keys
-        'rebuttals': rebuttals,
+        'rebuttals': [],#rebuttals,
         'fake_urls': fake,
         'mixed_urls': mixed,
         'verified_urls': verified
@@ -180,6 +181,7 @@ def count_user(user, tweets, allow_cached, only_cached):
     if len(tweets):
         database.save_count_result(user['id'], result)
 
+    print(user['screen_name'], 'done')
     return result
 
 def count_users(user_ids, twitter_api, allow_cached, only_cached):

@@ -38,6 +38,7 @@ def get_tweets_credibility(tweets):
         return None
     urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
 
+    print('retrieving the domains to assess')
     # let's count the domain appearances in all the tweets
     domains_appearances = defaultdict(list)
     for url_object in urls:
