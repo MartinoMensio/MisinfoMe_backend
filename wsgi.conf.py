@@ -1,7 +1,7 @@
 import multiprocessing
 
 bind = '0.0.0.0:5000'
-timeout = 60
+timeout = 60 * 2
 
 # gevent to handle multiple request for each worker using asyncIO
 # worker_class = 'gevent'

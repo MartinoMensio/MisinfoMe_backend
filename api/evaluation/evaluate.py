@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 from . import results, model
 from ..data import utils, database, data
 from ..external import twitter_connector
+from ..model import credibility_manager
 
 pool_size = 32
 
@@ -103,7 +104,7 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 ### Count methods: just counting tweets, need refactoring
 
 def count_user(user, tweets, allow_cached, only_cached):
-    print(user['screen_name'], allow_cached, only_cached)
+    # print(user['screen_name'], allow_cached, only_cached)
     if not user or 'id' not in user:
         # TODO handle other status codes (user not existent or suspended, with error code and message)
         return {'screen_name': user['screen_name']}
@@ -115,10 +116,11 @@ def count_user(user, tweets, allow_cached, only_cached):
         if result:
             result['cache'] = 'hit'
             return result
+    print('going to evaluate', user['screen_name'])
     shared_urls = twitter_connector.get_urls_from_tweets(tweets)
 
     print('classifiying urls')
-    classified_urls = [data.classify_url(url) for url in tqdm.tqdm(shared_urls)]
+    classified_urls = classify_urls(shared_urls)
 
     matching = [el for el in classified_urls if el]
     #print(matching)
@@ -201,6 +203,114 @@ def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cac
     user = twitter_api.get_user_from_screen_name(screen_name)
     tweets = twitter_api.get_user_tweets(user['id'])
     return count_user(user, tweets, allow_cached, only_cached)
+
+
+
+def classify_urls(urls_info, use_credibility=False):
+    if use_credibility:
+        return classify_urls_credibility(urls_info)
+    else:
+        return classify_urls_legacy(urls_info)
+
+def classify_urls_credibility(urls_info):
+    """Classifies the URLs based on the new credibility model, but replies in a legacy-compatible way"""
+    urls_to_domains = {el['resolved']: utils.get_url_domain(el['resolved']) for el in urls_info}
+    domains_credibility = credibility_manager.get_sources_credibility(list(set(urls_to_domains.values())))
+
+    result = []
+    for url_info in urls_info:
+        url = url_info['resolved']
+        #print(url_info)
+        domain = urls_to_domains[url]
+
+        # TODO doing one by one is extremely slow
+        domain_credibility = domains_credibility[domain]
+        credibility_value = domain_credibility['credibility']['value']
+        if abs(domain_credibility['credibility']['confidence']) < 0.1:
+            print('unknown', domain)
+            label = None
+        else:
+            label = {
+                'domain': domain,
+                'score': {
+                    'label': 'true' if (credibility_value > 0.5) else ('fake' if (credibility_value < -0.5) else 'mixed')
+                },
+                'reason': 'domain_match',
+                'url': url,
+                'found_in_tweet': url_info['found_in_tweet'],
+                'retweet': url_info['retweet'],
+                'sources': [{
+                    '_id': origin['origin_id'],
+                    'name': origin['origin_id'], # TODO better (via joining data)
+                    'url': origin['url'],
+                    'type': 'domain_list'
+                } for origin in domain_credibility['assessments']]
+        }
+        result.append(label)
+    return result
+
+def classify_urls_legacy(urls_info):
+    """The legacy evaluation"""
+    result = []
+    for url_info in tqdm.tqdm(urls_info):
+        print(url_info)
+        result.append(classify_url_legacy(url_info))
+    return result
+
+def classify_url_legacy(url_info):
+    url = url_info['resolved']
+    domain = utils.get_url_domain(url)
+
+    label_url = database.get_url_info(url)
+    label_domain = database.get_domain_info(domain)
+
+    if not label_domain and domain.startswith('www.'):
+        # try also without www.
+        label_domain = database.get_domain_info(domain[4:])
+
+    if label_domain and label_domain['score'].get('is_fact_checker', False):
+        label_domain['reason'] = 'fact_checker'
+        label_domain['url'] = url
+        label = label_domain
+        #print('there', label_domain)
+
+    elif label_url:
+        label_url['reason'] = 'full_url_match'
+        for s in label_url['score']['sources']:
+            if s in data.fact_checkers.keys():
+                label_url['reason'] = 'fact_checking'
+                label_url['score']['sources'] = [s]
+                break
+        label_url['url'] = url
+        label = label_url
+
+    else:
+        if label_domain:
+            label_domain['reason'] = 'domain_match'
+            label_domain['url'] = url
+            label = label_domain
+        else:
+            label = None
+
+    if label:
+        # attribution of the dataset
+        label['sources'] = []
+        for s in label['score']['sources']:
+            dataset = database.get_dataset(s)
+            if not dataset:
+                #print('WARNING: not found', s)
+                continue
+            if not dataset.get('name', None):
+                # TODO fix that when you understand how to manage fact-checkers as datasets
+                # wanted properties to display in frontend: {'name': s, 'url': s}
+                dataset = database.get_fact_checker(s)
+            label['sources'].append(dataset)
+        label['found_in_tweet'] = url_info['found_in_tweet']
+        label['retweet'] = url_info['retweet']
+        #print(label)
+    return label
+
+
 
 ### Methods for grouping database entries
 

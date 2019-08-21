@@ -8,59 +8,6 @@ from . import unshortener
 
 fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
 
-def classify_url(url_info):
-    url = url_info['resolved']
-    domain = utils.get_url_domain(url)
-
-    label_url = database.get_url_info(url)
-    label_domain = database.get_domain_info(domain)
-
-    if not label_domain and domain.startswith('www.'):
-        # try also without www.
-        label_domain = database.get_domain_info(domain[4:])
-
-    if label_domain and label_domain['score'].get('is_fact_checker', False):
-        label_domain['reason'] = 'fact_checker'
-        label_domain['url'] = url
-        label = label_domain
-        #print('there', label_domain)
-
-    elif label_url:
-        label_url['reason'] = 'full_url_match'
-        for s in label_url['score']['sources']:
-            if s in fact_checkers.keys():
-                label_url['reason'] = 'fact_checking'
-                label_url['score']['sources'] = [s]
-                break
-        label_url['url'] = url
-        label = label_url
-
-    else:
-        if label_domain:
-            label_domain['reason'] = 'domain_match'
-            label_domain['url'] = url
-            label = label_domain
-        else:
-            label = None
-
-    if label:
-        # attribution of the dataset
-        label['sources'] = []
-        for s in label['score']['sources']:
-            dataset = database.get_dataset(s)
-            if not dataset:
-                #print('WARNING: not found', s)
-                continue
-            if not dataset.get('name', None):
-                # TODO fix that when you understand how to manage fact-checkers as datasets
-                # wanted properties to display in frontend: {'name': s, 'url': s}
-                dataset = database.get_fact_checker(s)
-            label['sources'].append(dataset)
-        label['found_in_tweet'] = url_info['found_in_tweet']
-        label['retweet'] = url_info['retweet']
-        #print(label)
-    return label
-
 def get_datasets():
     return [el for el in database.get_datasets()]
 

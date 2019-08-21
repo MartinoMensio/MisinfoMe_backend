@@ -104,7 +104,7 @@ def unshorten(url, use_cache=True):
         else:
             # not found
             try:
-                res = requests.head(url, allow_redirects=True, timeout=1)
+                res = requests.head(url, allow_redirects=True, timeout=2)
                 result = res.url
             except requests.exceptions.Timeout as e:
                 # website dead, return the last one
@@ -116,7 +116,7 @@ def unshorten(url, use_cache=True):
                 result = found_url
             except requests.exceptions.RequestException as e:
                 # other exceptions such as SSLError, ConnectionError, TooManyRedirects
-                if e.request.url:
+                if e.request and e.request.url:
                     result = e.request.url
                 else:
                     # something is really wrong

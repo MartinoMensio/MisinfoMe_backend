@@ -9,7 +9,7 @@ api = Namespace('utils', description='Some utility functions')
 @api.route('/unshorten')
 class UrlUnshortener(Resource):
     args = {
-        'url': marshmallow.fields.Str(missing=None)
+        'url': marshmallow.fields.Str(required=True)
     }
 
     @api.param('url', 'The URL to unshorten')

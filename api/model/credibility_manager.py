@@ -18,6 +18,9 @@ def get_credibility_weight(credibility_value):
 def get_source_credibility(source):
     return credibility_connector.get_source_credibility(source)
 
+def get_sources_credibility(sources):
+    return credibility_connector.post_source_credibility_multiple(sources)
+
 def get_tweet_credibility_from_id(tweet_id):
     tweet = twitter_connector.get_tweet(tweet_id)
     tweets_credibility = get_tweets_credibility([tweet])
