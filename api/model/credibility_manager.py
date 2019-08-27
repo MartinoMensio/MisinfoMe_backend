@@ -62,7 +62,8 @@ def get_tweets_credibility(tweets):
         credibility_value = credibility['value']
         confidence = credibility['confidence']
         credibility_weight = get_credibility_weight(credibility_value)
-        credibility_sum += credibility_value * credibility_weight * confidence * appearance_cnt
+        final_weight = credibility_weight * confidence * appearance_cnt
+        credibility_sum += credibility_value * final_weight
         confidence_sum += credibility_weight * confidence * appearance_cnt
         weights_sum += credibility_weight * appearance_cnt
         sources_assessments.append({
@@ -70,7 +71,11 @@ def get_tweets_credibility(tweets):
             'credibility': credibility,
             'tweets_containing': domains_appearances[domain],
             'url': f'/misinfo/credibility/sources/{domain}',
-            'credibility_weight': credibility_weight
+            'credibility_weight': credibility_weight,
+            'weights': {
+                #'origin_weight': origin_weight,
+                'final_weight': final_weight
+            }
         })
     print(f'retrieved credibility for {len(sources_assessments)} domains')
     if credibility_sum:
