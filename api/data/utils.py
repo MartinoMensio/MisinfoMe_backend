@@ -15,7 +15,10 @@ def get_url_domain(url):
     #return str(parsed_uri.netloc)
     if not url:
         return ''
-    ext = tldextract.extract(url)
+    try:
+        ext = tldextract.extract(url)
+    except Exception:
+        raise ValueError(url)
     result = '.'.join(part for part in ext if part)
     return result.lower()
 
