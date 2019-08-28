@@ -103,13 +103,16 @@ def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
 
 ### Count methods: just counting tweets, need refactoring
 
-def count_user(user, tweets, allow_cached, only_cached):
+def count_user(user, tweets, allow_cached, only_cached, use_credibility):
     # print(user['screen_name'], allow_cached, only_cached)
     if not user or 'id' not in user:
         # TODO handle other status codes (user not existent or suspended, with error code and message)
         return {'screen_name': user['screen_name']}
     if allow_cached:
-        result = database.get_count_result(user['id'])
+        if use_credibility:
+            result = database.get_user_credibility_result(user['id'])
+        else:
+            result = database.get_count_result(user['id'])
         if only_cached and not result:
             # null
             return {'_id': user['id'], 'screen_name': user['screen_name'], 'cache': 'miss'}
@@ -120,7 +123,7 @@ def count_user(user, tweets, allow_cached, only_cached):
     shared_urls = twitter_connector.get_urls_from_tweets(tweets)
 
     print('classifiying urls')
-    classified_urls = classify_urls(shared_urls)
+    classified_urls = classify_urls(shared_urls, use_credibility)
 
     matching = [el for el in classified_urls if el]
     #print(matching)
@@ -180,33 +183,30 @@ def count_user(user, tweets, allow_cached, only_cached):
         'verified_urls': verified
     }
 
+    # last step: save in the database
     if len(tweets):
-        database.save_count_result(user['id'], result)
+        if use_credibility:
+            database.save_user_credibility_result(user['id'], result)
+        else:
+            database.save_count_result(user['id'], result)
 
     print(user['screen_name'], 'done')
     return result
 
-def count_users(user_ids, twitter_api, allow_cached, only_cached):
-    return [count_user(user_id, twitter_api, allow_cached, only_cached) for user_id in user_ids]
+# def count_users(user_ids, twitter_api, allow_cached, only_cached, use_credibility):
+#     return [count_user(user_id, twitter_api, allow_cached, only_cached, use_credibility) for user_id in user_ids]
 
-def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached):
-    return [count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached) for screen_name in screen_names]
+# def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached, use_credibility):
+#     return [count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, use_credibility) for screen_name in screen_names]
 
-def count_user_old(user_id, twitter_api, allow_cached, only_cached):
-    users = twitter_api.get_users_lookup([user_id])
-    if not users:
-        return None
-    user = users[0]
-    return count_user_from_screen_name(user['screen_name'], twitter_api, allow_cached, only_cached)
-
-def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached):
+def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, use_credibility):
     user = twitter_api.get_user_from_screen_name(screen_name)
     tweets = twitter_api.get_user_tweets(user['id'])
-    return count_user(user, tweets, allow_cached, only_cached)
+    return count_user(user, tweets, allow_cached, only_cached, use_credibility)
 
 
 
-def classify_urls(urls_info, use_credibility=False):
+def classify_urls(urls_info, use_credibility):
     if use_credibility:
         return classify_urls_credibility(urls_info)
     else:
@@ -226,14 +226,14 @@ def classify_urls_credibility(urls_info):
         # TODO doing one by one is extremely slow
         domain_credibility = domains_credibility[domain]
         credibility_value = domain_credibility['credibility']['value']
-        if abs(domain_credibility['credibility']['confidence']) < 0.1:
+        if abs(domain_credibility['credibility']['confidence']) < 0.2:
             print('unknown', domain)
             label = None
         else:
             label = {
                 'domain': domain,
                 'score': {
-                    'label': 'true' if (credibility_value > 0.5) else ('fake' if (credibility_value < -0.5) else 'mixed')
+                    'label': 'true' if (credibility_value > 0.4) else ('fake' if (credibility_value < -0.4) else 'mixed')
                 },
                 'reason': 'domain_match',
                 'url': url,

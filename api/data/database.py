@@ -54,6 +54,7 @@ twitter_tweets = db_twitter['twitter_tweets']
 
 # stored analysis (for stats overall pie chart)
 twitter_users_counts = db_twitter_analysis['twitter_users_counts']
+twitter_users_credibilities = db_twitter_analysis['twitter_users_credibility']
 
 
 # credibility collections
@@ -166,6 +167,16 @@ def get_count_result(user_id):
 
 def get_all_counts():
     return twitter_users_counts.find()
+
+def save_user_credibility_result(user_id, result):
+    result['_id'] = user_id
+    return replace_safe(twitter_users_credibilities, result)
+
+def get_user_credibility_result(user_id):
+    return twitter_users_credibilities.find_one({'_id': user_id})
+
+def get_all_user_credibility():
+    return twitter_users_credibilities.find()
 
 def get_users_id():
     return twitter_users.find(projection={'_id': True})

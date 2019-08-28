@@ -1,7 +1,10 @@
 from ..data import database
 
-def get_overall_counts():
-    counts = database.get_all_counts()
+def get_overall_counts(use_credibility):
+    if use_credibility:
+        counts = database.get_all_user_credibility()
+    else:
+        counts = database.get_all_counts()
     counts = [el for el in counts]
     score = 50
     if len(counts):

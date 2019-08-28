@@ -84,47 +84,50 @@ class TwitterAccountAnalysis(Resource):
         'user_id': marshmallow.fields.Int(missing=None),
         'screen_name': marshmallow.fields.Str(missing=None),
         'relation': marshmallow.fields.String(missing=None),
-        'limit': marshmallow.fields.Int(missing=500)
+        'limit': marshmallow.fields.Int(missing=500),
+        'use_credibility': marshmallow.fields.Boolean(missing=False),
     }
 
     @api.param('user_id', 'The user ID to analyse')
-    @api.param('screen_namme', 'The screen_name to analyse')
+    @api.param('screen_name', 'The screen_name to analyse')
     @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
     @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
+    @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility (legacy data interface as the old model)')
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
-    def get(self, user_id, screen_name, relation, limit):
+    def get(self, user_id, screen_name, relation, limit, use_credibility):
         """GET is for cached results"""
         allow_cached=True
         only_cached=True
         if relation == 'friends':
-            return analysis_manager.analyse_friends_from_screen_name(screen_name, limit)
+            return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
         if user_id:
-            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
+            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
         if screen_name:
-            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
+            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
 
         return {'error': 'Provide a user_id or screen_name as parameter'}, 400
 
     @api.param('user_id', 'The user ID to analyse')
-    @api.param('screen_namme', 'The screen_name to analyse')
+    @api.param('screen_name', 'The screen_name to analyse')
     @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
     @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
+    @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility')
     @use_kwargs(args)
     @marshal_with(count_analysis_fields)
-    def post(self, user_id, screen_name, relation, limit):
+    def post(self, user_id, screen_name, relation, limit, use_credibility):
         """POST runs the analysis again"""
         allow_cached=False
         only_cached=False
         if relation == 'friends':
             if user_id:
-                return analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached)
+                return analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
             if screen_name:
-                return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached)
+                return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
         if user_id:
-            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached)
+            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
         if screen_name:
-            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached)
+            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
         return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 
 @api.route('/time_distribution_url')
