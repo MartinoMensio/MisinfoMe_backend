@@ -253,7 +253,7 @@ def classify_urls_legacy(urls_info):
     """The legacy evaluation"""
     result = []
     for url_info in tqdm.tqdm(urls_info):
-        print(url_info)
+        #print(url_info)
         result.append(classify_url_legacy(url_info))
     return result
 
