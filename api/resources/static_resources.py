@@ -44,6 +44,11 @@ def configure_static_resources(base_url, app: flask.Flask, api: flask_restplus.A
     def favicon_helper():
         return send_from_directory('../app', 'favicon.ico')
 
+
+    @app.route(base_url + '/assets/<path:path>')
+    def assets_helper(path):
+        return send_from_directory('../app/assets', path)
+
     @app.route('/')
     @app.route(base_url)
     @app.route(base_url + '/')
