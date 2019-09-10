@@ -18,11 +18,13 @@ class CredibilityOrigins(Resource):
         return credibility_manager.get_credibility_origins()
 
 
-@api.route('/sources/<string:source>')
+@api.route('/sources/')
 @api.param('source', 'The source is a domain name (e.g., `snopes.com`)')
 @api.doc(description='Get the credibility of a certain source')
 class SourceCredibility(Resource):
     @api.response(200, 'Success')
+    @use_kwargs({'source': marshmallow.fields.Str(required=True)})
+    @api.param('source', description='The source to analyse', required=True)
     def get(self, source):
         return credibility_manager.get_source_credibility(source)
 

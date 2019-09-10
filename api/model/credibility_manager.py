@@ -34,7 +34,7 @@ def get_tweets_credibility_from_ids(tweet_ids):
     tweets = [twitter_connector.get_tweet(tweet_id) for tweet_id in tweet_ids]
     return get_tweets_credibility(tweets)
 
-def get_tweets_credibility(tweets):
+def get_tweets_credibility(tweets, group_method='domain'):
     tweets_not_none = [t for t in tweets if t]
     if not tweets_not_none:
         # no tweets retrieved. Wrong ids or deleted?
@@ -42,42 +42,54 @@ def get_tweets_credibility(tweets):
     urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
 
     print('retrieving the domains to assess')
-    # let's count the domain appearances in all the tweets
-    domains_appearances = defaultdict(list)
+    # let's count the group appearances in all the tweets
+    groups_appearances = defaultdict(list)
     for url_object in urls:
         url_unshortened = url_object['resolved']
-        domain = utils.get_url_domain(url_unshortened)
+        if group_method == 'domain':
+            group = utils.get_url_domain(url_unshortened)
+            fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
+        elif group_method == 'source':
+            group = utils.get_url_source(url_unshortened)
+            fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
+        elif group_method == 'url':
+            group = url_unshortened
+            fn_retrieve_credibility = credibility_connector.post_url_credibility_multiple
+        else:
+            raise ValueError(group_method)
         # TODO URL matches, credibility_connector.get_url_credibility(url_unshortened)
-        domains_appearances[domain].append(url_object['found_in_tweet'])
+        groups_appearances[group].append(url_object['found_in_tweet'])
     credibility_sum = 0
     confidence_sum = 0
     weights_sum = 0
     sources_assessments = []
-    print(f'getting credibility for {len(domains_appearances)} domains')
-    domain_assessments = credibility_connector.post_source_credibility_multiple(list(domains_appearances.keys()))
-    for domain, domain_credibility in domain_assessments.items():
-        appearance_cnt = len(domains_appearances[domain])
-        credibility = domain_credibility['credibility']
-        #print(domain, credibility)
+    print(f'getting credibility for {len(groups_appearances)} groups')
+    group_assessments = fn_retrieve_credibility(list(groups_appearances.keys()))
+    for group, group_credibility in group_assessments.items():
+        appearance_cnt = len(groups_appearances[group])
+        credibility = group_credibility['credibility']
+        #print(group, credibility)
         credibility_value = credibility['value']
         confidence = credibility['confidence']
+        if confidence < 0.1:
+            continue
         credibility_weight = get_credibility_weight(credibility_value)
         final_weight = credibility_weight * confidence * appearance_cnt
         credibility_sum += credibility_value * final_weight
         confidence_sum += credibility_weight * confidence * appearance_cnt
         weights_sum += credibility_weight * appearance_cnt
         sources_assessments.append({
-            'itemReviewed': domain,
+            'itemReviewed': group,
             'credibility': credibility,
-            'tweets_containing': domains_appearances[domain],
-            'url': f'/misinfo/credibility/sources/{domain}',
+            'tweets_containing': groups_appearances[group],
+            'url': f'/misinfo/credibility/sources/{group}',
             'credibility_weight': credibility_weight,
             'weights': {
                 #'origin_weight': origin_weight,
                 'final_weight': final_weight
             }
         })
-    print(f'retrieved credibility for {len(sources_assessments)} domains')
+    print(f'retrieved credibility for {len(sources_assessments)} groups')
     if credibility_sum:
         credibility_weighted = credibility_sum / confidence_sum
         confidence_weighted = confidence_sum / weights_sum
@@ -103,7 +115,33 @@ def get_user_credibility_from_user_id(user_id):
 
 def get_user_credibility_from_screen_name(screen_name):
     tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
-    return get_tweets_credibility(tweets)
+    profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+    sources_credibility = get_tweets_credibility(tweets)
+
+
+
+    urls_credibility = get_tweets_credibility(tweets, group_method='url')
+
+
+
+
+    # profile as source: 80% weight
+    # urls shared: 15%
+    # sources used: 5%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    final_credibility = {
+        'value': value_weighted,
+        'confidence': confidence_weighted
+    }
+
+    result = {
+        'credibility': final_credibility,
+        'profile_as_source_credibility': profile_as_source_credibility,
+        'sources_credibility': sources_credibility,
+        'urls_credibility': urls_credibility
+    }
+    return result
 
 def get_credibility_origins():
     return credibility_connector.get_origins()

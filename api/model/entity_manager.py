@@ -1,4 +1,4 @@
-from ..external import twitter_connector
+from ..external import twitter_connector, credibility_connector
 from ..data import data
 from ..data import database
 from ..evaluation import evaluate
@@ -70,7 +70,12 @@ def get_data_stats():
     return database.get_collections_stats()
 
 def get_domains():
-    return [el for el in database.get_domains()]
+    domains_old_evaluations = [el for el in database.get_domains()]
+    # domain_names = [el['domain'] for el in domains_old_evaluations]
+    # credibilities = credibility_connector.post_source_credibility_multiple(domain_names)
+    # for el in domains_old_evaluations:
+    #     el['credibility'] = credibilities[el['domain']]
+    return domains_old_evaluations
 
 def get_factcheckers_table():
     return data.get_fact_checkers_table()
