@@ -87,7 +87,8 @@ def get_tweets_credibility(tweets, group_method='domain'):
             'weights': {
                 #'origin_weight': origin_weight,
                 'final_weight': final_weight
-            }
+            },
+            'assessments': group_credibility['assessments']
         })
     print(f'retrieved credibility for {len(sources_assessments)} groups')
     if credibility_sum:
