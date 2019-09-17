@@ -7,12 +7,15 @@ import tqdm
 import signal
 import sys
 import re
+import urlexpander
 
+from multiprocessing.pool import ThreadPool
 from bs4 import BeautifulSoup
 
 
 from . import database
 from . import utils
+from ..utils import timeit
 
 shortening_domains = [
     # https://bit.do/list-of-url-shorteners.php
@@ -89,9 +92,14 @@ def unshorten_broken(url, referer=None, cookies=None):
     #database.save_url_redirect(url, url)
     return url
 
-def unshorten(url, use_cache=True):
+def unshorten(url, use_cache=False):
     """If use_cache is False, does not use the cache"""
     result = utils.add_protocol(url)
+
+    # to be tested
+    # result = urlexpander.expand(result)
+    # return result
+
     domain = utils.get_url_domain(url)
     if domain in shortening_domains:
         if use_cache:
@@ -175,6 +183,8 @@ def func(url):
     #print(res)
     return (url, res)
 
+
+@timeit
 def unshorten_multiprocess(url_list, pool_size=20):
     """Returns a dict, with one (url: resolved) for each url in url_list"""
     # remove duplicates
@@ -186,14 +196,23 @@ def unshorten_multiprocess(url_list, pool_size=20):
         results[match['_id']] = match['to']
     url_not_found = list(set(url_list) - set(results.keys()))
 
-    print('unshortening')
-    with multiprocessing.Pool(pool_size) as pool:
+    print('unshortening', len(url_not_found))
+
+    # rs = urlexpander.expand(url_not_found, n_workers=pool_size, filter_function=urlexpander.is_short, verbose=1)
+    # for r, u in zip(rs, url_not_found):
+    #     results[u] = r
+    # return results
+
+
+    # old, difficult to kill
+    with ThreadPool(pool_size) as pool:
         # one-to-one with the url_list
         for one_result in tqdm.tqdm(pool.imap_unordered(func, url_not_found), total=len(url_not_found)):
             url, resolved = one_result
             results[url] = resolved
             # save here, in the main process
             database.save_url_redirect(url, resolved)
+    print('unshortened')
     return results
 
 
