@@ -22,7 +22,7 @@ app.register_blueprint(blueprint_api)
 resources.configure_endpoints(app, api)
 resources.configure_cors(app)
 
-# dashboard to analyse the API
+# dashboard to analyse the API usage
 dashboard.config.link = 'misinfo/api/dashboard'
 dashboard.config.password = os.environ['DASHBOARD_PASSWORD']
 dashboard.bind(app)

@@ -13,7 +13,8 @@ else:
 
 print('MONGO_URI', MONGO_URI)
 
-client = MongoClient(MONGO_URI)
+# connect=False allows forking because the connection is opened when needed
+client = MongoClient(MONGO_URI, connect=False)
 print('database OK')
 
 db_twitter = client['test_coinform']

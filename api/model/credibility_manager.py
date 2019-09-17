@@ -44,19 +44,22 @@ def get_tweets_credibility(tweets, group_method='domain'):
     print('retrieving the domains to assess')
     # let's count the group appearances in all the tweets
     groups_appearances = defaultdict(list)
+    if group_method == 'domain':
+        fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
+    elif group_method == 'source':
+        fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
+    elif group_method == 'url':
+        fn_retrieve_credibility = credibility_connector.post_url_credibility_multiple
+    else:
+        raise ValueError(group_method)
     for url_object in urls:
         url_unshortened = url_object['resolved']
         if group_method == 'domain':
             group = utils.get_url_domain(url_unshortened)
-            fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
         elif group_method == 'source':
             group = utils.get_url_source(url_unshortened)
-            fn_retrieve_credibility = credibility_connector.post_source_credibility_multiple
         elif group_method == 'url':
             group = url_unshortened
-            fn_retrieve_credibility = credibility_connector.post_url_credibility_multiple
-        else:
-            raise ValueError(group_method)
         # TODO URL matches, credibility_connector.get_url_credibility(url_unshortened)
         groups_appearances[group].append(url_object['found_in_tweet'])
     credibility_sum = 0
