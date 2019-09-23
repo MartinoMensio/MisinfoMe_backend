@@ -4,7 +4,7 @@ import webargs
 import flask_restplus
 from webargs.flaskparser import use_args, use_kwargs
 
-from ..model import analysis_manager
+from ..model import analysis_manager, jobs_manager
 
 api = Namespace('analysis', description='Analysis of some entities')
 
@@ -86,6 +86,7 @@ class TwitterAccountAnalysis(Resource):
         'relation': marshmallow.fields.String(missing=None),
         'limit': marshmallow.fields.Int(missing=500),
         'use_credibility': marshmallow.fields.Boolean(missing=False),
+        'wait': marshmallow.fields.Boolean(missing=True)
     }
 
     @api.param('user_id', 'The user ID to analyse')
@@ -93,18 +94,28 @@ class TwitterAccountAnalysis(Resource):
     @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
     @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
     @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility (legacy data interface as the old model)')
+    @api.param('wait', description='Do you want to be waiting, or get a work id that you can query later?', type=bool, missing=True)
     @use_kwargs(args)
-    @marshal_with(count_analysis_fields)
-    def get(self, user_id, screen_name, relation, limit, use_credibility):
+    # @marshal_with(count_analysis_fields)
+    def get(self, user_id, screen_name, relation, limit, use_credibility, wait):
         """GET is for cached results"""
         allow_cached=True
         only_cached=True
-        if relation == 'friends':
-            return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
-        if user_id:
-            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-        if screen_name:
-            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        if wait:
+            if relation == 'friends':
+                result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
+            elif user_id:
+                result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+            elif screen_name:
+                result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+            return marshal(result, count_analysis_fields), 200
+        else:
+            if relation == 'friends':
+                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
+            elif user_id:
+                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
+            elif screen_name:
+                return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
 
         return {'error': 'Provide a user_id or screen_name as parameter'}, 400
 
@@ -113,21 +124,31 @@ class TwitterAccountAnalysis(Resource):
     @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
     @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
     @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility')
+    @api.param('wait', description='Do you want to be waiting, or get a work id that you can query later?', type=bool, missing=True)
     @use_kwargs(args)
-    @marshal_with(count_analysis_fields)
-    def post(self, user_id, screen_name, relation, limit, use_credibility):
+    #@marshal_with(count_analysis_fields)
+    def post(self, user_id, screen_name, relation, limit, use_credibility, wait):
         """POST runs the analysis again"""
         allow_cached=False
         only_cached=False
-        if relation == 'friends':
-            if user_id:
-                return analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-            if screen_name:
-                return analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-        if user_id:
-            return analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-        if screen_name:
-            return analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        if wait:
+            if relation == 'friends':
+                if user_id:
+                    result = analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+                elif screen_name:
+                    result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+            elif user_id:
+                result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+            elif screen_name:
+                result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+            return marshal(result, count_analysis_fields), 200
+        else:
+            if relation == 'friends':
+                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
+            elif user_id:
+                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
+            elif screen_name:
+                return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
         return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
 
 @api.route('/time_distribution_url')

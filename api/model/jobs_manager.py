@@ -36,11 +36,12 @@ class CallbackTask(Task):
         pass
 
 
-@celery.task(base=CallbackTask)# TODO(bind=True) will have self.update_state() to let the user to have more details https://blog.miguelgrinberg.com/post/using-celery-with-flask
-def wrapper(time_demanding_fn, *args, **kwargs):
-    print('task_id', wrapper.request.id)
+@celery.task(base=CallbackTask, bind=True)# TODO(bind=True) will have self.update_state() to let the user to have more details https://blog.miguelgrinberg.com/post/using-celery-with-flask
+def wrapper(self, time_demanding_fn, *args, **kwargs):
+    print('task_id', wrapper.request.id, time_demanding_fn)
     # TODO add a function to be called each time that an update comes, and call self.update_state() with bind=True
-    result = time_demanding_fn(*args, **kwargs)
+    tell_me_your_status = lambda message: self.update_state(state = message)
+    result = time_demanding_fn(update_status_fn=tell_me_your_status, *args, **kwargs)
     try:
         response = requests.post(GATEWAY_MODULE_ENDPOINT, json=content)
         print(response.status_code)

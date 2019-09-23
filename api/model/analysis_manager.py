@@ -13,9 +13,16 @@ def analyse_twitter_account(twitter_id, allow_cached=False, only_cached=False, u
     tweets = twitter_connector.get_user_tweets(user['id'])
     return evaluate.count_user(user, tweets, allow_cached, only_cached, use_credibility)
 
-def analyse_twitter_account_from_screen_name(twitter_screen_name, allow_cached=False, only_cached=False, use_credibility=False):
+def analyse_twitter_account_from_screen_name(twitter_screen_name, allow_cached=False, only_cached=False, use_credibility=False, update_status_fn=None):
+    print(update_status_fn)
+    if update_status_fn:
+        update_status_fn('getting information about the profile')
     user = twitter_connector.search_twitter_user_from_screen_name(twitter_screen_name)
+    if update_status_fn:
+        update_status_fn('retrieving the tweets of the profile')
     tweets = twitter_connector.get_user_tweets(user['id'])
+    if update_status_fn:
+        update_status_fn('unshortening the URLs contained in the tweets')
     result = evaluate.count_user(user, tweets, allow_cached, only_cached, use_credibility)
     #print(result)
     return result

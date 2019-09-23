@@ -34,11 +34,13 @@ def get_tweets_credibility_from_ids(tweet_ids):
     tweets = [twitter_connector.get_tweet(tweet_id) for tweet_id in tweet_ids]
     return get_tweets_credibility(tweets)
 
-def get_tweets_credibility(tweets, group_method='domain'):
+def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None):
     tweets_not_none = [t for t in tweets if t]
     if not tweets_not_none:
         # no tweets retrieved. Wrong ids or deleted?
         return None
+    if update_status_fn:
+        update_status_fn('unshortening the URLs contained in the tweets')
     urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
 
     print('retrieving the domains to assess')
@@ -117,14 +119,19 @@ def get_user_credibility_from_user_id(user_id):
     tweets = twitter_connector.get_user_tweets(user_id)
     return get_tweets_credibility(tweets)
 
-def get_user_credibility_from_screen_name(screen_name):
+def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
+    if update_status_fn:
+        update_status_fn('retrieving the tweets from the profile')
     tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
+    # if update_status_fn:
+    #     update_status_fn('computing the credibility ')
     profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
-    sources_credibility = get_tweets_credibility(tweets)
-
-
-
-    urls_credibility = get_tweets_credibility(tweets, group_method='url')
+    if update_status_fn:
+        update_status_fn('computing the credibility from the sources used in the tweets')
+    sources_credibility = get_tweets_credibility(tweets, update_status_fn=update_status_fn)
+    if update_status_fn:
+        update_status_fn('computing the credibility from the URLs used in the tweets')
+    urls_credibility = get_tweets_credibility(tweets, group_method='url', update_status_fn=update_status_fn)
 
 
 
