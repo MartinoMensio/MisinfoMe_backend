@@ -3,6 +3,8 @@ import os
 import requests
 from celery import Celery, Task
 from celery.result import AsyncResult
+
+from ..external import ExternalException
 #from ..model.credibility_manager import celery
 #from ..model.credibility_manager import get_tweet_credibility_from_id
 
@@ -88,7 +90,12 @@ def get_task_status(task_id):
         response = {
             'state': task.state,
             'status': str(task.info),  # this is the exception raised # TODO get status_code propagated and detail attribute
+            'error': {}
         }
+        if isinstance(task.info, ExternalException):
+            # this is (http_status_code, json object)
+            response['error'] = task.info.json_error
+            response['error']['http_status_code'] = task.info.status_code
     return response
 
 def get_mapping(key):
