@@ -31,12 +31,16 @@ class SourceCredibility(Resource):
 
     @use_kwargs({
         'source': marshmallow.fields.Str(required=True),
-        'callback_url': marshmallow.fields.Str(required=True)
+        'callback_url': marshmallow.fields.Str(missing=None)
     })
-    @api.param('callback_url', description='The callback_url coming from the gateway', required=True)
+    @api.param('callback_url', description='The callback_url coming from the gateway. If absent, the call will be blocking', missing=None)
     @api.param('source', description='The source to analyse', required=True)
     def post(self, source, callback_url):
-        return jobs_manager.create_task_for(credibility_manager.get_source_credibility, source, callback_url=callback_url)
+        """Endpoint for gateway"""
+        if callback_url:
+            return jobs_manager.create_task_for(credibility_manager.get_source_credibility, source, callback_url=callback_url)
+        else:
+            return credibility_manager.get_source_credibility(source)
 
 @api.route('/tweets/<int:tweet_id>')
 @api.param('tweet_id', 'The tweet is a identified by its ID, of type `int`')
@@ -47,7 +51,7 @@ class TweetCredibility(Resource):
     }
 
     args_post = {
-        'callback_url': marshmallow.fields.Str(required=True)
+        'callback_url': marshmallow.fields.Str(missing=None)
     }
 
     @use_kwargs(args)
@@ -66,10 +70,13 @@ class TweetCredibility(Resource):
             return result
 
     @use_kwargs(args_post)
-    @api.param('callback_url', description='The callback_url coming from the gateway', required=True)
+    @api.param('callback_url', description='The callback_url coming from the gateway. If absent, the call will be blocking', missing=None)
     def post(self, tweet_id, callback_url):
-        return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id, callback_url=callback_url)
-
+        """Endpoint for gateway"""
+        if callback_url:
+            return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id, callback_url=callback_url)
+        else:
+            return credibility_manager.get_tweet_credibility_from_id(tweet_id)
 
 @api.route('/users/')
 class TwitterUserCredibility(Resource):
@@ -79,7 +86,7 @@ class TwitterUserCredibility(Resource):
     }
     args_post = {
         'screen_name': marshmallow.fields.Str(required=True),
-        'callback_url': marshmallow.fields.Str(required=True)
+        'callback_url': marshmallow.fields.Str(missing=None)
     }
 
     @use_kwargs(args)
@@ -96,7 +103,11 @@ class TwitterUserCredibility(Resource):
             return result
 
     @use_kwargs(args_post)
-    @api.param('callback_url', description='A URL to be POSTed with the result of the job', required=True)
+    @api.param('callback_url', description='A URL to be POSTed with the result of the job. If absent, the call will be blocking', missing=None)
     @api.param('screen_name', description='The `screen_name` of the twitter profile to analyse', required=True)
     def post(self, screen_name, callback_url):
-        return jobs_manager.create_task_for(credibility_manager.get_user_credibility_from_screen_name, screen_name, callback_url=callback_url)
+        """Endpoint for gateway"""
+        if callback_url:
+            return jobs_manager.create_task_for(credibility_manager.get_user_credibility_from_screen_name, screen_name, callback_url=callback_url)
+        else:
+            return credibility_manager.get_user_credibility_from_screen_name(screen_name)
