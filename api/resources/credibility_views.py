@@ -12,7 +12,7 @@ api = Namespace('credibility', description='Interfacing with the credibility com
 
 
 @api.route('/origins/')
-@api.doc(description='Get the origins of the assessments used')
+@api.doc(description='Get the origins used to create the assessments')
 class CredibilityOrigins(Resource):
     @api.response(200, 'Success')
     def get(self):
@@ -29,6 +29,15 @@ class SourceCredibility(Resource):
     def get(self, source):
         return credibility_manager.get_source_credibility(source)
 
+    @use_kwargs({
+        'source': marshmallow.fields.Str(required=True),
+        'callback_url': marshmallow.fields.Str(required=True)
+    })
+    @api.param('callback_url', description='The callback_url coming from the gateway', required=True)
+    @api.param('source', description='The source to analyse', required=True)
+    def post(self, source, callback_url):
+        return jobs_manager.create_task_for(credibility_manager.get_source_credibility, source, callback_url=callback_url)
+
 @api.route('/tweets/<int:tweet_id>')
 @api.param('tweet_id', 'The tweet is a identified by its ID, of type `int`')
 @api.doc(description='Get the credibility of a certain tweet')
@@ -38,7 +47,7 @@ class TweetCredibility(Resource):
     }
 
     args_post = {
-        'query_id': marshmallow.fields.Str(required=True)
+        'callback_url': marshmallow.fields.Str(required=True)
     }
 
     @use_kwargs(args)
@@ -57,9 +66,9 @@ class TweetCredibility(Resource):
             return result
 
     @use_kwargs(args_post)
-    @api.param('query_id', description='The query_id coming from the gateway', required=True)
-    def post(self, tweet_id, query_id):
-        return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id, query_id=query_id)
+    @api.param('callback_url', description='The callback_url coming from the gateway', required=True)
+    def post(self, tweet_id, callback_url):
+        return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id, callback_url=callback_url)
 
 
 @api.route('/users/')
@@ -70,7 +79,7 @@ class TwitterUserCredibility(Resource):
     }
     args_post = {
         'screen_name': marshmallow.fields.Str(required=True),
-        'query_id': marshmallow.fields.Str(required=True)
+        'callback_url': marshmallow.fields.Str(required=True)
     }
 
     @use_kwargs(args)
@@ -87,7 +96,7 @@ class TwitterUserCredibility(Resource):
             return result
 
     @use_kwargs(args_post)
-    @api.param('query_id', description='The query_id coming from the gateway', required=True)
+    @api.param('callback_url', description='A URL to be POSTed with the result of the job', required=True)
     @api.param('screen_name', description='The `screen_name` of the twitter profile to analyse', required=True)
-    def post(self, screen_name, query_id):
-        return jobs_manager.create_task_for(credibility_manager.get_user_credibility_from_screen_name, screen_name, query_id=query_id)
+    def post(self, screen_name, callback_url):
+        return jobs_manager.create_task_for(credibility_manager.get_user_credibility_from_screen_name, screen_name, callback_url=callback_url)

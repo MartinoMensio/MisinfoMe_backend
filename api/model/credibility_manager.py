@@ -15,14 +15,20 @@ def get_credibility_weight(credibility_value):
 
     return result
 
-def get_source_credibility(source):
+def get_source_credibility(source, update_status_fn=None):
+    if update_status_fn:
+        update_status_fn('computing the credibility')
     return credibility_connector.get_source_credibility(source)
 
 def get_sources_credibility(sources):
     return credibility_connector.post_source_credibility_multiple(sources)
 
-def get_tweet_credibility_from_id(tweet_id):
+def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
+    if update_status_fn:
+        update_status_fn('retrieving the tweet')
     tweet = twitter_connector.get_tweet(tweet_id)
+    if update_status_fn:
+        update_status_fn('computing the credibility of the tweet')
     tweets_credibility = get_tweets_credibility([tweet])
     print(tweets_credibility)
     if not tweets_credibility:
