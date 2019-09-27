@@ -41,13 +41,9 @@ def get_tweets_credibility_from_ids(tweet_ids):
     return get_tweets_credibility(tweets)
 
 def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None):
-    tweets_not_none = [t for t in tweets if t]
-    if not tweets_not_none:
-        # no tweets retrieved. Wrong ids or deleted?
-        return None
     if update_status_fn:
         update_status_fn('unshortening the URLs contained in the tweets')
-    urls = twitter_connector.get_urls_from_tweets(tweets_not_none)
+    urls = twitter_connector.get_urls_from_tweets(tweets)
 
     print('retrieving the domains to assess')
     # let's count the group appearances in all the tweets
@@ -127,10 +123,18 @@ def get_user_credibility_from_user_id(user_id):
 
 def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
     if update_status_fn:
+        update_status_fn('retrieving the information about the profile')
+    itemReviewed = twitter_connector.search_twitter_user_from_screen_name(screen_name)
+    if update_status_fn:
         update_status_fn('retrieving the tweets from the profile')
     tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
-    # if update_status_fn:
-    #     update_status_fn('computing the credibility ')
+    itemReviewed['tweets_cnt'] = len(tweets)
+    if update_status_fn:
+        update_status_fn('unshortening the URLs contained in the tweets')
+    urls = twitter_connector.get_urls_from_tweets(tweets)
+    itemReviewed['shared_urls_cnt'] = len(urls)
+    if update_status_fn:
+        update_status_fn('computing the credibility of the profile as a source')
     profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
     if update_status_fn:
         update_status_fn('computing the credibility from the sources used in the tweets')
@@ -156,7 +160,8 @@ def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
         'credibility': final_credibility,
         'profile_as_source_credibility': profile_as_source_credibility,
         'sources_credibility': sources_credibility,
-        'urls_credibility': urls_credibility
+        'urls_credibility': urls_credibility,
+        'itemReviewed': itemReviewed
     }
     return result
 

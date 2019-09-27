@@ -70,6 +70,8 @@ def get_urls_from_tweets(tweets):
     # TODO this method does not belong here
     all_urls = []
     for t in tweets:
+        if not t:
+            continue
         urls = [{'url': u, 'found_in_tweet': str(t['id']), 'retweet': t['retweet']} for u in t['links']]
         all_urls.extend(urls)
 
