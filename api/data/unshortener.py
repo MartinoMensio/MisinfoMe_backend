@@ -7,7 +7,7 @@ import tqdm
 import signal
 import sys
 import re
-import urlexpander
+# import urlexpander
 
 from multiprocessing.pool import ThreadPool
 from bs4 import BeautifulSoup

@@ -29,16 +29,75 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
     tweet = twitter_connector.get_tweet(tweet_id)
     if update_status_fn:
         update_status_fn('computing the credibility of the tweet')
-    tweets_credibility = get_tweets_credibility([tweet])
-    print(tweets_credibility)
-    if not tweets_credibility:
-        return None # error tweets not found
-    return tweets_credibility
+    sources_credibility = get_tweets_credibility([tweet])
+    urls_credibility = get_tweets_credibility([tweet], group_method='url')
+    profile_as_source_credibility = {
+        'credibility':{
+            'value': 0,
+            'confidence': 0
+        }
+    }
+
+    # profile as source: 80% weight
+    # urls shared: 15%
+    # sources used: 5%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    if confidence_weighted:
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    else:
+        value_weighted = 0.
+    final_credibility = {
+        'value': value_weighted,
+        'confidence': confidence_weighted
+    }
+
+    result = {
+        'credibility': final_credibility,
+        'profile_as_source_credibility': profile_as_source_credibility,
+        'sources_credibility': sources_credibility,
+        'urls_credibility': urls_credibility,
+        'itemReviewed': tweet_id
+    }
+    return result
+
+    # print(tweets_credibility)
+    # if not tweets_credibility:
+    #     return None # error tweets not found
+    # return tweets_credibility
 
 def get_tweets_credibility_from_ids(tweet_ids):
     # TODO implement in twitter_connnector batch tweet retrieval
     tweets = [twitter_connector.get_tweet(tweet_id) for tweet_id in tweet_ids]
-    return get_tweets_credibility(tweets)
+    sources_credibility = get_tweets_credibility(tweets)
+    urls_credibility = get_tweets_credibility(tweets, group_method='url')
+    profile_as_source_credibility = {
+        'credibility':{
+            'value': 0,
+            'confidence': 0
+        }
+    }
+
+    # profile as source: 80% weight
+    # urls shared: 15%
+    # sources used: 5%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    if confidence_weighted:
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    else:
+        value_weighted = 0.
+    final_credibility = {
+        'value': value_weighted,
+        'confidence': confidence_weighted
+    }
+
+    result = {
+        'credibility': final_credibility,
+        'profile_as_source_credibility': profile_as_source_credibility,
+        'sources_credibility': sources_credibility,
+        'urls_credibility': urls_credibility,
+        'itemReviewed': tweet_ids
+    }
+    return result
 
 def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None):
     if update_status_fn:
@@ -150,7 +209,10 @@ def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
     # urls shared: 15%
     # sources used: 5%
     confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
-    value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    if confidence_weighted:
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    else:
+        value_weighted = 0.
     final_credibility = {
         'value': value_weighted,
         'confidence': confidence_weighted

@@ -99,39 +99,6 @@ def get_url_info(url):
 def get_rebuttals(url):
     return rebuttals_collection.find_one({'_id': url})
 
-def save_twitter_user(user):
-    user['_id'] = user['id']
-    return replace_safe(twitter_users, user)
-
-def save_twitter_users(users):
-    for u in users:
-        u['_id'] = u['id']
-    return twitter_users.insert_many(users)
-
-def get_twitter_user(id):
-    return twitter_users.find_one({'_id': id})
-
-def get_twitter_user_from_screen_name(screen_name):
-    return twitter_users.find_one({'screen_name': screen_name})
-
-def save_tweet(tweet):
-    tweet['_id'] = tweet['id']
-    return replace_safe(twitter_tweets, tweet)
-
-def save_new_tweets(tweets):
-    to_save = []
-    for t in tweets:
-        if '_id' not in t:
-            t['_id'] = t['id']
-            to_save.append(t)
-    if to_save:
-        return twitter_tweets.insert_many(to_save)
-    else:
-        return True
-
-def get_tweet(id):
-    return twitter_tweets.find_one({'_id': id})
-
 def get_tweets_from_user_id(user_id):
     return twitter_tweets.find({'user.id': user_id})
 
@@ -179,64 +146,8 @@ def get_user_credibility_result(user_id):
 def get_all_user_credibility():
     return twitter_users_credibilities.find()
 
-def get_users_id():
-    return twitter_users.find(projection={'_id': True})
-
 def get_all_factchecking():
     return fact_checking_urls.find()
 
 def get_factchecking_from_url(url):
     return fact_checking_urls.find({'url': url})
-
-
-"""
-def save_tweets_relevant_factchecking(factchecking_domain, tweets):
-    item = tweets
-    item['_id'] = factchecking_domain
-    return tweets_by_fact_checking.insert(item)
-
-def get_tweets_relevant_factchecking(factchecking_domain):
-    return tweets_by_fact_checking.find_one(factchecking_domain)
-"""
-
-def get_tweets_by_url(url):
-    return tweets_by_url.find_one({'_id': url})
-
-def save_tweets_by_url(url, tweets):
-    document = {'_id': url, 'url': url, 'tweets': tweets, 'updated': datetime.datetime.now()}
-    return tweets_by_url.replace_one({'_id': document['_id']}, document, upsert=True)
-
-
-
-def credibility_add_node(node_id, node):
-    document = node
-    document['_id'] = node_id
-    return credibility_nodes.insert_one(document)
-
-def credibility_remove_node(node_id):
-    return credibility_nodes.delete_one({'_id': node_id})
-
-def credibility_get_nodes():
-    return credibility_nodes.find()
-
-def credibility_get_outgoing_links_from_node_id(node_id):
-    return db_credibility[node_id].find()
-
-def credibility_reset():
-    return client.drop_database('credibility')
-
-def credibility_add_link(source_id, dest_id, link):
-    print(source_id, dest_id, link)
-    document = link
-    document['from'] = source_id
-    document['to'] = dest_id
-    # TODO check source_id and dest_id exist
-    return db_credibility[source_id].insert_one(document)
-
-def get_dataset_graph():
-    nodes = datasets_graph_nodes_collection.find()
-    links = datasets_graph_links_collection.find()
-    return {
-        'nodes': {n['id']: n for n in nodes},
-        'links': [l for l in links]
-    }

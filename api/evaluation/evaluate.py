@@ -8,7 +8,6 @@ import datetime
 from dateutil.relativedelta import relativedelta
 
 
-from . import results, model
 from ..data import utils, database, data
 from ..external import twitter_connector
 from ..model import credibility_manager
@@ -18,88 +17,6 @@ pool_size = 32
 
 def save_stats():
     raise NotImplementedError()
-
-### Tree evaluations: with reasons
-
-def evaluate_domain(url):
-    domain = utils.get_url_domain(url)
-    print('domain', domain)
-    database_object = database.get_domain_info(domain)
-    reasons = []
-    if not database_object:
-        # look also without subdomain
-        domain = utils.get_url_domain_without_subdomains(domain)
-        database_object = database.get_domain_info(domain)
-    print('database_object', database_object)
-    if database_object:
-        # dataset_entry with domain match
-        dataset_entry = model.DatasetEntry(database_object)
-        print('dataset_entry', dataset_entry.to_dict())
-        dataset_match = results.DatasetMatch(dataset_entry)
-        print('dataset_match', dataset_match.to_dict())
-        rel_reason = results.RelationshipReason('matches', dataset_match)
-        reasons.append(rel_reason)
-    result = results.DomainResult(domain, reasons)
-    print('result', result.to_dict())
-    return result
-
-def evaluate_url(url):
-    # TODO cleanup the URL, lower() the domain part only
-    # TODO if it is a tweet url, return the evaluate_tweet
-    # TODO if it is a twitter user url, return the evaluate_user
-    database_object = database.get_url_info(url)
-    print('database_object', database_object)
-    rel_reason = results.RelationshipReason('belongs_to_domain', evaluate_domain(url))
-    reasons = [rel_reason]
-    if database_object:
-        # dataset_entry with url match
-        dataset_entry = model.DatasetEntry(database_object)
-        print('dataset_entry', dataset_entry.to_dict())
-        dataset_match = results.DatasetMatch(dataset_entry)
-        print('dataset_match', dataset_match.to_dict())
-        rel_reason = results.RelationshipReason('matches', dataset_match)
-        reasons.append(rel_reason)
-    # TODO rebuttals
-    result = results.UrlResult(url, reasons)
-    print('result', result.to_dict)
-    return result
-
-def evaluate_tweet(tweet_id, twitter_api):
-    # TODO check tweet_id?
-    print('tweet_id', tweet_id)
-    tweet_objects = twitter_api.get_statuses_lookup([tweet_id])
-    #print('tweet_object', tweet_objects)
-    if not tweet_objects:
-        return None
-    urls = twitter_connector.get_urls_from_tweets(tweet_objects)
-    print('urls', urls)
-    reasons = [results.RelationshipReason('contains_url', evaluate_url(url['url'])) for url in urls]
-
-    # TODO pass the tweet object instead
-    result = results.TweetResult(tweet_objects[0], reasons)
-    print('result', result.to_dict())
-    return result
-
-def evaluate_twitter_user(user_id, twitter_api):
-    # TODO check twitter_id?
-    print('user_id', user_id)
-    users = twitter_api.get_users_lookup([user_id])
-    tweets = twitter_api.get_user_tweets(user_id)
-    print('#len tweets', len(tweets))
-    reasons = [results.RelationshipReason('writes', evaluate_tweet(tweet['id'], twitter_api)) for tweet in tweets]
-
-    # TODO pass the user object instead
-    result = results.UserResult(users[0], len(tweets), reasons)
-    return result
-
-def evaluate_twitter_user_from_screen_name(screen_name, twitter_api):
-    print('screen_name', screen_name)
-    user = twitter_api.get_user_from_screen_name(screen_name)
-    if not user:
-        return evaluate_twitter_user(None, twitter_api)
-    return evaluate_twitter_user(user['id'], twitter_api)
-
-
 
 ### Count methods: just counting tweets, need refactoring
 
@@ -198,11 +115,6 @@ def count_user(user, tweets, allow_cached, only_cached, use_credibility):
 
 # def count_users_from_screen_name(screen_names, twitter_api, allow_cached, only_cached, use_credibility):
 #     return [count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, use_credibility) for screen_name in screen_names]
-
-def count_user_from_screen_name(screen_name, twitter_api, allow_cached, only_cached, use_credibility):
-    user = twitter_api.get_user_from_screen_name(screen_name)
-    tweets = twitter_api.get_user_tweets(user['id'])
-    return count_user(user, tweets, allow_cached, only_cached, use_credibility)
 
 
 
@@ -317,7 +229,7 @@ def classify_url_legacy(url_info):
 def get_factchecking_by_domain():
     """grouped by domain of factchecking, better to use by_factchecker (see below)"""
     all_factchecking = [el for el in database.get_all_factchecking()]
-    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_subdomains(el['url'])), key=lambda el: utils.get_url_domain_without_subdomains(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
     result = {}
     # TODO also total stats
@@ -342,11 +254,11 @@ def get_factchecking_by_factchecker():
         'fact_checking': []
     } for el in fact_checkers}
 
-    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_subdomains(el['url'])), key=lambda el: utils.get_url_domain_without_subdomains(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
 
     for k,v in result.items():
-        domain_name = utils.get_url_domain_without_www(k)
+        domain_name = utils.get_url_domain_without_subdomains(k)
         v['domain'] = domain_name
 
         # group by finding
@@ -381,9 +293,9 @@ def get_factchecking_by_factchecker():
 
 #def get_factchecking_by_one_factchecker(factchecker, twitter_api)
 
-def get_factchecking_by_one_domain(domain, twitter_api, time_granularity='month'):
+def get_factchecking_by_one_domain(domain, time_granularity='month'):
     all_factchecking = [el for el in database.get_all_factchecking()]
-    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_www(el['url'])), key=lambda el: utils.get_url_domain_without_www(el['url']))
+    by_fact_checker_domain = itertools.groupby(sorted(all_factchecking, key=lambda el: utils.get_url_domain_without_subdomains(el['url'])), key=lambda el: utils.get_url_domain_without_subdomains(el['url']))
     by_fact_checker_domain = {k: list(v) for k,v in by_fact_checker_domain}
     values = []
     for k2, v2 in by_fact_checker_domain.items():
@@ -418,9 +330,9 @@ def get_factchecking_by_one_domain(domain, twitter_api, time_granularity='month'
             # TODO bad data should not arrive here!
             continue
 
-        analyse_url_distribution(factchecking_url, twitter_api)
-        tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url, twitter_api)
-        tweet_ids_sharing_claim = data.get_tweets_containing_url(claim_url, twitter_api)
+        analyse_url_distribution(factchecking_url)
+        tweet_ids_sharing_factchecking = data.get_tweets_containing_url(factchecking_url)
+        tweet_ids_sharing_claim = data.get_tweets_containing_url(claim_url)
 
         factchecking_tweets.extend(tweet_ids_sharing_factchecking)
         claim_tweets.extend(tweet_ids_sharing_claim)
@@ -499,17 +411,17 @@ def get_factchecking_by_one_domain(domain, twitter_api, time_granularity='month'
     }
     return result
 
-def analyse_url_distribution(url, twitter_api, reference_date=None, time_granularity='month'):
-    tweet_ids_sharing = data.get_tweets_containing_url(url, twitter_api)
+def analyse_url_distribution(url, reference_date=None, time_granularity='month'):
+    tweet_ids_sharing = data.get_tweets_containing_url(url)
     if reference_date:
         # this analysis is time relative to reference
         tweets_relative = defaultdict(lambda: 0)
-        for k, v in analyse_tweet_time_relative(None, tweet_ids_sharing, time_granularity, twitter_api).items():
+        for k, v in analyse_tweet_time_relative(None, tweet_ids_sharing, time_granularity).items():
             tweets_relative[k] += v
         result = tweets_relative
     else:
         # absolute analysis
-        result = analyse_tweet_time(tweet_ids_sharing, time_granularity, 'absolute', None, twitter_api)
+        result = analyse_tweet_time(tweet_ids_sharing, time_granularity, 'absolute', None)
 
     return result
 
@@ -533,7 +445,7 @@ def get_url_publish_date(url):
     }
 
 
-def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity, twitter_api):
+def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity):
     date_str = fact_checking_url.get('date')
     if date_str:
         debunking_time = dateparser.parse(date_str)
@@ -543,7 +455,7 @@ def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity, 
         #print('date not found')
         return {}
     tweet_ids = [int(el) for el in tweet_ids]
-    tweets = twitter_api.get_statuses_lookup(tweet_ids)
+    tweets = [twitter_connector.get_tweet(t_id) for t_id in tweet_ids]
     groups = defaultdict(lambda: 0)
     for t in tweets:
         created_at = t['created_at']
@@ -565,10 +477,10 @@ def analyse_tweet_time_relative(fact_checking_url, tweet_ids, time_granularity, 
     #print(groups)
     return groups
 
-def analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time, twitter_api):
+def analyse_tweet_time(tweet_ids, time_granularity, mode, reference_time):
     tweet_ids = [int(el) for el in tweet_ids]
     print(tweet_ids)
-    tweets = twitter_api.get_statuses_lookup(tweet_ids)
+    tweets = [twitter_connector.get_tweet(t_id) for t_id in tweet_ids]
     #print(tweets)
     groups = defaultdict(lambda: 0)
     # fill with 0 in the middle

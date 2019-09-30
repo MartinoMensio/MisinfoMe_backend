@@ -71,10 +71,11 @@ def get_data_stats():
 
 def get_domains():
     domains_old_evaluations = [el for el in database.get_domains()]
-    # domain_names = [el['domain'] for el in domains_old_evaluations]
-    # credibilities = credibility_connector.post_source_credibility_multiple(domain_names)
-    # for el in domains_old_evaluations:
-    #     el['credibility'] = credibilities[el['domain']]
+    domain_names = [el['domain'] for el in domains_old_evaluations]
+    # TODO double check to be getting cached evaluations
+    credibilities = credibility_connector.post_source_credibility_multiple(domain_names)
+    for el in domains_old_evaluations:
+        el['credibility'] = credibilities[el['domain']]
     return domains_old_evaluations
 
 def get_factcheckers_table():

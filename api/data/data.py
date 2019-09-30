@@ -5,11 +5,12 @@ from collections import defaultdict
 from . import database
 from . import utils
 from . import unshortener
+from ..external import twitter_connector
 
 fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
 
 def get_datasets():
-    return [el for el in database.get_datasets()]
+    return [el for el in database.get_sources()]
 
 def get_domains():
     return [el for el in database.get_domains()]
@@ -106,16 +107,9 @@ def get_fact_checkers_table(create_tsv=False):
 
     return rows
 
-def get_tweets_containing_url(url, twitter_api):
-    result = database.get_tweets_by_url(url)
-    # TODO consider using the date comparison and only ask for newer tweets
-    if result:
-        return result['tweets']
-    else:
-        tweets_with_urls = twitter_api.search(url)
-        tweets_ids = [int(el.id) for el in tweets_with_urls['statuses']]
-        #result = twitter_api.get_statuses_lookup(tweets_ids)
-        result = tweets_ids
-        database.save_tweets_by_url(url, tweets_ids)
+def get_tweets_containing_url(url):
+    tweets = twitter_connector.search_tweets_with_url(url)
 
-        return result
+    tweets_ids = [int(el.id) for el in tweets]
+
+    return tweets_ids

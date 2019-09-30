@@ -49,7 +49,6 @@ def search_friends_from_screen_name(screen_name):
 
 @timeit
 def search_tweets_with_url(url):
-    # TODO this is not implemented in twitter_connector
     response = requests.get(f'{TWITTER_CONNECTOR}search/tweets', params={'link': url})
     if response.status_code != 200:
         print('ERROR', url, response.status_code)
