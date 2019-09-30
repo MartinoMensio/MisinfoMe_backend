@@ -22,7 +22,7 @@ docopt==0.6.2
 Flask==1.0.2
 Flask-Cors==3.0.7
 flask-marshmallow==0.10.0
-Flask-MonitoringDashboard==2.1.4
+Flask-MonitoringDashboard==3.0.3
 Flask-RESTful==0.3.7
 flask-restplus==0.12.1
 future==0.17.1
