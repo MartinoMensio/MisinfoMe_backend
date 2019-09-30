@@ -127,21 +127,21 @@ def get_domains():
     return domains_collection.find()
 
 def save_count_result(user_id, count_result):
-    count_result['_id'] = user_id
+    count_result['_id'] = int(user_id)
     return replace_safe(twitter_users_counts, count_result)
 
 def get_count_result(user_id):
-    return twitter_users_counts.find_one({'_id': user_id})
+    return twitter_users_counts.find_one({'_id': int(user_id)})
 
 def get_all_counts():
     return twitter_users_counts.find()
 
 def save_user_credibility_result(user_id, result):
-    result['_id'] = user_id
+    result['_id'] = int(user_id)
     return replace_safe(twitter_users_credibilities, result)
 
 def get_user_credibility_result(user_id):
-    return twitter_users_credibilities.find_one({'_id': user_id})
+    return twitter_users_credibilities.find_one({'_id': int(user_id)})
 
 def get_all_user_credibility():
     return twitter_users_credibilities.find()
