@@ -52,66 +52,6 @@ class TwitterAccount(Resource):
         twitter_account = entity_manager.get_twitter_account_from_screen_name(screen_name)
         return twitter_account
 
-"""
-class TwitterAccountList(Resource):
-    args = {
-        'relation': marshmallow.fields.Str(missing=None, validate=lambda r: r in ['followers', 'friends']),
-        'screen_name': marshmallow.fields.Str(missing=None),
-        'account_id': marshmallow.fields.Int(missing=None),
-        'limit': marshmallow.fields.Int(missing=500),
-        'offset': marshmallow.fields.Int(missing=0),
-        'cached': marshmallow.fields.Int(missing=False)
-    }
-
-    @marshal_with(twitter_account_object)
-    @use_kwargs(args)
-    def get(self, relation, screen_name, account_id, limit, offset, cached):
-        if relation == 'followers':
-            if account_id:
-                return entity_manager.get_twitter_account_followers_from_id(account_id, limit, offset)
-            elif screen_name:
-                return entity_manager.get_twitter_account_followers_from_screen_name(screen_name, limit, offset)
-            else:
-                return {'error': 'followers of?'}
-        elif relation == 'friends':
-            if account_id:
-                return entity_manager.get_twitter_account_friends_from_id(account_id, limit, offset)
-            elif screen_name:
-                return entity_manager.get_twitter_account_friends_from_screen_name(screen_name, limit, offset)
-            else:
-                return {'error': 'friends of?'}
-        # no relationship
-        elif screen_name:
-            result = entity_manager.get_twitter_account_from_screen_name(screen_name, cached)
-            if 'errors' in result:
-                return {'error': result['errors'][0]['message']}
-            return result
-        elif account_id:
-            result = entity_manager.get_twitter_account_from_id(account_id, cached)
-            if 'errors' in result:
-                return {'error': result['errors'][0]['message']}
-            return result
-
-        return {'error': 'Missing one of required params: tweet_ids, user_id, screen_name, url'}, 400
-"""
-"""
-class TwitterFriends(Resource):
-    args = {
-        'screen_name': marshmallow.fields.Str(missing=None),
-        'account_id': marshmallow.fields.Int(missing=None),
-        'limit': marshmallow.fields.Int(missing=500),
-        'offset': marshmallow.fields.Int(missing=0),
-        #'cached': marshmallow.fields.Int(missing=False)
-    }
-    @use_kwargs(args)
-    def get(self, screen_name, account_id, limit, offset):
-        if account_id:
-            return entity_manager.get_twitter_account_friends_from_id(account_id, limit, offset)
-        elif screen_name:
-            return entity_manager.get_twitter_account_friends_from_screen_name(screen_name, limit, offset)
-        else:
-            return {'error': 'friends of?'}
-"""
 
 @api.route('/factchecking_organisations/<string:org_id>')
 class FactcheckingOrganisation(Resource):

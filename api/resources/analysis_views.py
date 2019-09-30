@@ -84,7 +84,7 @@ class TwitterAccountAnalysis(Resource):
         'user_id': marshmallow.fields.Int(missing=None),
         'screen_name': marshmallow.fields.Str(missing=None),
         'relation': marshmallow.fields.String(missing=None),
-        'limit': marshmallow.fields.Int(missing=500),
+        'limit': marshmallow.fields.Int(missing=200),
         'use_credibility': marshmallow.fields.Boolean(missing=False),
         'wait': marshmallow.fields.Boolean(missing=True)
     }
@@ -103,7 +103,10 @@ class TwitterAccountAnalysis(Resource):
         only_cached=True
         if wait:
             if relation == 'friends':
-                result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
+                if screen_name:
+                    result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
+                if user_id:
+                    result = analysis_manager.analyse_friends(user_id, limit, use_credibility=use_credibility)
             elif user_id:
                 result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
             elif screen_name:

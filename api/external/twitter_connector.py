@@ -40,8 +40,8 @@ def search_tweets_from_screen_name(screen_name):
     return result
 
 @timeit
-def search_friends_from_screen_name(screen_name):
-    response = requests.get(f'{TWITTER_CONNECTOR}search/friends', params={'screen_name': screen_name})
+def search_friends_from_screen_name(screen_name, limit=200):
+    response = requests.get(f'{TWITTER_CONNECTOR}search/friends', params={'screen_name': screen_name, 'limit': limit})
     if response.status_code != 200:
         print('ERROR', screen_name, response.status_code)
         raise ExternalException(response.status_code, response.json())

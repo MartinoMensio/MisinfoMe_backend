@@ -29,7 +29,7 @@ def analyse_twitter_account_from_screen_name(twitter_screen_name, allow_cached=F
 
 def analyse_friends_from_screen_name(screen_name, limit, allow_cached=True, only_cached=True, use_credibility=False):
     """Returns the analysis for all the friends, default cached"""
-    friends = twitter_connector.search_friends_from_screen_name(screen_name)
+    friends = twitter_connector.search_friends_from_screen_name(screen_name, limit)
     if limit:
         friends = friends[:limit]
     result = []
@@ -40,7 +40,8 @@ def analyse_friends_from_screen_name(screen_name, limit, allow_cached=True, only
 
 def analyse_friends(user_id, limit, allow_cached=True, only_cached=True, use_credibility=False):
     """Returns the analysis for all the friends, default cached"""
-    friends = twitter_connector.get_twitter_user(user_id)
+    user = twitter_connector.get_twitter_user(user_id)
+    friends = twitter_connector.search_friends_from_screen_name(user['screen_name'])
     if limit:
         friends = friends[:limit]
     result = []
