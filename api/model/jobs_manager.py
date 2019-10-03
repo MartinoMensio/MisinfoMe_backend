@@ -24,7 +24,7 @@ celery.conf.update(
 class CallbackTask(Task):
     def on_success(self, retval, job_id, args, kwargs):
         print('task succeeded, submitting to the gateway', job_id)
-        callback_url = str(get_mapping(job_id))
+        callback_url = get_mapping(job_id).decode('utf-8')
         print(callback_url)
         # TODO here we walidate the callback_url
         if not 'api.coinform.eu/' in callback_url:
