@@ -31,9 +31,10 @@ class CallbackTask(Task):
             print('callback_url not valid')
             return
         try:
-            response = requests.post(callback_url, json=retval)
+            response = requests.post(callback_url, json=retval, verify=False)
             print(response.status_code)
-        except:
+        except Exception as e:
+            print(e)
             print('error submitting to gateway')
 
     def on_failure(self, exc, job_id, args, kwargs, einfo):
