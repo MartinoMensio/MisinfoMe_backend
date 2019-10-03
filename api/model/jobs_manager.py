@@ -27,11 +27,14 @@ class CallbackTask(Task):
         callback_url = get_mapping(job_id).decode('utf-8')
         print(callback_url)
         # TODO here we walidate the callback_url
+        response_object = {
+            'response': retval
+        }
         if not 'api.coinform.eu/' in callback_url:
             print('callback_url not valid')
             return
         try:
-            response = requests.post(callback_url, json=retval, verify=False)
+            response = requests.post(callback_url, json=response_object, verify=False)
             print(response.status_code)
         except Exception as e:
             print(e)
