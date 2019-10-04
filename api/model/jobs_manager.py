@@ -27,6 +27,8 @@ class CallbackTask(Task):
         callback_url = get_mapping(job_id)
         if callback_url:
             callback_url = callback_url.decode('utf-8')
+        else:
+            callback_url = ''
         print(callback_url)
         # TODO here we walidate the callback_url
         response_object = {
