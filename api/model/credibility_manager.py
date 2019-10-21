@@ -38,12 +38,12 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         }
     }
 
-    # profile as source: 80% weight
-    # urls shared: 15%
-    # sources used: 5%
-    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    # profile as source: 60% weight
+    # urls shared: 25%
+    # sources used: 15%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.6 + sources_credibility['credibility']['confidence'] * 0.15 + urls_credibility['credibility']['confidence'] * 0.25
     if confidence_weighted:
-        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.15 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.25 * urls_credibility['credibility']['confidence']) / confidence_weighted
     else:
         value_weighted = 0.
     final_credibility = {
@@ -77,12 +77,12 @@ def get_tweets_credibility_from_ids(tweet_ids):
         }
     }
 
-    # profile as source: 80% weight
-    # urls shared: 15%
-    # sources used: 5%
-    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    # profile as source: 60% weight
+    # urls shared: 25%
+    # sources used: 15%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.6 + sources_credibility['credibility']['confidence'] * 0.15 + urls_credibility['credibility']['confidence'] * 0.25
     if confidence_weighted:
-        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.15 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.25 * urls_credibility['credibility']['confidence']) / confidence_weighted
     else:
         value_weighted = 0.
     final_credibility = {
@@ -177,8 +177,10 @@ def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None)
     }
 
 def get_user_credibility_from_user_id(user_id):
-    tweets = twitter_connector.get_user_tweets(user_id)
-    return get_tweets_credibility(tweets)
+    # TODO deprecate, just use the one from screen name
+    user = {} #twitter_connector.(user_id)
+    raise NotImplementedError('just use get_user_credibility_from_screen_name')
+    return get_user_credibility_from_screen_name(user['screen_name'])
 
 def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
     if update_status_fn:
@@ -205,12 +207,12 @@ def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
 
 
 
-    # profile as source: 80% weight
-    # urls shared: 15%
-    # sources used: 5%
-    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.8 + sources_credibility['credibility']['confidence'] * 0.05 + urls_credibility['credibility']['confidence'] * 0.15
+    # profile as source: 60% weight
+    # urls shared: 25%
+    # sources used: 15%
+    confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.6 + sources_credibility['credibility']['confidence'] * 0.15 + urls_credibility['credibility']['confidence'] * 0.25
     if confidence_weighted:
-        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.8 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.05 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.15 * urls_credibility['credibility']['confidence']) / confidence_weighted
+        value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.15 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.25 * urls_credibility['credibility']['confidence']) / confidence_weighted
     else:
         value_weighted = 0.
     final_credibility = {
@@ -225,7 +227,24 @@ def get_user_credibility_from_screen_name(screen_name, update_status_fn=None):
         'urls_credibility': urls_credibility,
         'itemReviewed': itemReviewed
     }
+    database.save_user_credibility_result(itemReviewed['id'], result)
     return result
+
+def get_user_friends_credibility_from_screen_name(screen_name, limit):
+    friends = twitter_connector.search_friends_from_screen_name(screen_name, limit)
+    results = []
+    for f in friends:
+        cached = database.get_user_credibility_result(f['id'])
+        if cached and 'itemReviewed' in cached.keys():
+            result = cached
+            result['cache'] = 'hit'
+            # TODO proper marshalling
+            result['updated'] = str(result['updated'])
+            result['screen_name'] = result['itemReviewed']['screen_name']
+        else:
+            result = {'cache': 'miss', 'screen_name': f['screen_name']}
+        results.append(result)
+    return results
 
 def get_credibility_origins():
     return credibility_connector.get_origins()

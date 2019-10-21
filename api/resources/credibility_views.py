@@ -111,3 +111,17 @@ class TwitterUserCredibility(Resource):
             return jobs_manager.create_task_for(credibility_manager.get_user_credibility_from_screen_name, screen_name, callback_url=callback_url)
         else:
             return credibility_manager.get_user_credibility_from_screen_name(screen_name)
+
+@api.route('/user-friends/')
+class TwitterUserFriendsCredibility(Resource):
+    args = {
+        'screen_name': marshmallow.fields.Str(required=True),
+        'limit': marshmallow.fields.Int(missing=300)
+    }
+
+    @use_kwargs(args)
+    @api.param('screen_name', description='The `screen_name` of the twitter profile with the friends to get the cached analysis', required=True)
+    @api.param('limit', description='How many friends to retrieve, default 300')
+    def get(self, screen_name, limit):
+        result = credibility_manager.get_user_friends_credibility_from_screen_name(screen_name, limit)
+        return result

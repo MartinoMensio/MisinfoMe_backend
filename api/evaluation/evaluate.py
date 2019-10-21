@@ -103,7 +103,8 @@ def count_user(user, tweets, allow_cached, only_cached, use_credibility):
     # last step: save in the database
     if len(tweets):
         if use_credibility:
-            database.save_user_credibility_result(user['id'], result)
+            pass # don't save this, credibility module uses this collection
+            #database.save_user_credibility_result(user['id'], result)
         else:
             database.save_count_result(user['id'], result)
 

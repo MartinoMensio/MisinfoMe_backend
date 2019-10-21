@@ -58,7 +58,7 @@ twitter_users_counts = db_twitter_analysis['twitter_users_counts']
 twitter_users_credibilities = db_twitter_analysis['twitter_users_credibility']
 
 
-# credibility collections
+# credibility collections (NOT USED)
 credibility_nodes = db_credibility['nodes']
 credibility_computed = db_credibility['computed']
 
