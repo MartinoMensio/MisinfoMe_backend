@@ -73,6 +73,7 @@ def replace_safe(collection, document, key_property='_id'):
         collection.replace_one({'_id': document[key_property]}, document, upsert=True)
     except errors.DuplicateKeyError:
         collection.replace_one({'_id': document[key_property]}, document, upsert=True)
+    document['updated'] = document['updated'].isoformat()
 
 def get_url_redirect(url):
     return url_redirects_collection.find_one({'_id': url})

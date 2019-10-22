@@ -103,8 +103,8 @@ class TwitterUserCredibility(Resource):
             return result
 
     @use_kwargs(args_post)
-    @api.param('callback_url', description='A URL to be POSTed with the result of the job. If absent, the call will be blocking', missing=None)
     @api.param('screen_name', description='The `screen_name` of the twitter profile to analyse', required=True)
+    @api.param('callback_url', description='A URL to be POSTed with the result of the job. If absent, the call will be blocking', missing=None)
     def post(self, screen_name, callback_url):
         """Endpoint for gateway"""
         if callback_url:
