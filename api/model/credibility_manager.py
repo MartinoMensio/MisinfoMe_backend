@@ -241,6 +241,10 @@ def get_user_friends_credibility_from_screen_name(screen_name, limit):
             # TODO proper marshalling
             result['updated'] = str(result['updated'])
             result['screen_name'] = result['itemReviewed']['screen_name']
+            # too many details for the friends, removing them
+            del result['profile_as_source_credibility']
+            del result['sources_credibility']
+            del result['urls_credibility']
         else:
             result = {'cache': 'miss', 'screen_name': f['screen_name']}
         results.append(result)
