@@ -79,7 +79,8 @@ def get_url_redirect(url):
     return url_redirects_collection.find_one({'_id': url})
 
 def save_url_redirect(from_url, to_url):
-    url_mapping = {'_id': from_url, 'to': to_url}
+    # just be sure not to go beyond the MongoDB limit of 1024
+    url_mapping = {'_id': from_url[:1023], 'to': to_url}
     return replace_safe(url_redirects_collection, url_mapping)
 
 def get_url_redirects():
