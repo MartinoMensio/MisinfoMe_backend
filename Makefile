@@ -1,6 +1,9 @@
 dump_datasets:
 	mongodump -d datasets_resources -o dump && echo "dumped datasets"
 
+dump_credibility:
+	mongodump -d credibility -o dump && echo "dumped credibility"
+
 dump_twitter:
 	mongodump -d test_coinform -o dump && echo "dumped twitter"
 
