@@ -2,7 +2,7 @@ app/*
 flask_monitoringdashboard.db
 
 dump/**
-dump.tar.gz
+dump*.tar.gz
 aggregated_*.json
 all_*.json
 cache/**

@@ -26,9 +26,11 @@ def count_user(user, tweets, allow_cached, only_cached, use_credibility):
         # TODO handle other status codes (user not existent or suspended, with error code and message)
         return {'screen_name': user['screen_name']}
     if allow_cached:
-        if use_credibility:
-            result = database.get_user_credibility_result(user['id'])
-        else:
+        result = None
+        # if use_credibility:
+        #     result = database.get_user_credibility_result(user['id'])
+        # else:
+        if not use_credibility:
             result = database.get_count_result(user['id'])
         if only_cached and not result:
             # null
@@ -77,7 +79,7 @@ def count_user(user, tweets, allow_cached, only_cached, use_credibility):
     # } for el_k, el_v in rebuttals_match.items()]
 
     if len(fake) + len(verified):
-        score = (50. * (len(verified) - len(fake))) / (len(fake) + len(verified)) + 50
+        score = (50. * (1 * len(verified) + -10 * len(fake))) / (10 * len(fake) + 5 * len(mixed) + len(verified)) + 50
         #print('evaluating', score, len(verified), len(fake))
     else:
         # default to unknown
@@ -102,10 +104,11 @@ def count_user(user, tweets, allow_cached, only_cached, use_credibility):
 
     # last step: save in the database
     if len(tweets):
-        if use_credibility:
-            pass # don't save this, credibility module uses this collection
-            #database.save_user_credibility_result(user['id'], result)
-        else:
+        # if use_credibility:
+        #     pass # don't save this, credibility module uses this collection
+        #     #database.save_user_credibility_result(user['id'], result)
+        # else:
+        if not use_credibility:
             database.save_count_result(user['id'], result)
 
     print(user['screen_name'], 'done')
