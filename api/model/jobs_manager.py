@@ -12,7 +12,9 @@ GATEWAY_MODULE_ENDPOINT = os.environ.get('GATEWAY_MODULE_ENDPOINT', 'https://loc
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 
 r = redis.Redis(host=REDIS_HOST)
+r.set('test','test')
 celery = Celery('tasks', broker=f'redis://{REDIS_HOST}:6379/0', backend=f'redis://{REDIS_HOST}:6379/0')
+print('redis OK')
 
 celery.conf.update(
     task_serializer='pickle', # so that the wrapper can have the function as an argument (not serializable through json)
