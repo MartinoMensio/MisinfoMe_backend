@@ -153,3 +153,6 @@ def get_all_factchecking():
 
 def get_factchecking_from_url(url):
     return fact_checking_urls.find({'url': url})
+
+def ping_db():
+    return db_twitter_analysis.command('ping')

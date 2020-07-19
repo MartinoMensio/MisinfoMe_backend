@@ -79,3 +79,17 @@ def get_urls_from_tweets(tweets):
         url['resolved'] = unshortened[url['url']]
 
     return all_urls
+
+
+def get_status():
+    try:
+        response = requests.get(f'{TWITTER_CONNECTOR}utils/status')
+    except:
+        return {
+            'status': 'dead'
+        }
+    if response.status_code != 200:
+        return {
+            'status': f'HTTP code {response.status_code}'
+        }
+    return response.json()

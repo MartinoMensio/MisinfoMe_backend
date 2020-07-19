@@ -120,3 +120,6 @@ def get_task_status_from_callback_url(callback_url):
     if not job_id:
         return None
     return get_task_status(job_id)
+
+def health():
+    return r.echo('ok').decode()

@@ -27,3 +27,16 @@ def get_origins():
     if response.status_code != 200:
         raise ValueError(response.status_code)
     return response.json()
+
+def get_status():
+    try:
+        response = requests.get(f'{CREDIBILITY_ENDPOINT}/utils/status')
+    except:
+        return {
+            'status': 'dead'
+        }
+    if response.status_code != 200:
+        return {
+            'status': f'HTTP code {response.status_code}'
+        }
+    return response.json()
