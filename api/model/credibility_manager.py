@@ -57,7 +57,7 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         'sources_credibility': sources_credibility,
         'urls_credibility': urls_credibility,
         'itemReviewed': tweet_id,
-        'explanation_link': f'/misinfo/credibility/tweets/{tweet_id}',
+        'explanation_link': f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}',
     }
     return result
 
