@@ -4,13 +4,19 @@ import requests
 from celery import Celery, Task
 from celery.result import AsyncResult
 
+# also load environment file in the workers
+from dotenv import load_dotenv
+load_dotenv()
+
 from ..external import ExternalException
 #from ..model.credibility_manager import celery
 #from ..model.credibility_manager import get_tweet_credibility_from_id
 
+
 GATEWAY_MODULE_ENDPOINT = os.environ.get('GATEWAY_MODULE_ENDPOINT', 'https://localhost:1234/foo')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 COINFORM_TOKEN = os.environ.get('COINFORM_TOKEN', '')
+print('COINFORM_TOKEN', COINFORM_TOKEN)
 
 r = redis.Redis(host=REDIS_HOST)
 r.set('test','test')
