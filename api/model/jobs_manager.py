@@ -10,7 +10,7 @@ from ..external import ExternalException
 
 GATEWAY_MODULE_ENDPOINT = os.environ.get('GATEWAY_MODULE_ENDPOINT', 'https://localhost:1234/foo')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
-COINFORM_TOKEN = os.environ['COINFORM_TOKEN']
+COINFORM_TOKEN = os.environ.get('COINFORM_TOKEN', '')
 
 r = redis.Redis(host=REDIS_HOST)
 r.set('test','test')
