@@ -10,6 +10,7 @@ from ..external import ExternalException
 
 GATEWAY_MODULE_ENDPOINT = os.environ.get('GATEWAY_MODULE_ENDPOINT', 'https://localhost:1234/foo')
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
+COINFORM_TOKEN = os.environ['COINFORM_TOKEN']
 
 r = redis.Redis(host=REDIS_HOST)
 r.set('test','test')
@@ -40,7 +41,10 @@ class CallbackTask(Task):
             print('callback_url not valid')
             return
         try:
-            response = requests.post(callback_url, json=response_object, verify=False)
+            headers = {
+                'Authorization': f'Bearer {COINFORM_TOKEN}'
+            }
+            response = requests.post(callback_url, json=response_object, headers=headers, verify=False)
             print(response.status_code)
         except Exception as e:
             print(e)
