@@ -4,6 +4,13 @@ import requests
 CREDIBILITY_ENDPOINT = os.environ.get('CREDIBILITY_ENDPOINT', 'http://localhost:20300')
 print('CREDIBILITY_ENDPOINT', CREDIBILITY_ENDPOINT)
 
+def get_url_credibility(url):
+    response = requests.get(f'{CREDIBILITY_ENDPOINT}/urls/', params={'url': url})
+    if response.status_code != 200:
+        raise ValueError(response.text)
+        raise ValueError(response.status_code)
+    return response.json()
+
 def post_url_credibility_multiple(urls):
     response = requests.post(f'{CREDIBILITY_ENDPOINT}/urls/', json={'urls': urls})
     if response.status_code != 200:
