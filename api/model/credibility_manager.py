@@ -2,7 +2,7 @@ from collections import defaultdict
 from tqdm import tqdm
 
 from ..data import database
-from ..external import twitter_connector, credibility_connector
+from ..external import twitter_connector, credibility_connector, ExternalException
 from ..data import utils, unshortener
 
 
@@ -34,7 +34,23 @@ def get_sources_credibility(sources):
 def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
     if update_status_fn:
         update_status_fn('retrieving the tweet')
-    tweet = twitter_connector.get_tweet(tweet_id)
+    try:
+        exception = None
+        tweet = twitter_connector.get_tweet(tweet_id)
+    except ExternalException as e:
+        # tweet may have been deleted
+        tweet = {
+            'id': str(tweet_id),
+            'text': None,
+            'retweet': None,
+            'retweet_source_tweet': None,
+            'links': [],
+            'user_id': None,
+            'user_screen_name': None,
+            'exception': vars(e)
+        }
+        exception = dict(vars(e))
+        exception_real = e
     if update_status_fn:
         update_status_fn('computing the credibility of the tweet')
     sources_credibility = get_tweets_credibility([tweet])
@@ -52,7 +68,9 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
     if tweet_direct_credibility['credibility']['confidence'] > 0.01:
         confidence_weighted = tweet_direct_credibility['credibility']['confidence']
         value_weighted = tweet_direct_credibility['credibility']['value']
+        tweet_direct = True
     else:
+        tweet_direct = False
         confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.2 + sources_credibility['credibility']['confidence'] * 0.2 + urls_credibility['credibility']['confidence'] * 0.6
         if confidence_weighted:
             value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.2 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.2 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.6 * urls_credibility['credibility']['confidence']) / confidence_weighted
@@ -65,6 +83,8 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
 
     tweet_id = str(tweet_id)
 
+    # TODO if tweet was removed, and we have some fact-checks, retrieve the user handle to show the other components of the score (credibility_as_source)
+
     result = {
         'credibility': final_credibility,
         'profile_as_source_credibility': profile_as_source_credibility,
@@ -73,9 +93,12 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         'itemReviewed': tweet_id,
         'ratingExplanationFormat': 'url',
         'ratingExplanation': f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}',
+        'exception': exception,
     }
     if tweet_direct_credibility['credibility']['confidence'] > 0.01:
         result['tweet_direct_credibility'] = tweet_direct_credibility
+    if exception and not tweet_direct:
+        raise exception_real
     return result
 
     # print(tweets_credibility)
