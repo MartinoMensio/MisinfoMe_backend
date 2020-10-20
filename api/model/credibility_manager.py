@@ -85,6 +85,7 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
 
     # TODO if tweet was removed, and we have some fact-checks, retrieve the user handle to show the other components of the score (credibility_as_source)
 
+    misinfome_frontend_url = f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}'
     result = {
         'credibility': final_credibility,
         'profile_as_source_credibility': profile_as_source_credibility,
@@ -92,14 +93,90 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         'urls_credibility': urls_credibility,
         'itemReviewed': tweet_id,
         'ratingExplanationFormat': 'url',
-        'ratingExplanation': f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}',
+        'ratingExplanation': misinfome_frontend_url,
         'exception': exception,
     }
     if tweet_direct_credibility['credibility']['confidence'] > 0.01:
         result['tweet_direct_credibility'] = tweet_direct_credibility
+
     if exception and not tweet_direct:
         raise exception_real
+
+    # explanation (TODO enable)
+    explanation = get_credibility_explanation(result)
+    result['ratingExplanation'] = explanation
+    result['ratingExplanationFormat'] = 'markdown'
+
     return result
+
+
+
+def get_credibility_explanation(rating):
+    tweet_id = rating['itemReviewed']
+    misinfome_frontend_url = f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}'
+    # TODO get twitter screen name, to make it better
+    tweet_link = f'https://twitter.com/a/statuses/{tweet_id}'
+    if 'tweet_direct_credibility' in rating:
+        # Situation 1: the tweet has been fact-checked
+        factchecker_label = 'TODO' # TODO factchecking_report should have the original label
+        factchecker_name = 'TODO'
+        factchecker_assessment = 'TODO'
+        factchecker_report_url = 'TODO'
+        explanation = f'''This [tweet]({tweet_link}) has been fact-checked as **{factchecker_label}** by [{factchecker_name}({factchecker_assessment}).
+                    See their report [here]({factchecker_report_url}).
+
+                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+    elif rating['urls_credibility']['credibility']['confidence'] > 0.01:
+        # Situation 2: the tweet contains a link that was reviewed
+        factchecker_label = 'TODO'
+        factchecker_name = 'TODO'
+        factchecker_assessment = 'TODO'
+        factchecker_report_url = 'TODO'
+        explanation = f'''This [tweet]({tweet_link}) contains a link fact-checked as **{factchecker_label}** by [{factchecker_name}({factchecker_assessment}).
+                    See their report [here]({factchecker_report_url}).
+
+                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+    elif rating['sources_credibility']['credibility']['confidence'] > 0.01:
+        # Situation 3: the tweet contains a link that comes from a source that is not credible
+        source_evaluations = rating['sources_credibility']['assessments']
+        # TODO manage multiple sources rated
+        source = source_evaluations[0]['itemReviewed']
+        not_factchecking_report = [el for el in source_evaluations[0]['assessments'] if el['origin_id'] != 'factchecking_report']
+        print(not_factchecking_report)
+        tools = sorted(not_factchecking_report, key=lambda el: el['weights']['final_weight'], reverse=True)[:3]
+        factchecking_report = [el for el in source_evaluations[0]['assessments'] if el['origin_id'] == 'factchecking_report']
+        if factchecking_report:
+            factchecking_report = factchecking_report[0]
+            # TODO fact-checks may also be true!!!!
+            factcheckers = factchecking_report['original'].keys()
+            factcheckers_names = [el for el in factcheckers if el != 'overall']
+            additional_explanation_factchecking = f'*{source}* also contains false claims according to {", ".join(factcheckers_names)}'
+        else:
+            additional_explanation_factchecking = ''
+        tool_names = ', '.join([el['origin']['name'] for el in tools])
+        label = 'TODO' # TODO disagreeing_labels
+        explanation = f'''This [tweet]({tweet_link}) contains a link to *{source}* which is a not credible source according to
+                    {tool_names}.
+                    {additional_explanation_factchecking}
+                    
+                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+    elif rating['profile_as_source_credibility']['credibility']['confidence'] > 0.01:
+        # Situation 4: the tweet comes from a non-credible profile
+        profile_link = rating['profile_as_source_credibility']['itemReviewed']
+        profile_name = profile_link.split('/')[-1]
+        # profile_link = f'https://twitter.com/{profile_name}'
+        misinfo_from_profile_cnt = '' # TODO
+        explanation = f'''This [tweet]({tweet_link}) comes from [{profile_name}]({profile_link}),
+        a profile that has shared misinformation other {misinfo_from_profile_cnt} times.
+
+        For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+    else:
+        explanation = f'''We could not find any verified information regarding the credibility of this [tweet]({tweet_link}).
+                    Test *italic* **bold** 
+        
+                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+
+    return explanation
 
     # print(tweets_credibility)
     # if not tweets_credibility:
