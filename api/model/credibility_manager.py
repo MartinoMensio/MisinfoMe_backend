@@ -103,7 +103,7 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         raise exception_real
 
     # explanation (TODO enable)
-    explanation = get_credibility_explanation(result)
+    explanation = get_credibility_explanation(result, screen_name)
     result['ratingExplanation'] = explanation
     result['ratingExplanationFormat'] = 'markdown'
 
@@ -111,35 +111,43 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
 
 
 
-def get_credibility_explanation(rating):
+def get_credibility_explanation(rating, screen_name):
     tweet_id = rating['itemReviewed']
     misinfome_frontend_url = f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}'
-    # TODO get twitter screen name, to make it better
     tweet_link = f'https://twitter.com/a/statuses/{tweet_id}'
+    # TODO manage cases when multiple situations apply (sort by confidence the different conditions)
     if 'tweet_direct_credibility' in rating:
         # Situation 1: the tweet has been fact-checked
-        factchecker_label = 'TODO' # TODO factchecking_report should have the original label
-        factchecker_name = 'TODO'
-        factchecker_assessment = 'TODO'
-        factchecker_report_url = 'TODO'
-        explanation = f'''This [tweet]({tweet_link}) has been fact-checked as **{factchecker_label}** by [{factchecker_name}({factchecker_assessment}).
-                    See their report [here]({factchecker_report_url}).
-
-                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+        # TODO manage multiple reviews, agreeing and disagreeing
+        tweet_rating = rating['tweet_direct_credibility']['assessments'][0]['reports'][0]
+        factchecker_label = tweet_rating['coinform_label'].replace('_', ' ')
+        factchecker_name = tweet_rating['origin']['name']
+        factchecker_assessment = tweet_rating['origin']['assessment_url']
+        factchecker_report_url = tweet_rating['report_url']
+        explanation = f'This [tweet]({tweet_link}) has been fact-checked as **{factchecker_label}** ' \
+                      f'by [{factchecker_name}]({factchecker_assessment}). ' \
+                      f'See their report [here]({factchecker_report_url}). ' \
+                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
     elif rating['urls_credibility']['credibility']['confidence'] > 0.01:
         # Situation 2: the tweet contains a link that was reviewed
-        factchecker_label = 'TODO'
-        factchecker_name = 'TODO'
-        factchecker_assessment = 'TODO'
-        factchecker_report_url = 'TODO'
-        explanation = f'''This [tweet]({tweet_link}) contains a link fact-checked as **{factchecker_label}** by [{factchecker_name}({factchecker_assessment}).
-                    See their report [here]({factchecker_report_url}).
-
-                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
-    elif rating['sources_credibility']['credibility']['confidence'] > 0.01:
+        # TODO manage multiple URLs
+        # TODO manage multiple reviews, agreeing and disagreeing
+        # TODO provide source name??
+        url_rating = rating['urls_credibility']['assessments'][0]['assessments'][0]['reports'][0]
+        url_reviewed = 'TODO'
+        factchecker_label = url_rating['coinform_label'].replace('_', ' ')
+        factchecker_name = url_rating['origin']['name']
+        factchecker_assessment = url_rating['origin']['assessment_url']
+        factchecker_report_url = url_rating['report_url']
+        explanation = f'This [tweet]({tweet_link}) contains a link fact-checked as **{factchecker_label}** ' \
+                    f'by [{factchecker_name}]({factchecker_assessment}). ' \
+                    f'See their report [here]({factchecker_report_url}). ' \
+                    f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+    elif rating['sources_credibility']['credibility']['confidence'] > 0.2:
         # Situation 3: the tweet contains a link that comes from a source that is not credible
         source_evaluations = rating['sources_credibility']['assessments']
         # TODO manage multiple sources rated
+        # TODO manage multiple reviews, agreeing and disagreeing
         source = source_evaluations[0]['itemReviewed']
         not_factchecking_report = [el for el in source_evaluations[0]['assessments'] if el['origin_id'] != 'factchecking_report']
         print(not_factchecking_report)
@@ -147,37 +155,65 @@ def get_credibility_explanation(rating):
         factchecking_report = [el for el in source_evaluations[0]['assessments'] if el['origin_id'] == 'factchecking_report']
         if factchecking_report:
             factchecking_report = factchecking_report[0]
-            # TODO fact-checks may also be true!!!!
-            factcheckers = factchecking_report['original'].keys()
-            factcheckers_names = [el for el in factcheckers if el != 'overall']
-            additional_explanation_factchecking = f'*{source}* also contains false claims according to {", ".join(factcheckers_names)}'
+            # TODO fact-checks may also be true!!!! In this case the list filtered by not_credible will become empty
+            reports = factchecking_report['reports']
+            # dict removes duplicates
+            print(reports)
+            # origin is null if not a proper fact-checker
+            factcheckers = {el['origin']['id']: el['origin'] for el in reports if (el['coinform_label'] == 'not_credible' and el['origin'])}
+            # create markdown for each one of them
+            factcheckers_names = [el["name"] for el in factcheckers.values()]
+            factcheckers_names = [f'[{el["name"]}]({el["assessment_url"]})' for el in factcheckers.values()]
+            additional_explanation_factchecking = f'*{source}* also contains false claims according to {", ".join(factcheckers_names)}. '
         else:
             additional_explanation_factchecking = ''
-        tool_names = ', '.join([el['origin']['name'] for el in tools])
-        label = 'TODO' # TODO disagreeing_labels
-        explanation = f'''This [tweet]({tweet_link}) contains a link to *{source}* which is a not credible source according to
-                    {tool_names}.
-                    {additional_explanation_factchecking}
-                    
-                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+        # TODO tools have evaluation URLs, maybe it's better than linking to the homepage?
+        tool_names = ', '.join(f"[{el['origin']['name']}]({el['origin']['homepage']})" for el in tools)
+        label = get_coinform_label(rating['sources_credibility']['credibility'])
+        explanation = f'This [tweet]({tweet_link}) contains a link to *{source}* which is a **{label.replace("_", " ")}** source ' \
+                      f'according to {tool_names}. ' \
+                      f'{additional_explanation_factchecking}' \
+                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
     elif rating['profile_as_source_credibility']['credibility']['confidence'] > 0.01:
         # Situation 4: the tweet comes from a non-credible profile
         profile_link = rating['profile_as_source_credibility']['itemReviewed']
-        profile_name = profile_link.split('/')[-1]
+        profile_name = profile_link.split('/')[-1] # (the same as screenName)
         # profile_link = f'https://twitter.com/{profile_name}'
-        misinfo_from_profile_cnt = '' # TODO
-        explanation = f'''This [tweet]({tweet_link}) comes from [{profile_name}]({profile_link}),
-        a profile that has shared misinformation other {misinfo_from_profile_cnt} times.
-
-        For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+        assessments = rating['profile_as_source_credibility']['assessments']
+        factchecking_report = [el for el in assessments if el['origin_id'] == 'factchecking_report']
+        reports = factchecking_report[0]['reports']
+        # TODO count by tweet reviewed, not by factchecker URL!!!
+        misinfo_from_profile_cnt = len(set(el['report_url'] for el in reports if el['coinform_label'] == 'not_credible'))
+        goodinfo_from_profile_cnt = len(set(el['report_url'] for el in reports if el['coinform_label'] == 'credible'))
+        uncertain_from_profile_cnt = len(set(el['report_url'] for el in reports if el['coinform_label'] == 'uncertain'))
+        if misinfo_from_profile_cnt:
+            stats_piece = f'misinformation other {misinfo_from_profile_cnt} times'
+        elif uncertain_from_profile_cnt:
+            stats_piece = f'uncertain informations other {uncertain_from_profile_cnt} times'
+        else:
+            stats_piece = f'verified information other {goodinfo_from_profile_cnt} times' 
+        explanation = f'This [tweet]({tweet_link}) comes from [{profile_name}]({profile_link}), ' \
+                      f'a profile that has shared {stats_piece}. ' \
+                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
     else:
-        explanation = f'''We could not find any verified information regarding the credibility of this [tweet]({tweet_link}).
-                    Test *italic* **bold** 
-        
-                    For more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+        explanation = f'We could not find any verified information regarding the credibility of this [tweet]({tweet_link}).' \
+                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
 
     return explanation
 
+
+def get_coinform_label(credibility):
+    label = 'not_verifiable'
+    if credibility['confidence'] >= 0.5:
+        if credibility['value'] > 0.6:
+            label = 'credible'
+        elif credibility['value'] > 0.25:
+            label = 'mostly_credible'
+        elif credibility['value'] >= -0.25:
+            label = 'uncertain'
+        else:
+            label = 'not_credible'
+    return label
     # print(tweets_credibility)
     # if not tweets_credibility:
     #     return None # error tweets not found
