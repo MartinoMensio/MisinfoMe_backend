@@ -1,6 +1,10 @@
 dump_datasets:
 	mongodump -d datasets_resources -o dump && echo "dumped datasets"
 
+
+dump_claimreviews:
+	mongodump -d claimreview_scraper -c claim_reviews -o dump && echo "dumped datasets"
+
 dump_credibility:
 	mongodump -d credibility -o dump && echo "dumped credibility"
 

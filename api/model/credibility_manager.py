@@ -421,3 +421,6 @@ def get_user_friends_credibility_from_screen_name(screen_name, limit):
 # Credibility origins
 def get_credibility_origins():
     return credibility_connector.get_origins()
+
+def get_factcheckers():
+    return credibility_connector.get_factcheckers()

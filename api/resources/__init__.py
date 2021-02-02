@@ -3,7 +3,7 @@ import flask_restplus
 import flask
 from flask_cors import CORS
 
-from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views, jobs_views
+from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views, jobs_views, data_views, twitter_views
 from . import static_resources
 from ..external import ExternalException
 
@@ -33,6 +33,12 @@ def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
 
     # endpoints for the jobs
     api.add_namespace(jobs_views.api)
+
+    # endpoints for data automatic update
+    api.add_namespace(data_views.api)
+
+    # twitter api
+    api.add_namespace(twitter_views.api)
 
     # endpoints for the static resources (frontend)
     static_resources.configure_static_resources(base_url, app, api)

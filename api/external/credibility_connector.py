@@ -35,6 +35,12 @@ def get_origins():
         raise ValueError(response.status_code)
     return response.json()
 
+def get_factcheckers():
+    response = requests.get(f'{CREDIBILITY_ENDPOINT}/factcheckers/')
+    if response.status_code != 200:
+        raise ValueError(response.status_code)
+    return response.json()
+
 def get_status():
     try:
         response = requests.get(f'{CREDIBILITY_ENDPOINT}/utils/status')

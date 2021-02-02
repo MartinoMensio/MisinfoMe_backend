@@ -18,6 +18,13 @@ class CredibilityOrigins(Resource):
     def get(self):
         return credibility_manager.get_credibility_origins()
 
+@api.route('/factcheckers/')
+@api.doc(description='Get the factcheckers from IFCN')
+class CredibilityFactcheckers(Resource):
+    @api.response(200, 'Success')
+    def get(self):
+        return credibility_manager.get_factcheckers()
+
 
 @api.route('/sources/')
 @api.param('source', 'The source is a domain name (e.g., `snopes.com`)')
