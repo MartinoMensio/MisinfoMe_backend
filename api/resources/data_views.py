@@ -6,7 +6,7 @@ import flask_restplus
 from flask import request
 from webargs.flaskparser import use_args, use_kwargs
 
-from ..external import claimreview_scraper_connector
+from ..external import claimreview_scraper_connector, credibility_connector
 from .. import app
 
 api = Namespace('data', description='Update data collection')
@@ -18,7 +18,13 @@ class CredibilityOrigins(Resource):
     def post(self):
         json_data = request.json
         print(json_data)
-        return claimreview_scraper_connector.download_data(json_data)
+        a = credibility_connector.update_origin('ifcn')
+        print(a)
+        b = claimreview_scraper_connector.download_data(json_data)
+        print(b)
+        c = credibility_connector.update_origin('factchecking_report')
+        print(c)
+        return b
         
 @api.route('/latest/')
 @api.doc(description='Get the latest data release')
