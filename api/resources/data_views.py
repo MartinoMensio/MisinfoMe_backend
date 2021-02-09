@@ -28,7 +28,7 @@ class CredibilityOrigins(Resource):
         
 @api.route('/latest/')
 @api.doc(description='Get the latest data release')
-class CredibilityOrigins(Resource):
+class LatestData(Resource):
     args = {
         'file_name': marshmallow.fields.Str(missing=None)
     }
@@ -37,3 +37,27 @@ class CredibilityOrigins(Resource):
     @api.response(200, 'Success')
     def get(self, file_name):
         return claimreview_scraper_connector.get_latest(file_name)
+
+@api.route('/sample/')
+@api.doc(description='Get random data samples')
+class RandomSamples(Resource):
+    args = {
+        'since': marshmallow.fields.Str(missing=None),
+        'until': marshmallow.fields.Str(missing=None),
+        'misinforming_domain': marshmallow.fields.Str(missing=None),
+        'fact_checker_domain': marshmallow.fields.Str(missing=None),
+        'cursor': marshmallow.fields.Str(missing=None),
+    }
+    @use_args(args)
+    @api.param('since', 'Time filter, only get items published since the provided date. Format YYYY-MM-DD')
+    @api.param('until', 'Time filter, only get items published until the provided date. Format YYYY-MM-DD')
+    @api.param('misinforming_domain', 'The domain where misinformation is published, e.g., breitbart.com')
+    @api.param('fact_checker_domain', 'The domain of the factchecker, e.g., snopes.com')
+    @api.param('cursor', 'The cursor to resume sampling')
+    @api.response(200, 'Success')
+    def get(self, args):
+        arguments = request.args
+        print(arguments)
+        return claimreview_scraper_connector.get_sample(args)
+
+

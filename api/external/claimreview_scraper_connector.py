@@ -16,7 +16,7 @@ def get_latest(file_name):
     params = {}
     if file_name:
         params['file'] = file_name
-    response = requests.get(f'{DATA_ENDPOINT}/data/latest', params=params)
+    response = requests.get(f'{DATA_ENDPOINT}/data/daily/latest', params=params)
     if response.status_code != 200:
         raise ValueError(response.text)
 
@@ -28,3 +28,9 @@ def get_latest(file_name):
         file = BytesIO(response.content)
         file.seek(0)
         return send_file(file, attachment_filename=file_name, as_attachment=True)
+
+def get_sample(args):
+    response = requests.get(f'{DATA_ENDPOINT}/data/sample', params=args)
+    if response.status_code != 200:
+        raise ValueError(response.text)
+    return response.json()
