@@ -56,8 +56,7 @@ class RandomSamples(Resource):
     @api.param('cursor', 'The cursor to resume sampling')
     @api.response(200, 'Success')
     def get(self, args):
-        arguments = request.args
-        print(arguments)
+        print(args)
         return claimreview_scraper_connector.get_sample(args)
 
 
