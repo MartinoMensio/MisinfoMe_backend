@@ -46,7 +46,7 @@ class RandomSamples(Resource):
         'until': marshmallow.fields.Str(missing=None),
         'misinforming_domain': marshmallow.fields.Str(missing=None),
         'fact_checker_domain': marshmallow.fields.Str(missing=None),
-        'exclude_twitter_misinfo': marshmallow.fields.Bool(missing=True),
+        'exclude_misinfo_domain': marshmallow.fields.List(marshmallow.fields.String(), missing=['twitter.com', 'wikipedia.org']),
         'exclude_homepage_url_misinfo': marshmallow.fields.Bool(missing=True),
         'cursor': marshmallow.fields.Str(missing=None),
     }
@@ -55,7 +55,7 @@ class RandomSamples(Resource):
     @api.param('until', 'Time filter, only get items published until the provided date. Format YYYY-MM-DD')
     @api.param('misinforming_domain', 'The domain where misinformation is published, e.g., breitbart.com')
     @api.param('fact_checker_domain', 'The domain of the factchecker, e.g., snopes.com')
-    @api.param('exclude_twitter_misinfo', 'Whether to exclude fact-checked links to twitter.com. Default is true. It will be discarded if `misinforming_domain` is equal to `twitter.com`')
+    @api.param('exclude_misinfo_domain', 'Whether to exclude fact-checked links to some domains. Default is `twitter.com` and `wikipedia.org` (`?exclude_misinfo_domain=twitter.com&exclude_misinfo_domain=wikipedia.org`). It will be discarded if `misinforming_domain` is set.')
     @api.param('exclude_homepage_url_misinfo', 'Whether to exclude fact-checked links that point to a homepage (no specific article, e.g. "https://www.senatemajority.com/"). Default is true.')
     @api.param('cursor', 'The cursor to resume sampling')
     @api.response(200, 'Success')
