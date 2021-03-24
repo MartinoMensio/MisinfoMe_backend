@@ -27,6 +27,13 @@ def get_sources_credibility(sources):
     """Obtain the credibility score for multiple sources"""
     return credibility_connector.post_source_credibility_multiple(sources)
 
+def get_url_credibility(url, update_status_fn=None):
+    """Obtain the credibility score for a single source"""
+    if update_status_fn:
+        update_status_fn('computing the credibility of URL')
+    return credibility_connector.get_url_credibility(url)
+
+
 
 
 # Tweet credibility

@@ -49,6 +49,29 @@ class SourceCredibility(Resource):
         else:
             return credibility_manager.get_source_credibility(source)
 
+@api.route('/urls/')
+@api.param('url', 'The URL to be checked')
+@api.doc(description='Get the credibility of a certain URL')
+class UrlCredibility(Resource):
+    @api.response(200, 'Success')
+    @use_kwargs({'url': marshmallow.fields.Str(required=True)})
+    @api.param('url', description='The URL to analyse', required=True)
+    def get(self, url):
+        return credibility_manager.get_url_credibility(url)
+
+    @use_kwargs({
+        'url': marshmallow.fields.Str(required=True),
+        'callback_url': marshmallow.fields.Str(missing=None)
+    })
+    @api.param('callback_url', description='The callback_url coming from the gateway. If absent, the call will be blocking', missing=None)
+    @api.param('url', description='The url to analyse', required=True)
+    def post(self, url, callback_url):
+        """Endpoint for gateway"""
+        if callback_url:
+            return jobs_manager.create_task_for(credibility_manager.get_url_credibility, url, callback_url=callback_url)
+        else:
+            return credibility_manager.get_url_credibility(url)
+
 @api.route('/tweets/<int:tweet_id>')
 @api.param('tweet_id', 'The tweet is a identified by its ID, of type `int`')
 @api.doc(description='Get the credibility of a certain tweet')
