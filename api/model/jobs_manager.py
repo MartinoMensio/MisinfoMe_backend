@@ -67,6 +67,7 @@ def wrapper(self, time_demanding_fn, *args, **kwargs):
     tell_me_your_status = lambda message: self.update_state(state = message)
     result = time_demanding_fn(update_status_fn=tell_me_your_status, *args, **kwargs)
     try:
+        # TODO: something is wrong here, content is not defined. Also, the requests.post is already in CallbackTask
         response = requests.post(GATEWAY_MODULE_ENDPOINT, json=content)
         print(response.status_code)
     except:

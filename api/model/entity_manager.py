@@ -80,3 +80,62 @@ def get_domains():
 
 def get_factcheckers_table():
     return data.get_fact_checkers_table()
+
+# New MisinfoMe Homepage
+def get_most_popular_entries():
+    return [
+        'BreitbartNews',
+        'DailyBuzzLive',
+        'newswarz',
+        'CRG_CRM',
+        'liberty_writers',
+        'LawEnforceToday',
+        'HenryMakow',
+        'LifeZette',
+        'Breaking911'
+    ]
+
+def get_latest_reviews():
+    return [{
+        'image_url': 'https://logo.clearbit.com/snopes.com',
+        'title': 'Trump Campaign Sends Email Fundraising Off COVID-19 Diagnosis',
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    },{
+        'image_url': 'https://logo.clearbit.com/opensecrets.org',
+        'title': 'Trump Campaign Sends Email Fundraising Off COVID-19 Diagnosis',
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    },{
+        'image_url': 'https://logo.clearbit.com/fullfact.org',
+        'title': 'Biden was "Wearing a Wire" in Debate',
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    },{
+        'image_url': 'https://logo.clearbit.com/allsides.com',
+        'title': 'Biden was "Wearing a Wire" in Debate',
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    },{
+        'image_url': 'https://logo.clearbit.com/factcheck.org',
+        'title': "Kamala Harris Isn't Eligible to Serve as President",
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    },{
+        'image_url': 'https://logo.clearbit.com/truthorfiction.com',
+        'title': "Kamala Harris Isn't Eligible to Serve as President",
+        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
+    }]
+
+def get_frontend_v2_home():
+    return {
+        'most_popular_entries': get_most_popular_entries(),
+        'stats': {
+            'profiles_analysed_count': 2780,
+            'tweets_analysed_count': 11750,
+            'profiles_misinformed_count': 417,
+            'tweets_misinformed_count': 2937
+        },
+        'latest_reviews': get_latest_reviews(),
+    }

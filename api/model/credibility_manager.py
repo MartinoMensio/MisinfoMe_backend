@@ -1,5 +1,6 @@
-from collections import defaultdict
+import time
 from tqdm import tqdm
+from collections import defaultdict
 
 from ..data import database
 from ..external import twitter_connector, credibility_connector, ExternalException
@@ -431,3 +432,67 @@ def get_credibility_origins():
 
 def get_factcheckers():
     return credibility_connector.get_factcheckers()
+
+# new analysis for MisinfoMe v2
+def get_v2_profile_credibility(screen_name, update_status_fn=None):
+    if update_status_fn:
+        update_status_fn('retrieving profile')
+    time.sleep(3)
+    if update_status_fn:
+        update_status_fn('retrieving tweets')
+    time.sleep(3)
+    if update_status_fn:
+        update_status_fn('analysisng tweets')
+    time.sleep(3)
+    return {
+        'profile': {
+            'name': 'Donald Trup',
+            'screen_name': 'realDonaldTrump',
+            'profile_image_url': 'https://en.wikipedia.org/wiki/File:Donald_Trump_official_portrait.jpg',
+            'description': '45th President of the United States of America',
+            'location': 'USA',
+            'created_at': 'Oct 2009',
+            'statuses_count': 10325,
+            'followers_count': 5203,
+            'friends_count': 1348
+        },
+        'tweets_analysed_stats': {
+            'tweets_retrieved_count': 500,
+            'tweets_matching_count': 112,
+            'tweets_credible_count': 62,
+            'tweets_not_credible_count': 26,
+            'tweets_mixed_count': 13,
+            'tweets_unknown_count': 11
+        },
+        'matching_tweets': [
+            {
+                'created_at': '6h',
+                'text': "'Hugs'! Thats how we close and email exchange between Brazilians, even if they are only acquaintances... I think I miss that!!",
+                'credibility_score': -0.5,
+                'matching_links': [
+                    {
+                        'link': 'https://t.co/B8r8t3Crev?amp=1',
+                        'fact_checks': [
+                            {
+                                'name': 'The Washington Post',
+                                'label': 'False',
+                                'fact_check_url': 'https://example.com'
+                            }
+                        ]
+                    }
+                ],
+                'matching_sources': [
+                    {
+                        'source': 'breitbart.com',
+                        'source_assessments': [
+                            {
+                                'name': 'The Washington Post',
+                                'label': 'False',
+                                'assessment_url': 'https://example.com'
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
