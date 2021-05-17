@@ -437,25 +437,59 @@ def get_factcheckers():
 def get_v2_profile_credibility(screen_name, update_status_fn=None):
     if update_status_fn:
         update_status_fn('retrieving profile')
-    time.sleep(3)
+    profile = twitter_connector.search_twitter_user_from_screen_name(screen_name)
     if update_status_fn:
-        update_status_fn('retrieving tweets')
-    time.sleep(3)
+        update_status_fn('retrieving the tweets')
+    # tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
     if update_status_fn:
-        update_status_fn('analysisng tweets')
-    time.sleep(3)
+        update_status_fn('unshortening the URLs contained in the tweets')
+    # urls = twitter_connector.get_urls_from_tweets(tweets)
+    # itemReviewed['shared_urls_cnt'] = len(urls)
+    if update_status_fn:
+        update_status_fn('computing the credibility of the profile as a source')
+    # profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+    if update_status_fn:
+        update_status_fn('computing the credibility from the sources used in the tweets')
+    # sources_credibility = get_tweets_credibility(tweets, update_status_fn=update_status_fn)
+    if update_status_fn:
+        update_status_fn('computing the credibility from the URLs used in the tweets')
+    # urls_credibility = get_tweets_credibility(tweets, group_method='url', update_status_fn=update_status_fn)
+    # get_tweets_credibility_directly_reviewed data is already in `profile_as_source_credibility`
+
+
+
+
+    # # profile as source: 60% weight
+    # # urls shared: 25%
+    # # sources used: 15%
+    # confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.6 + sources_credibility['credibility']['confidence'] * 0.15 + urls_credibility['credibility']['confidence'] * 0.25
+    # if confidence_weighted:
+    #     value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.15 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.25 * urls_credibility['credibility']['confidence']) / confidence_weighted
+    # else:
+    #     value_weighted = 0.
+    # final_credibility = {
+    #     'value': value_weighted,
+    #     'confidence': confidence_weighted
+    # }
+
+    # result = {
+    #     'credibility': final_credibility,
+    #     'profile_as_source_credibility': profile_as_source_credibility,
+    #     'sources_credibility': sources_credibility,
+    #     'urls_credibility': urls_credibility,
+    #     'itemReviewed': itemReviewed
+    # }
+    # database.save_user_credibility_result(itemReviewed['id'], result)
+
+    # time.sleep(3)
+    # if update_status_fn:
+    #     update_status_fn('retrieving tweets')
+    # time.sleep(3)
+    # if update_status_fn:
+    #     update_status_fn('analysisng tweets')
+    # time.sleep(3)
     return {
-        'profile': {
-            'name': 'Donald Trup',
-            'screen_name': 'realDonaldTrump',
-            'profile_image_url': 'https://en.wikipedia.org/wiki/File:Donald_Trump_official_portrait.jpg',
-            'description': '45th President of the United States of America',
-            'location': 'USA',
-            'created_at': 'Oct 2009',
-            'statuses_count': 10325,
-            'followers_count': 5203,
-            'friends_count': 1348
-        },
+        'profile': profile,
         'tweets_analysed_stats': {
             'tweets_retrieved_count': 500,
             'tweets_matching_count': 112,
