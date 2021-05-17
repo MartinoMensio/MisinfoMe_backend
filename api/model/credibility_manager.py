@@ -134,8 +134,8 @@ def get_credibility_explanation(rating, screen_name):
         factchecker_report_url = tweet_rating['report_url']
         explanation = f'This [tweet]({tweet_link}) has been fact-checked as **{factchecker_label}** ' \
                       f'by [{factchecker_name}]({factchecker_assessment}). ' \
-                      f'See their report [here]({factchecker_report_url}). ' \
-                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+                      f'See their report [here]({factchecker_report_url}). '# \
+                    #   f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
     elif rating['urls_credibility']['credibility']['confidence'] > 0.01:
         # Situation 2: the tweet contains a link that was reviewed
         # TODO manage multiple URLs
@@ -149,8 +149,8 @@ def get_credibility_explanation(rating, screen_name):
         factchecker_report_url = url_rating['report_url']
         explanation = f'This [tweet]({tweet_link}) contains a link fact-checked as **{factchecker_label}** ' \
                     f'by [{factchecker_name}]({factchecker_assessment}). ' \
-                    f'See their report [here]({factchecker_report_url}). ' \
-                    f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
+                    f'See their report [here]({factchecker_report_url}). '# \
+                    # f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'''
     elif rating['sources_credibility']['credibility']['confidence'] > 0.2:
         # Situation 3: the tweet contains a link that comes from a source that is not credible
         source_evaluations = rating['sources_credibility']['assessments']
@@ -180,8 +180,8 @@ def get_credibility_explanation(rating, screen_name):
         label = get_coinform_label(rating['sources_credibility']['credibility'])
         explanation = f'This [tweet]({tweet_link}) contains a link to *{source}* which is a **{label.replace("_", " ")}** source ' \
                       f'according to {tool_names}. ' \
-                      f'{additional_explanation_factchecking}' \
-                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
+                      f'{additional_explanation_factchecking}'# \
+                    #   f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
     elif rating['profile_as_source_credibility']['credibility']['confidence'] > 0.01:
         # Situation 4: the tweet comes from a non-credible profile
         profile_link = rating['profile_as_source_credibility']['itemReviewed']
@@ -201,11 +201,11 @@ def get_credibility_explanation(rating, screen_name):
         else:
             stats_piece = f'verified information other {goodinfo_from_profile_cnt} times' 
         explanation = f'This [tweet]({tweet_link}) comes from [{profile_name}]({profile_link}), ' \
-                      f'a profile that has shared {stats_piece}. ' \
-                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
+                      f'a profile that has shared {stats_piece}. '# \
+                    #   f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
     else:
-        explanation = f'We could not find any verified information regarding the credibility of this [tweet]({tweet_link}).' \
-                      f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
+        explanation = f'We could not find any verified information regarding the credibility of this [tweet]({tweet_link}).'# \
+                    #   f'\n\nFor more details of this analysis, [visit MisinfoMe]({misinfome_frontend_url})'
 
     return explanation
 
