@@ -34,3 +34,9 @@ def get_sample(args):
     if response.status_code != 200:
         raise ValueError(response.text)
     return response.json()
+
+def get_latest_factchecks():
+    response = requests.get(f'{DATA_ENDPOINT}/data/latest_factchecks')
+    if response.status_code != 200:
+        raise ValueError(response.text)
+    return response.json()

@@ -1,4 +1,4 @@
-from ..external import twitter_connector, credibility_connector
+from ..external import twitter_connector, credibility_connector, claimreview_scraper_connector
 from ..data import data
 from ..data import database
 from ..evaluation import evaluate
@@ -95,38 +95,25 @@ def get_most_popular_entries():
         'Breaking911'
     ]
 
-def get_latest_reviews():
-    return [{
-        'image_url': 'https://logo.clearbit.com/snopes.com',
-        'title': 'Trump Campaign Sends Email Fundraising Off COVID-19 Diagnosis',
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    },{
-        'image_url': 'https://logo.clearbit.com/opensecrets.org',
-        'title': 'Trump Campaign Sends Email Fundraising Off COVID-19 Diagnosis',
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    },{
-        'image_url': 'https://logo.clearbit.com/fullfact.org',
-        'title': 'Biden was "Wearing a Wire" in Debate',
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    },{
-        'image_url': 'https://logo.clearbit.com/allsides.com',
-        'title': 'Biden was "Wearing a Wire" in Debate',
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    },{
-        'image_url': 'https://logo.clearbit.com/factcheck.org',
-        'title': "Kamala Harris Isn't Eligible to Serve as President",
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    },{
-        'image_url': 'https://logo.clearbit.com/truthorfiction.com',
-        'title': "Kamala Harris Isn't Eligible to Serve as President",
-        'description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
-        'fact_check_url': 'https://www.snopes.com/fact-check/trump-army-fundraising-email/'
-    }]
+def get_latest_reviews(max=6):
+    # image_url, title, description, fact_check_url
+    latest = claimreview_scraper_connector.get_latest_factchecks()
+    latest = latest[:max]
+    results = []
+    for el in latest:
+        image_url = f'https://logo.clearbit.com/{el["fact_checker"]["domain"]}'
+        title = el['goose']['opengraph'].get('title', None) or el['goose']['title']
+        description = el['goose']['opengraph'].get('description', None) or el['goose']['meta']['description']
+        fact_check_url = el['review_url']
+        date_published = el['date_published']
+        results.append({
+            'image_url': image_url,
+            'title': title,
+            'description': description,
+            'fact_check_url': fact_check_url,
+            'date_published': date_published
+        })
+    return results
 
 def get_frontend_v2_home():
     return {
