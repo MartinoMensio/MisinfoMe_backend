@@ -3,6 +3,7 @@ from flask_restplus import Resource, marshal_with, Namespace
 import webargs
 import marshmallow
 import flask_restplus
+from flask import request
 from webargs.flaskparser import use_args, use_kwargs
 
 from ..model import credibility_manager, jobs_manager
@@ -107,6 +108,20 @@ class TweetCredibility(Resource):
             return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id, callback_url=callback_url)
         else:
             return credibility_manager.get_tweet_credibility_from_id(tweet_id)
+
+@api.route('/tweets/batch')
+# @api.param('tweet_id', 'The tweet is a identified by its ID, of type `int`')
+@api.doc(description='Get the credibility of a batch of tweets')
+class TweetsBatchCredibility(Resource):
+
+    @api.doc(body=api.model('body', {}))
+    def post(self):
+        json_data = request.json
+        if isinstance(json_data, list):
+            tweets = json_data
+        else:
+            tweets = [json_data]
+        return credibility_manager.get_tweet_credibility_from_dirty_tweet_batch(tweets)
 
 @api.route('/users/')
 class TwitterUserCredibility(Resource):

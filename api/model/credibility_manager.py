@@ -40,10 +40,12 @@ def get_url_credibility(url, update_status_fn=None):
 # Tweet credibility
 
 def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
+    # retrieve tweet then delegate to real function
     if update_status_fn:
         update_status_fn('retrieving the tweet')
     try:
         exception = None
+        exception_real = None
         tweet = twitter_connector.get_tweet(tweet_id)
     except ExternalException as e:
         # tweet may have been deleted
@@ -59,15 +61,91 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
         }
         exception = dict(vars(e))
         exception_real = e
+    return get_tweet_credibility_from_tweet(tweet, exception, exception_real, update_status_fn)
+
+def get_tweet_credibility_from_dirty_tweet_batch(dirty_tweets):
+    tweets = [cleanup_tweet(t) for t in tqdm(dirty_tweets, desc='cleaning tweets')]
+    sources_credibility = get_tweets_credibility(tweets)
+    sources_credibility_by_tweet_id = {id: el for el in sources_credibility['assessments'] for id in el['tweets_containing']}
+    urls_credibility = get_tweets_credibility(tweets, group_method='url')
+    urls_credibility_by_tweet_id = {id: el for el in urls_credibility['assessments'] for id in el['tweets_containing']}
+    zero_result = {
+        'credibility': {
+            'value': 0.0,
+            'confidence': 0.0
+        }
+    }
+    results = []
+    for t in tqdm(tweets, desc='putting together credibility scores'):
+        tweet_id = t['id']
+        if tweet_id in sources_credibility_by_tweet_id:
+            s_c = sources_credibility_by_tweet_id[tweet_id]
+            s_c = {k: v for k,v in s_c.items() if k != 'tweets_containing'}
+        else:
+            s_c = zero_result
+        if tweet_id in urls_credibility_by_tweet_id:
+            u_c = urls_credibility_by_tweet_id[tweet_id]
+            u_c = {k: v for k,v in u_c.items() if k != 'tweets_containing'}
+        else:
+            u_c = zero_result
+        # TODO profile_as_source_credibility, double check weights
+        confidence_weighted =  (s_c['credibility']['confidence'] * 0.15 + u_c['credibility']['confidence'] * 0.6) / (0.15 + 0.6) # profile_as_source_credibility['credibility']['confidence'] * 0.6 +
+        if confidence_weighted:
+            # profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] +
+            value_weighted = (s_c['credibility']['value'] * 0.15 * s_c['credibility']['confidence']+ u_c['credibility']['value'] * 0.6 * u_c['credibility']['confidence']) / confidence_weighted
+        else:
+            value_weighted = 0.
+        final_credibility = {
+            'value': value_weighted,
+            'confidence': confidence_weighted
+        }
+
+        result = {
+            'credibility': final_credibility,
+            # 'profile_as_source_credibility': profile_as_source_credibility,
+            'sources_credibility': s_c,
+            'urls_credibility': u_c,
+            'itemReviewed': tweet_id
+        }
+        results.append(result)
+    return results
+
+
+def cleanup_tweet(dirty_tweet):
+    return {
+        'id': str(dirty_tweet['id']),
+        'text': dirty_tweet['text'],
+        'retweet': any(el['type']=='retweeted' for el in dirty_tweet.get('referenced_tweets', [])),
+        'retweeted_source_tweet': None,
+        'links': [el['expanded_url'] for el in dirty_tweet['entities'].get('urls', [])],
+        # 'user_screen_name': None # TODO?
+    }
+
+def get_tweet_credibility_from_dirty_tweet(dirty_tweet):
+    # a dirty tweet may come from API request
+    tweet = cleanup_tweet(dirty_tweet)
+    return get_tweet_credibility_from_tweet(tweet, exception=None, exception_real=None, update_status_fn=None)
+
+def get_tweet_credibility_from_tweet(tweet, exception=None, exception_real=None, update_status_fn=None):
+    tweet_id = tweet['id']
+    # the real function inside for the tweet rating
     if update_status_fn:
         update_status_fn('computing the credibility of the tweet')
     sources_credibility = get_tweets_credibility([tweet])
     urls_credibility = get_tweets_credibility([tweet], group_method='url')
-    tweet_direct_credibility = get_tweets_credibility_directly_reviewed(tweet)
 
     # TODO: this does not look at the history of the user, just if it has been reviewed directly
-    screen_name = tweet['user_screen_name']
-    profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+    if tweet.get('user_screen_name', None):
+        tweet_direct_credibility = get_tweets_credibility_directly_reviewed(tweet)
+        screen_name = tweet['user_screen_name']
+        profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+    else:
+        profile_as_source_credibility = tweet_direct_credibility = {
+            'credibility': {
+                'value': 0.0,
+                'confidence': 0.0
+            }
+        }
 
     # profile as source: 20% weight
     # urls in tweet: 60%
@@ -110,8 +188,8 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
     if exception and not tweet_direct:
         raise exception_real
 
-    # explanation (TODO enable)
-    explanation = get_credibility_explanation(result, screen_name)
+    # explanation
+    explanation = get_credibility_explanation(result)
     result['ratingExplanation'] = explanation
     result['ratingExplanationFormat'] = 'markdown'
 
@@ -119,7 +197,7 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
 
 
 
-def get_credibility_explanation(rating, screen_name):
+def get_credibility_explanation(rating):
     tweet_id = rating['itemReviewed']
     misinfome_frontend_url = f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}'
     tweet_link = f'https://twitter.com/a/statuses/{tweet_id}'
@@ -302,6 +380,12 @@ def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None)
     print(f'getting credibility for {len(groups_appearances)} groups')
     group_assessments = fn_retrieve_credibility(list(groups_appearances.keys()))
     for group, group_credibility in group_assessments.items():
+        if group == 'twitter.com':
+            continue
+        if group_method in ['domain', 'source']:
+            frontend_url = f'/misinfo/credibility/sources/{group}'
+        else:
+            frontend_url = 'TODO'
         appearance_cnt = len(groups_appearances[group])
         credibility = group_credibility['credibility']
         #print(group, credibility)
@@ -318,7 +402,7 @@ def get_tweets_credibility(tweets, group_method='domain', update_status_fn=None)
             'itemReviewed': group,
             'credibility': credibility,
             'tweets_containing': groups_appearances[group],
-            'url': f'/misinfo/credibility/sources/{group}',
+            'url': frontend_url,
             'credibility_weight': credibility_weight,
             'weights': {
                 #'origin_weight': origin_weight,
