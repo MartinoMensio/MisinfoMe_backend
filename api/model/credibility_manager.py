@@ -440,20 +440,20 @@ def get_v2_profile_credibility(screen_name, update_status_fn=None):
     profile = twitter_connector.search_twitter_user_from_screen_name(screen_name)
     if update_status_fn:
         update_status_fn('retrieving the tweets')
-    # tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
+    tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
     if update_status_fn:
         update_status_fn('unshortening the URLs contained in the tweets')
-    # urls = twitter_connector.get_urls_from_tweets(tweets)
+    urls = twitter_connector.get_urls_from_tweets(tweets)
     # itemReviewed['shared_urls_cnt'] = len(urls)
-    if update_status_fn:
-        update_status_fn('computing the credibility of the profile as a source')
+    # if update_status_fn:
+    #     update_status_fn('computing the credibility of the profile as a source')
     # profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
     if update_status_fn:
         update_status_fn('computing the credibility from the sources used in the tweets')
-    # sources_credibility = get_tweets_credibility(tweets, update_status_fn=update_status_fn)
+    sources_credibility = get_tweets_credibility(tweets, update_status_fn=update_status_fn)
     if update_status_fn:
         update_status_fn('computing the credibility from the URLs used in the tweets')
-    # urls_credibility = get_tweets_credibility(tweets, group_method='url', update_status_fn=update_status_fn)
+    urls_credibility = get_tweets_credibility(tweets, group_method='url', update_status_fn=update_status_fn)
     # get_tweets_credibility_directly_reviewed data is already in `profile_as_source_credibility`
 
 
@@ -491,7 +491,7 @@ def get_v2_profile_credibility(screen_name, update_status_fn=None):
     return {
         'profile': profile,
         'tweets_analysed_stats': {
-            'tweets_retrieved_count': 500,
+            'tweets_retrieved_count': len(tweets),
             'tweets_matching_count': 112,
             'tweets_credible_count': 62,
             'tweets_not_credible_count': 26,

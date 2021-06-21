@@ -18,7 +18,14 @@ class FrontendV2Home(Resource):
     def get(self):
         return entity_manager.get_frontend_v2_home()
 
-@api.route('/analysis/')
+@api.route('/home/most_popular_entries')
+@api.doc(description='Get the most searched profiles')
+class FrontendV2HomePopularEntries(Resource):
+    @api.response(200, 'Success')
+    def get(self):
+        return entity_manager.get_most_popular_entries()
+
+@api.route('/profiles/')
 @api.doc(description='Analyse a profile')
 class FrontendV2Analysis(Resource):
     args = {
