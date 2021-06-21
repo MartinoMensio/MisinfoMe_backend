@@ -117,7 +117,7 @@ def cleanup_tweet(dirty_tweet):
         'text': dirty_tweet['text'],
         'retweet': any(el['type']=='retweeted' for el in dirty_tweet.get('referenced_tweets', [])),
         'retweeted_source_tweet': None,
-        'links': [el['expanded_url'] for el in dirty_tweet['entities'].get('urls', [])],
+        'links': [el['expanded_url'] for el in dirty_tweet.get('entities', {}).get('urls', [])],
         # 'user_screen_name': None # TODO?
     }
 
