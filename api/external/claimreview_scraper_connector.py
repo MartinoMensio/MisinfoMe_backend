@@ -3,13 +3,15 @@ import requests
 from io import BytesIO
 from flask import send_file
 
+from . import ExternalException
+
 DATA_ENDPOINT = os.environ.get('DATA_ENDPOINT', 'http://localhost:20400')
 print('DATA_ENDPOINT', DATA_ENDPOINT)
 
 def download_data(body):
     response = requests.post(f'{DATA_ENDPOINT}/data/download', json=body)
     if response.status_code != 200:
-        raise ValueError(response.text)
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def get_latest(file_name):
@@ -18,7 +20,7 @@ def get_latest(file_name):
         params['file'] = file_name
     response = requests.get(f'{DATA_ENDPOINT}/data/daily/latest', params=params)
     if response.status_code != 200:
-        raise ValueError(response.text)
+        raise ExternalException(response.status_code, response.json())
 
     if not file_name:
         return response.json()
@@ -32,11 +34,11 @@ def get_latest(file_name):
 def get_sample(args):
     response = requests.get(f'{DATA_ENDPOINT}/data/sample', params=args)
     if response.status_code != 200:
-        raise ValueError(response.text)
+        raise ExternalException(response.status_code, response.json())
     return response.json()
 
 def get_latest_factchecks():
     response = requests.get(f'{DATA_ENDPOINT}/data/latest_factchecks')
     if response.status_code != 200:
-        raise ValueError(response.text)
+        raise ExternalException(response.status_code, response.json())
     return response.json()
