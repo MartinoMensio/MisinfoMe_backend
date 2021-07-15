@@ -657,7 +657,8 @@ def get_v2_profile_credibility(screen_name, until_id=None, update_status_fn=None
     not_credible_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'not_credible' ]
     not_verifiable_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'not_verifiable' ]
     uncertain_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'uncertain' ]
-    unknown_tweets_cnt = total_tweets - len(not_credible_tweets + uncertain_tweets + credible_tweets)
+    # unknown_tweets_cnt = total_tweets - len(not_credible_tweets + uncertain_tweets + credible_tweets)
+    unknown_tweets_cnt = len(all_tweets_reviewed) - len(not_credible_tweets + uncertain_tweets + credible_tweets)
 
     # TODO limit (huge on frontend) and sort
     # TODO select if not_verifiable should be returned or not! (threshold)
