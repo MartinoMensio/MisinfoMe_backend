@@ -118,11 +118,6 @@ def get_latest_reviews(max=6):
 def get_frontend_v2_home():
     return {
         'most_popular_entries': get_most_popular_entries(),
-        'stats': {
-            'profiles_analysed_count': 2780,
-            'tweets_analysed_count': 11750,
-            'profiles_misinformed_count': 417,
-            'tweets_misinformed_count': 2937
-        },
+        'stats': database.get_homepage_stats_v2(),
         'latest_reviews': get_latest_reviews(),
     }

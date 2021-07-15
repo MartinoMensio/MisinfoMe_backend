@@ -23,6 +23,10 @@ db_redirects = client['utilities']
 db_datasets = client['datasets_resources']
 db_credibility = client['credibility']
 
+db_v2 = client['misinfo_v2']
+reviewed_tweets_v2 = db_v2['reviewed_tweets_v2']
+reviewed_profiles_v2 = db_v2['reviewed_profiles_v2']
+
 # domain key is the domain itself
 domains_collection = db_datasets['domains']
 # domain assessments
@@ -153,6 +157,35 @@ def get_all_factchecking():
 
 def get_factchecking_from_url(url):
     return fact_checking_urls.find({'url': url})
+
+def get_reviewed_profile_v2(user_id):
+    return reviewed_profiles_v2.find_one({'_id': user_id})
+
+def find_reviewed_tweets_v2(user_id):
+    return reviewed_tweets_v2.find({'user_id': user_id})
+
+def save_reviewed_tweets_v2(tweets):
+    for t in tweets:
+        if '_id' not in t:
+            # this tweet review is new
+            t['_id'] = t['id']
+            reviewed_tweets_v2.update({'_id': t['_id']}, t, upsert=True)
+
+def save_reviewed_profile_v2(profile):
+    profile['_id'] = str(profile['profile']['id'])
+    replace_safe(reviewed_profiles_v2, profile)
+
+def get_homepage_stats_v2():
+    profiles_analysed_count = reviewed_profiles_v2.count()
+    tweets_analysed_count = reviewed_tweets_v2.count()
+    profiles_misinformed_count = reviewed_profiles_v2.find({'tweets_analysed_stats.tweets_not_credible_count': {'$gt': 0}}).count()
+    tweets_misinformed_count = reviewed_tweets_v2.find({'coinform_label': 'not_credible'}).count()
+    return {
+        'profiles_analysed_count': profiles_analysed_count,
+        'tweets_analysed_count': tweets_analysed_count,
+        'profiles_misinformed_count': profiles_misinformed_count,
+        'tweets_misinformed_count': tweets_misinformed_count
+    }
 
 def ping_db():
     return db_twitter_analysis.command('ping')

@@ -30,28 +30,31 @@ class FrontendV2HomePopularEntries(Resource):
 class FrontendV2Analysis(Resource):
     args = {
         'screen_name': marshmallow.fields.String(required=True),
+        'until_id': marshmallow.fields.String(missing=None),
         'wait': marshmallow.fields.Bool(missing=False)
     }
 
     @api.response(200, 'Success')
     @use_kwargs(args)
     @api.param('screen_name', description='The screen name of the profile to be analysed', type=str, required=True)
+    @api.param('until_id', description='To continue previous analysis', type=str, missing=None)
     @api.param('wait', description='Do you want to wait or to use job manager?', type=bool, missing=False)
-    def post(self, screen_name, wait):
+    def post(self, screen_name, until_id, wait):
         print(wait)
         if not wait:
-            return jobs_manager.create_task_for(credibility_manager.get_v2_profile_credibility, screen_name)
+            return jobs_manager.create_task_for(credibility_manager.get_v2_profile_credibility, screen_name, until_id)
         else:
-            return credibility_manager.get_v2_profile_credibility(screen_name)
+            return credibility_manager.get_v2_profile_credibility(screen_name, until_id)
     
     @api.response(200, 'Success')
     @use_kwargs(args)
     @api.param('screen_name', description='The screen name of the profile to be analysed', type=str, required=True)
+    @api.param('until_id', description='To continue previous analysis', type=str, missing=None)
     @api.param('wait', description='Do you want to wait or to use job manager?', type=bool, missing=False)
-    def get(self, screen_name, wait):
+    def get(self, screen_name, until_id, wait):
         print(wait)
         if not wait:
-            return jobs_manager.create_task_for(credibility_manager.get_v2_profile_credibility, screen_name)
+            return jobs_manager.create_task_for(credibility_manager.get_v2_profile_credibility, screen_name, until_id)
         else:
-            return credibility_manager.get_v2_profile_credibility(screen_name)
+            return credibility_manager.get_v2_profile_credibility(screen_name, until_id)
 

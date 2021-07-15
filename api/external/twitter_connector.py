@@ -80,6 +80,19 @@ def get_urls_from_tweets(tweets):
 
     return all_urls
 
+def search_twitter_user_from_username_v2(username):
+    response = requests.get(f'{TWITTER_CONNECTOR}v2/users', params={'username': username})
+    if response.status_code != 200:
+        print('ERROR', username, response.status_code)
+        raise ExternalException(response.status_code, response.json())
+    return response.json()
+
+def search_tweets_from_user_id_v2(user_id, get_all=False, until_id=None):
+    response = requests.get(f'{TWITTER_CONNECTOR}v2/tweets', params={'user_id': user_id, 'get_all': get_all, 'until_id': until_id})
+    if response.status_code != 200:
+        print('ERROR', user_id, response.status_code)
+        raise ExternalException(response.status_code, response.json())
+    return response.json()
 
 def get_status():
     try:

@@ -1,10 +1,19 @@
 import time
+import re
 from tqdm import tqdm
 from collections import defaultdict
 
 from ..data import database
 from ..external import twitter_connector, credibility_connector, ExternalException
 from ..data import utils, unshortener
+
+
+zero_credibility = {
+    'credibility': {
+        'value': 0.0,
+        'confidence': 0.0
+    }
+}
 
 
 def get_credibility_weight(credibility_value):
@@ -65,16 +74,56 @@ def get_tweet_credibility_from_id(tweet_id, update_status_fn=None):
 
 def get_tweet_credibility_from_dirty_tweet_batch(dirty_tweets):
     tweets = [cleanup_tweet(t) for t in tqdm(dirty_tweets, desc='cleaning tweets')]
-    sources_credibility = get_tweets_credibility(tweets)
-    sources_credibility_by_tweet_id = {id: el for el in sources_credibility['assessments'] for id in el['tweets_containing']}
-    urls_credibility = get_tweets_credibility(tweets, group_method='url')
-    urls_credibility_by_tweet_id = {id: el for el in urls_credibility['assessments'] for id in el['tweets_containing']}
-    zero_result = {
-        'credibility': {
-            'value': 0.0,
-            'confidence': 0.0
+    sources_credibility = get_tweets_credibility(tweets, group_method='source') # TODO: this is source, instead in old analysis it's domain
+    # {id: el for el in sources_credibility['assessments'] for id in el['tweets_containing']}
+    sources_credibility_by_tweet_id_tmp = defaultdict(list)
+    for el in sources_credibility['assessments']:
+        for id in el['tweets_containing']:
+            sources_credibility_by_tweet_id_tmp[id].append(el)
+    sources_credibility_by_tweet_id = {}
+    for tweet_id, values in sources_credibility_by_tweet_id_tmp.items():
+        # aggregate between different sources for the same tweet
+        credibility_sum = sum(el['credibility']['value'] for el in values)
+        confidence_sum = sum(el['credibility']['confidence'] for el in values)
+        if credibility_sum:
+            credibility_weighted = credibility_sum / len(values)
+            confidence_weighted = confidence_sum / len(values)
+        else:
+            credibility_weighted = 0.
+            confidence_weighted = 0.
+        sources_credibility_by_tweet_id[tweet_id] = {
+            'credibility': {
+                'value': credibility_weighted,
+                'confidence': confidence_weighted
+            },
+            'assessments': values
         }
-    }
+    
+    urls_credibility = get_tweets_credibility(tweets, group_method='url')
+    #{id: el for el in urls_credibility['assessments'] for id in el['tweets_containing']}
+    urls_credibility_by_tweet_id_tmp = defaultdict(list)
+    for el in urls_credibility['assessments']:
+        for id in el['tweets_containing']:
+            urls_credibility_by_tweet_id_tmp[id].append(el)
+    urls_credibility_by_tweet_id = {}
+    for tweet_id, values in urls_credibility_by_tweet_id_tmp.items():
+        # aggregate between different urls for the same tweet
+        credibility_sum = sum(el['credibility']['value'] for el in values)
+        confidence_sum = sum(el['credibility']['confidence'] for el in values)
+        if credibility_sum:
+            credibility_weighted = credibility_sum / len(values)
+            confidence_weighted = confidence_sum / len(values)
+        else:
+            credibility_weighted = 0.
+            confidence_weighted = 0.
+        urls_credibility_by_tweet_id[tweet_id] = {
+            'credibility': {
+                'value': credibility_weighted,
+                'confidence': confidence_weighted
+            },
+            'assessments': values
+        }
+    
     results = []
     for t in tqdm(tweets, desc='putting together credibility scores'):
         tweet_id = t['id']
@@ -82,12 +131,12 @@ def get_tweet_credibility_from_dirty_tweet_batch(dirty_tweets):
             s_c = sources_credibility_by_tweet_id[tweet_id]
             s_c = {k: v for k,v in s_c.items() if k != 'tweets_containing'}
         else:
-            s_c = zero_result
+            s_c = zero_credibility
         if tweet_id in urls_credibility_by_tweet_id:
             u_c = urls_credibility_by_tweet_id[tweet_id]
             u_c = {k: v for k,v in u_c.items() if k != 'tweets_containing'}
         else:
-            u_c = zero_result
+            u_c = zero_credibility
         # TODO profile_as_source_credibility, double check weights
         confidence_weighted =  (s_c['credibility']['confidence'] * 0.15 + u_c['credibility']['confidence'] * 0.6) / (0.15 + 0.6) # profile_as_source_credibility['credibility']['confidence'] * 0.6 +
         if confidence_weighted:
@@ -100,13 +149,28 @@ def get_tweet_credibility_from_dirty_tweet_batch(dirty_tweets):
             'confidence': confidence_weighted
         }
 
+        misinfome_frontend_url = f'https://misinfo.me/misinfo/credibility/tweets/{tweet_id}'
         result = {
             'credibility': final_credibility,
-            # 'profile_as_source_credibility': profile_as_source_credibility,
+            'profile_as_source_credibility': zero_credibility, # TODO
             'sources_credibility': s_c,
             'urls_credibility': u_c,
-            'itemReviewed': tweet_id
+            'itemReviewed': tweet_id,
+            'ratingExplanationFormat': 'url',
+            'ratingExplanation': misinfome_frontend_url,
+            'exception': None,
         }
+        # if tweet_direct_credibility['credibility']['confidence'] > 0.01:
+        #     result['tweet_direct_credibility'] = tweet_direct_credibility
+
+        # if exception and not tweet_direct:
+        #     raise exception_real
+
+        # explanation
+        explanation = get_credibility_explanation(result)
+        result['ratingExplanation'] = explanation
+        result['ratingExplanationFormat'] = 'markdown'
+
         results.append(result)
     return results
 
@@ -235,6 +299,7 @@ def get_credibility_explanation(rating):
         # TODO manage multiple sources rated
         # TODO manage multiple reviews, agreeing and disagreeing
         source = source_evaluations[0]['itemReviewed']
+        # raise ValueError(rating)
         not_factchecking_report = [el for el in source_evaluations[0]['assessments'] if el['origin_id'] != 'factchecking_report']
         print(not_factchecking_report)
         tools = sorted(not_factchecking_report, key=lambda el: el['weights']['final_weight'], reverse=True)[:3]
@@ -518,99 +583,133 @@ def get_factcheckers():
     return credibility_connector.get_factcheckers()
 
 # new analysis for MisinfoMe v2
-def get_v2_profile_credibility(screen_name, update_status_fn=None):
+def get_v2_profile_credibility(screen_name, until_id=None, update_status_fn=None):
     if update_status_fn:
         update_status_fn('retrieving profile')
-    profile = twitter_connector.search_twitter_user_from_screen_name(screen_name)
+    profile = twitter_connector.search_twitter_user_from_username_v2(screen_name)
+    user_id = profile['id']
     if update_status_fn:
-        update_status_fn('retrieving the tweets')
-    tweets = twitter_connector.search_tweets_from_screen_name(screen_name)
+        update_status_fn('searching for previous analyses')
+    # find a previous analysis of this profile
+    previous_profile_analysis = database.get_reviewed_profile_v2(user_id)
+    # get the tweets that have already been checked
+    already_analysed_tweets = list(database.find_reviewed_tweets_v2(user_id))
+    tweet_ids_already_analysed = [el['id'] for el in already_analysed_tweets]
+    # find directly reviewed tweets
     if update_status_fn:
-        update_status_fn('unshortening the URLs contained in the tweets')
-    urls = twitter_connector.get_urls_from_tweets(tweets)
-    # itemReviewed['shared_urls_cnt'] = len(urls)
-    # if update_status_fn:
-    #     update_status_fn('computing the credibility of the profile as a source')
-    # profile_as_source_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+        update_status_fn('analysing the credibility of the profile')
+    profile_credibility = credibility_connector.get_source_credibility(f'twitter.com/{screen_name}')
+    profile_assessments = profile_credibility['assessments']
+    factchecking = next((el for el in profile_assessments if el['origin_id'] == 'factchecking_report'), None)
+    directly_reviewed_tweets = []
+    if factchecking:
+        for report in factchecking['reports']:
+            itemReviewed = report['itemReviewed']
+            pieces = itemReviewed.split('/')
+            if len(pieces) > 4:
+                # https://twitter.com/user/tweet_id/...
+                tweet_id = pieces[4]
+                tweet_cred = get_tweets_credibility_directly_reviewed({'tweet_id': tweet_id})
+                directly_reviewed_tweets.append(tweet_cred)
+                # TODO attach tweet object, if still available, otherwise leave a "tweet not available" message
+                # TODO add directly reviewed tweets to response!!!
+    
+    # get tweets from profile
+    # if it is the first request, get_all set to true, otherwise false
     if update_status_fn:
-        update_status_fn('computing the credibility from the sources used in the tweets')
-    sources_credibility = get_tweets_credibility(tweets, update_status_fn=update_status_fn)
+        update_status_fn('getting new tweets from the profile')
+    get_all = True if not until_id else False
+    tweets_info = twitter_connector.search_tweets_from_user_id_v2(user_id, get_all, until_id)
+    tweets_to_analyse = [el for el in tweets_info['tweets'] if el['id'] not in tweet_ids_already_analysed]
+    total_tweets = tweets_info['total_tweets']
+    next_until_id = tweets_info['next_until_id']
+    tweets_by_id = {el['id']: el for el in tweets_to_analyse}
+
+    # analyse the batch of tweets
     if update_status_fn:
-        update_status_fn('computing the credibility from the URLs used in the tweets')
-    urls_credibility = get_tweets_credibility(tweets, group_method='url', update_status_fn=update_status_fn)
-    # get_tweets_credibility_directly_reviewed data is already in `profile_as_source_credibility`
+        update_status_fn('analysing the credibility of the tweets')
+    new_tweets_analysed = get_tweet_credibility_from_dirty_tweet_batch(tweets_to_analyse)
+    # attach the tweet object here
+    for el in new_tweets_analysed:
+        el['tweet'] = tweets_by_id[el['itemReviewed']]
 
+    dict_by_id = lambda items: {el['itemReviewed']: el for el in items}
+    # put all together (overwriting) TODO warning directly reviewed may disappear
+    all_tweets_reviewed = {
+        **dict_by_id(already_analysed_tweets), 
+        **dict_by_id(new_tweets_analysed),
+        **dict_by_id(directly_reviewed_tweets),
+    }.values()
+    # only keep worthy
+    print('all_tweets_reviewed', len(all_tweets_reviewed))
+    all_tweets_reviewed = [el for el in all_tweets_reviewed if el['credibility']['confidence'] > 0.01]
+    print('with a bit of confidence', len(all_tweets_reviewed))
+    # sort worst first
+    all_tweets_reviewed = sorted(all_tweets_reviewed, key=lambda el: el['credibility']['value'])
+    for el in all_tweets_reviewed:
+        el['coinform_label'] = get_coinform_label(el['credibility'])
+        el['user_id'] = user_id
+        el['id'] = el['itemReviewed']
+    # save to DB the reviews from these tweets
+    database.save_reviewed_tweets_v2(all_tweets_reviewed)
+    # by credibility
+    credible_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] in ['credible', 'mostly_credible'] ]
+    not_credible_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'not_credible' ]
+    not_verifiable_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'not_verifiable' ]
+    uncertain_tweets = [el for el in all_tweets_reviewed if el['coinform_label'] == 'uncertain' ]
+    unknown_tweets_cnt = total_tweets - len(not_credible_tweets + uncertain_tweets + credible_tweets)
 
-
-
-    # # profile as source: 60% weight
-    # # urls shared: 25%
-    # # sources used: 15%
-    # confidence_weighted = profile_as_source_credibility['credibility']['confidence'] * 0.6 + sources_credibility['credibility']['confidence'] * 0.15 + urls_credibility['credibility']['confidence'] * 0.25
-    # if confidence_weighted:
-    #     value_weighted = (profile_as_source_credibility['credibility']['value'] * 0.6 * profile_as_source_credibility['credibility']['confidence'] + sources_credibility['credibility']['value'] * 0.15 * sources_credibility['credibility']['confidence']+ urls_credibility['credibility']['value'] * 0.25 * urls_credibility['credibility']['confidence']) / confidence_weighted
-    # else:
-    #     value_weighted = 0.
-    # final_credibility = {
-    #     'value': value_weighted,
-    #     'confidence': confidence_weighted
-    # }
-
-    # result = {
-    #     'credibility': final_credibility,
-    #     'profile_as_source_credibility': profile_as_source_credibility,
-    #     'sources_credibility': sources_credibility,
-    #     'urls_credibility': urls_credibility,
-    #     'itemReviewed': itemReviewed
-    # }
-    # database.save_user_credibility_result(itemReviewed['id'], result)
-
-    # time.sleep(3)
-    # if update_status_fn:
-    #     update_status_fn('retrieving tweets')
-    # time.sleep(3)
-    # if update_status_fn:
-    #     update_status_fn('analysisng tweets')
-    # time.sleep(3)
-    return {
+    # TODO limit (huge on frontend) and sort
+    # TODO select if not_verifiable should be returned or not! (threshold)
+    tweets_to_display = not_credible_tweets + credible_tweets + uncertain_tweets + not_verifiable_tweets[:100]
+    tweets_to_display = sorted(tweets_to_display, key=lambda el: el['credibility']['value'])
+    # final conversion to easy format
+    matching_tweets = []
+    for el in tweets_to_display:
+        matching_tweets.append({
+            'tweet': el['tweet'],
+            'coinform_label': el['coinform_label'],
+            'credibility_score': el['credibility']['value'],
+            'matching_links': get_links_factchecks_v2(el),
+            'matching_sources': get_sources_assessments_v2(el), #TODO
+        })
+    
+    response = {
+        'next_until_id': next_until_id,
         'profile': profile,
         'tweets_analysed_stats': {
-            'tweets_retrieved_count': len(tweets),
-            'tweets_matching_count': 112,
-            'tweets_credible_count': 62,
-            'tweets_not_credible_count': 26,
-            'tweets_mixed_count': 13,
-            'tweets_unknown_count': 11
+            'tweets_retrieved_count': total_tweets,
+            'tweets_matching_count': len(all_tweets_reviewed),
+            'tweets_credible_count': len(credible_tweets),
+            'tweets_not_credible_count': len(not_credible_tweets),
+            'tweets_mixed_count': len(uncertain_tweets),
+            'tweets_unknown_count': unknown_tweets_cnt
         },
-        'matching_tweets': [
-            {
-                'created_at': '6h',
-                'text': "'Hugs'! Thats how we close and email exchange between Brazilians, even if they are only acquaintances... I think I miss that!!",
-                'credibility_score': -0.5,
-                'matching_links': [
-                    {
-                        'link': 'https://t.co/B8r8t3Crev?amp=1',
-                        'fact_checks': [
-                            {
-                                'name': 'The Washington Post',
-                                'label': 'False',
-                                'fact_check_url': 'https://example.com'
-                            }
-                        ]
-                    }
-                ],
-                'matching_sources': [
-                    {
-                        'source': 'breitbart.com',
-                        'source_assessments': [
-                            {
-                                'name': 'The Washington Post',
-                                'label': 'False',
-                                'assessment_url': 'https://example.com'
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+        'matching_tweets': matching_tweets
     }
+    database.save_reviewed_profile_v2(response)
+    return response
+
+def get_links_factchecks_v2(credibility_assessment):
+    results = []
+    # TODO what about directly reviewed tweets?
+    for ass in credibility_assessment['urls_credibility'].get('assessments', []):
+        link = ass['itemReviewed']
+        fact_checks = [report for report in ass['assessments'][0]['reports']] # assumption that only factchecking_report provides assessments 
+        results.append({
+            'link': link,
+            'fact_checks': fact_checks
+        })
+    return results
+
+def get_sources_assessments_v2(credibility_assessment):
+    results = []
+    for ass in credibility_assessment['sources_credibility'].get('assessments', []):
+        source = ass['itemReviewed']
+        # TODO factchecking report should be linked to old frontend? Ask to the team
+        source_assessments = ass['assessments']
+        results.append({
+            'source': source,
+            'source_assessments': source_assessments
+        })
+    return results
