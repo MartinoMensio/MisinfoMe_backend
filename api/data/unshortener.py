@@ -8,6 +8,9 @@ import signal
 import sys
 import re
 # import urlexpander
+import string
+from urllib.parse import urlsplit, parse_qsl, quote, unquote, urlencode
+from posixpath import normpath
 
 from multiprocessing.pool import ThreadPool
 from bs4 import BeautifulSoup
@@ -66,53 +69,55 @@ more_shortening_domains = {'cnn.it', 'strw.rs', 'to.pbs.org', 'm.eonline.com', '
 
 shortening_domains.extend(more_shortening_domains)
 
-def unshorten_broken(url, referer=None, cookies=None):
-    domain = utils.get_url_domain(url)
-    print(url)
-    if domain in shortening_domains:
-        #cached = database.get_url_redirect(url)
-        #if not cached:"""
-        headers = headers = {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
-            'Accept-Encoding': 'gzip, deflate',
-            'Accept-Language': 'en-GB,en;q=0.9,it-IT;q=0.8,it;q=0.7,en-US;q=0.6',
-            'User-Agent': 'Google Chrome Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
-        }
-        if referer:
-            headers['Referer'] = referer
-        response = requests.head(url, headers=headers)
-        location = response.headers.get('location', None)
-        if not location:
-            print(response.headers)
-            print(cookies)
-            # try again with cookies
-            return unshorten_broken(url, referer=url, cookies=response.cookies)
-        print(response.url, location)
-        return unshorten_broken(location, referer=url)
-    #database.save_url_redirect(url, url)
-    return url
+# def unshorten_broken(url, referer=None, cookies=None):
+#     domain = utils.get_url_domain(url)
+#     print(url)
+#     if domain in shortening_domains:
+#         #cached = database.get_url_redirect(url)
+#         #if not cached:"""
+#         headers = headers = {
+#             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+#             'Accept-Encoding': 'gzip, deflate',
+#             'Accept-Language': 'en-GB,en;q=0.9,it-IT;q=0.8,it;q=0.7,en-US;q=0.6',
+#             'User-Agent': 'Google Chrome Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+#         }
+#         if referer:
+#             headers['Referer'] = referer
+#         response = requests.head(url, headers=headers)
+#         location = response.headers.get('location', None)
+#         if not location:
+#             print(response.headers)
+#             print(cookies)
+#             # try again with cookies
+#             return unshorten_broken(url, referer=url, cookies=response.cookies)
+#         print(response.url, location)
+#         return unshorten_broken(location, referer=url)
+#     #database.save_url_redirect(url, url)
+#     return url
 
 def unshorten(url, use_cache=False):
     """If use_cache is False, does not use the cache"""
     result = utils.add_protocol(url)
+    result = url_normalize(result)
+    print('url_normalize result', result)
 
     # to be tested
     # result = urlexpander.expand(result)
     # return result
 
-    domain = utils.get_url_domain(url)
-    if domain in shortening_domains:
-        if use_cache:
-            cached = database.get_url_redirect(url)
-        else:
-            cached = False
-        if cached:
-            # match found
-            result = cached['to']
-        else:
-            # not found
+    domain = utils.get_url_domain(result)
+    if use_cache:
+        cached = database.get_url_redirect(result)
+    else:
+        cached = False
+    if cached:
+        # match found
+        result = cached['to']
+    else:
+        # not found
+        if domain in shortening_domains:
             try:
-                res = requests.head(url, allow_redirects=True, timeout=2)
+                res = requests.head(result, allow_redirects=True, timeout=2)
                 result = res.url
             except requests.exceptions.Timeout as e:
                 # website dead, return the last one
@@ -132,50 +137,50 @@ def unshorten(url, use_cache=False):
             except Exception as e:
                 # something like http://ow.ly/yuFE8 that points to .
                 print('error for',url)
-        if use_cache:
-            # save in the cache for next calls
-            database.save_url_redirect(url, result)
+            if use_cache:
+                # save in the cache for next calls
+                database.save_url_redirect(url, result)
     return result
 
 
 resolver_url = 'https://unshorten.me/'
-class UnshortenerRemote(object):
-    """This unshortener is based on the https://unshorten.me/ website.
-    Therefore it's deadly slow. Better to use the local unshortener"""
-    def __init__(self):
-        self.session = requests.Session()
-        res_text = self.session.get(resolver_url).text
-        soup = BeautifulSoup(res_text, 'html.parser')
-        csrf = soup.select('input[name="csrfmiddlewaretoken"]')[0]['value']
-        #print(csrf)
-        self.csrf = csrf
+# class UnshortenerRemote(object):
+#     """This unshortener is based on the https://unshorten.me/ website.
+#     Therefore it's deadly slow. Better to use the local unshortener"""
+#     def __init__(self):
+#         self.session = requests.Session()
+#         res_text = self.session.get(resolver_url).text
+#         soup = BeautifulSoup(res_text, 'html.parser')
+#         csrf = soup.select('input[name="csrfmiddlewaretoken"]')[0]['value']
+#         #print(csrf)
+#         self.csrf = csrf
 
-    def unshorten(self, url, handle_error=True):
-        domain = utils.get_url_domain(url)
-        if domain in shortening_domains:
-            cached = database.get_url_redirect(url)
-            if not cached:
-                res_text = self.session.post(resolver_url, headers={'Referer': resolver_url}, data={'csrfmiddlewaretoken': self.csrf, 'url': url}).text
-                soup = BeautifulSoup(res_text, 'html.parser')
-                try:
-                    source_url = soup.select('section[id="features"] h3 code')[0].get_text()
-                except:
-                    #print('ERROR for', url)
-                    if handle_error:
-                        source_url = url
-                    else:
-                        source_url = None
-                m = (url, source_url)
-                #print('unshortened', url, source_url)
-                #print(m)
-                #self.mappings[m[0]] = m[1]
-                database.save_url_redirect(url, source_url)
-            else:
-                source_url = cached['to']
-        else:
-            # not doing it!
-            source_url = url
-        return source_url
+#     def unshorten(self, url, handle_error=True):
+#         domain = utils.get_url_domain(url)
+#         if domain in shortening_domains:
+#             cached = database.get_url_redirect(url)
+#             if not cached:
+#                 res_text = self.session.post(resolver_url, headers={'Referer': resolver_url}, data={'csrfmiddlewaretoken': self.csrf, 'url': url}).text
+#                 soup = BeautifulSoup(res_text, 'html.parser')
+#                 try:
+#                     source_url = soup.select('section[id="features"] h3 code')[0].get_text()
+#                 except:
+#                     #print('ERROR for', url)
+#                     if handle_error:
+#                         source_url = url
+#                     else:
+#                         source_url = None
+#                 m = (url, source_url)
+#                 #print('unshortened', url, source_url)
+#                 #print(m)
+#                 #self.mappings[m[0]] = m[1]
+#                 database.save_url_redirect(url, source_url)
+#             else:
+#                 source_url = cached['to']
+#         else:
+#             # not doing it!
+#             source_url = url
+#         return source_url
 
 def func(url):
     #url, uns = params
@@ -214,6 +219,94 @@ def unshorten_multiprocess(url_list, pool_size=20):
             database.save_url_redirect(url, resolved)
     print('unshortened')
     return results
+
+
+# inspired from https://github.com/tg123/tao.bb/blob/master/url_normalize.py
+SAFE_CHARS = ''.join([c for c in (string.digits + string.ascii_letters + string.punctuation) if c not in '%#'])
+VALID_DOMAIN = re.compile('^[a-zA-Z\d-]{1,63}(\.[a-zA-Z\d-]{1,63})*$')
+
+def escape(unescaped_str):
+    unquoted = unquote(unescaped_str)
+    while unquoted != unescaped_str:
+        unescaped_str = unquoted
+        unquoted = unquote(unquoted)
+    return quote(unquoted, SAFE_CHARS)
+
+def url_normalize(url):
+    # print('url normalize called', url)
+    url = url.replace('\t', '').replace('\r', '').replace('\n', '')
+    url = url.strip()
+    testurl = urlsplit(url)
+    if testurl.scheme == '':
+        url = urlsplit('http://' + url)
+    elif testurl.scheme in ['http', 'https']:
+        url = testurl
+    else:
+        return None
+
+    scheme = url.scheme
+
+    if url.netloc:
+        try:
+            hostname = url.hostname.rstrip(':')
+
+            port = None
+            try:
+                port = url.port
+            except ValueError:
+                pass
+
+            username = url.username
+            password = url.password
+
+            hostname = [part for part in hostname.split('.') if part]
+
+            # # convert long ipv4
+            # # here will fail domains like localhost
+            # if len(hostname) < 2:
+            #     hostname = [socket.inet_ntoa(struct.pack('!L', long(hostname[0])))]
+
+            hostname = '.'.join(hostname)
+            # hostname = hostname.decode('utf-8').encode('idna').lower()
+
+            if not VALID_DOMAIN.match(hostname):
+                return None
+
+        except:
+            return None
+
+
+        netloc = hostname
+        if username:
+            netloc = '@' + netloc    
+            if password:
+                netloc = ':' + password + netloc
+            netloc = username + netloc
+
+        if port:
+            if scheme == 'http':
+                port = '' if port == 80 else port
+            elif scheme == 'https':
+                port = '' if port == 443 else port
+
+            if port:
+                netloc += ':' + str(port)
+        
+        path = netloc + normpath('/' + url.path + '/').replace('//', '/')
+    else:
+        return None
+
+
+    query = parse_qsl(url.query, True)
+    query = dict(query)
+    # ignore tracking stuff
+    query = {k:v for k,v in query.items() if k not in ['fbclid', 'mc_cid', 'mc_eid', 'refresh_count', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']}
+    query = sorted(query.items())
+    query = urlencode(query)
+
+    fragment = url.fragment
+
+    return (('%s://%s?%s#%s' % (scheme, escape(path), query, escape(fragment))).rstrip('?#/ '))
 
 
 if __name__ == "__main__":

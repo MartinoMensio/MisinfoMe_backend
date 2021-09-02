@@ -74,6 +74,7 @@ def get_urls_from_tweets(tweets):
         urls = [{'url': u, 'found_in_tweet': str(t['id']), 'retweet': t['retweet']} for u in t['links']]
         all_urls.extend(urls)
 
+    # TODO unshorten has now improved: use the credibility module
     unshortened = unshortener.unshorten_multiprocess([u['url'] for u in all_urls])
     for url in all_urls:
         url['resolved'] = unshortened[url['url']]
