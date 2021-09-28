@@ -223,7 +223,7 @@ def unshorten_multiprocess(url_list, pool_size=20):
 
 # inspired from https://github.com/tg123/tao.bb/blob/master/url_normalize.py
 SAFE_CHARS = ''.join([c for c in (string.digits + string.ascii_letters + string.punctuation) if c not in '%#'])
-VALID_DOMAIN = re.compile('^[a-zA-Z\d-]{1,63}(\.[a-zA-Z\d-]{1,63})*$')
+VALID_DOMAIN = re.compile('^[a-zA-Z_\d-]{1,63}(\.[a-zA-Z\d-]{1,63})*$')
 
 def escape(unescaped_str):
     unquoted = unquote(unescaped_str)
