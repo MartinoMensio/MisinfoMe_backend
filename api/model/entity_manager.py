@@ -101,7 +101,8 @@ def get_latest_reviews(max=6):
     latest = latest[:max]
     results = []
     for el in latest:
-        image_url = f'https://logo.clearbit.com/{el["fact_checker"]["domain"]}'
+        # image_url = f'https://logo.clearbit.com/{el["fact_checker"]["domain"]}'
+        image_url = el["fact_checker"]["avatar"]
         title = el['goose']['opengraph'].get('title', None) or el['goose']['title']
         description = el['goose']['opengraph'].get('description', None) or el['goose']['meta']['description']
         fact_check_url = el['review_url']
