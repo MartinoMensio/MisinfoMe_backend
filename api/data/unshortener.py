@@ -18,6 +18,7 @@ from bs4 import BeautifulSoup
 
 from . import database
 from . import utils
+from . import webarchives
 from ..utils import timeit
 
 shortening_domains = [
@@ -95,29 +96,36 @@ shortening_domains.extend(more_shortening_domains)
 #     #database.save_url_redirect(url, url)
 #     return url
 
-def unshorten(url, use_cache=False):
+def unshorten(url, use_cache=True):
     """If use_cache is False, does not use the cache"""
-    result = utils.add_protocol(url)
-    result = url_normalize(result)
-    print('url_normalize result', result)
+    url_normalised = utils.add_protocol(url)
+    url_normalised = url_normalize(url_normalised)
+    result = url_normalised
+    print('url_normalised', url_normalised)
 
     # to be tested
     # result = urlexpander.expand(result)
     # return result
 
-    domain = utils.get_url_domain(result)
+    domain = utils.get_url_domain(url_normalised)
     if use_cache:
-        cached = database.get_url_redirect(result)
+        cached = database.get_url_redirect(url_normalised)
     else:
         cached = False
     if cached:
         # match found
         result = cached['to']
+        return result
     else:
         # not found
+        # first of all, check if it is a webarchive url
+        if domain in webarchives.domains:
+            result = webarchives.resolve_url(url_normalised)
+            if use_cache:
+                database.save_url_redirect(url_normalised, result)
         if domain in shortening_domains:
             try:
-                res = requests.head(result, allow_redirects=True, timeout=2)
+                res = requests.head(url_normalised, allow_redirects=True, timeout=2)
                 result = res.url
             except requests.exceptions.Timeout as e:
                 # website dead, return the last one
@@ -139,7 +147,7 @@ def unshorten(url, use_cache=False):
                 print('error for',url)
             if use_cache:
                 # save in the cache for next calls
-                database.save_url_redirect(url, result)
+                database.save_url_redirect(url_normalised, result)
     return result
 
 
