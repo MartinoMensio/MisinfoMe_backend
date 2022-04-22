@@ -14,8 +14,12 @@ def permacc_resolve_url(url):
     return url_resolved
 
 def archiveorg_resolve_url(url):
-    match = re.match(r'^https?:\/\/web\.archive\.org.*\/(?P<original>https?:\/\/.*)', url)
+    match = re.match(r'^https?:\/\/web\.archive\.org.*\/(?P<original>https?:\/(?P<second_slash>\/)?.*)', url)
     original_url = match.group('original')
+    second_slash = match.group('second_slash')
+    if not second_slash:
+        # double the //
+        original_url = original_url[:6] + '/' + original_url[6:]
     return original_url
 
 domains = {
