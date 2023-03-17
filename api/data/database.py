@@ -170,7 +170,7 @@ def save_reviewed_tweets_v2(tweets):
         if '_id' not in t:
             # this tweet review is new
             t['_id'] = t['id']
-            reviewed_tweets_v2.update_one({'_id': t['_id']}, t, upsert=True)
+            reviewed_tweets_v2.replace_one({'_id': t['_id']}, t, upsert=True)
 
 def save_reviewed_profile_v2(profile):
     profile['_id'] = str(profile['profile']['id'])
