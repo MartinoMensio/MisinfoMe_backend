@@ -193,7 +193,7 @@ def classify_url_legacy(url_info):
     elif label_url:
         label_url['reason'] = 'full_url_match'
         for s in label_url['score']['sources']:
-            if s in data.fact_checkers.keys():
+            if s in [el["_id"] for el in data.get_fact_checkers()]:
                 label_url['reason'] = 'fact_checking'
                 label_url['score']['sources'] = [s]
                 break

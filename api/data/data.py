@@ -7,7 +7,7 @@ from . import utils
 from . import unshortener
 from ..external import twitter_connector
 
-fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
+# fact_checkers = {el['_id']:el for el in database.get_fact_checkers()}
 
 def get_datasets():
     return [el for el in database.get_sources()]

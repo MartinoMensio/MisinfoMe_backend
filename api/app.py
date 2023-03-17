@@ -2,12 +2,14 @@ import os
 import requests
 from flask import Flask, Blueprint, request
 try: 
-    from flask_restplus import Api, Resource
+    from flask_restplus import Api
 except ImportError:
     import werkzeug, flask.scaffold
     werkzeug.cached_property = werkzeug.utils.cached_property
     flask.helpers._endpoint_from_view_func = flask.scaffold._endpoint_from_view_func
-    from flask_restplus import Api, Resource
+    import collections
+    collections.MutableMapping = collections.abc.MutableMapping
+    from flask_restplus import Api
 from flask.json import JSONEncoder
 import datetime
 import flask_monitoringdashboard as dashboard
