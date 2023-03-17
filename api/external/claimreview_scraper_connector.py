@@ -32,7 +32,7 @@ def get_latest(file_name):
         return send_file(file, attachment_filename=file_name, as_attachment=True)
 
 def get_sample(args):
-    args = {k: v for k, v in args.items() if v is not None}
+    args = {k: v for k, v in args.items() if v != None and v != ''}
     response = requests.get(f'{DATA_ENDPOINT}/data/sample', params=args)
     if response.status_code != 200:
         raise ExternalException(response.status_code, response.json())
