@@ -1,6 +1,9 @@
 app/*
 app_v2/*
 flask_monitoringdashboard.db
+evaluation/**/*.csv
+evaluation/**.png
+# evaluation/**
 
 dump/**
 dump*.tar.gz
