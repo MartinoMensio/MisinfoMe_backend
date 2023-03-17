@@ -111,11 +111,11 @@ def get_tweets_from_user_id(user_id):
 
 def get_collections_stats():
     return {
-        'origins': sources_collection.count(),
-        'urls': urls_collection.count(),
-        'domains': domains_collection.count(),
-        #'rebuttals': rebuttals_collection.count(),
-        'fact_checking': fact_checkers_collection.count(),
+        'origins': sources_collection.count_documents({}),
+        'urls': urls_collection.count_documents({}),
+        'domains': domains_collection.count_documents({}),
+        #'rebuttals': rebuttals_collection.count_documents({}),
+        'fact_checking': fact_checkers_collection.count_documents({}),
     }
 
 def get_dataset(dataset_key):
@@ -177,10 +177,10 @@ def save_reviewed_profile_v2(profile):
     replace_safe(reviewed_profiles_v2, profile)
 
 def get_homepage_stats_v2():
-    profiles_analysed_count = reviewed_profiles_v2.count()
-    tweets_analysed_count = reviewed_tweets_v2.count()
-    profiles_misinformed_count = reviewed_profiles_v2.find({'tweets_analysed_stats.tweets_not_credible_count': {'$gt': 0}}).count()
-    tweets_misinformed_count = reviewed_tweets_v2.find({'coinform_label': 'not_credible'}).count()
+    profiles_analysed_count = reviewed_profiles_v2.count_documents({})
+    tweets_analysed_count = reviewed_tweets_v2.count_documents({})
+    profiles_misinformed_count = reviewed_profiles_v2.count_documents({'tweets_analysed_stats.tweets_not_credible_count': {'$gt': 0}})
+    tweets_misinformed_count = reviewed_tweets_v2.count_documents({'coinform_label': 'not_credible'})
     return {
         'profiles_analysed_count': profiles_analysed_count,
         'tweets_analysed_count': tweets_analysed_count,
