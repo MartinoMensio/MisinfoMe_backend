@@ -49,7 +49,7 @@ def configure_static_resources(base_url, app: flask.Flask, api: flask_restplus.A
     def assets_helper(path):
         return send_from_directory('../app/assets', path)
 
-    @app.route('/')
+    # @app.route('/')
     @app.route(base_url)
     @app.route(base_url + '/')
     #@app.route(app_url)
@@ -58,6 +58,21 @@ def configure_static_resources(base_url, app: flask.Flask, api: flask_restplus.A
         # this route is for sending the user to the homepage
         return redirect(base_url + '/home')
 
+
+    @app.route('/static/<path:path>')
+    # @app.route('/favicon.ico')
+    def static_proxy_v2(path=None):
+        # the static files
+        print('here in static_proxy', path)
+        # raise ValueError(path)
+        return send_from_directory('../app_v2', path)
+
+    @app.route('/<path:path>')
+    @app.route('/home')
+    def send_new_frontend(path=None):
+        print(send_new_frontend, path)
+        # raise ValueError(path)
+        return send_from_directory('../app_v2', 'index.html')
 
 
     # we need to register the newly created blueprint for the documentation
