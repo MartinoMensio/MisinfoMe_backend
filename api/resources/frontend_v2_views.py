@@ -58,3 +58,31 @@ class FrontendV2Analysis(Resource):
         else:
             return credibility_manager.get_v2_profile_credibility(screen_name, until_id)
 
+
+# TODO add endpoint to analyse single tweet
+@api.route('/tweets/<int:tweet_id>')
+@api.param('tweet_id', 'The tweet is a identified by its ID, of type `int`')
+@api.doc(description='Get the credibility of a certain tweet')
+class TweetCredibilityV2(Resource):
+    args = {
+        'wait': marshmallow.fields.Boolean(missing=True)
+    }
+
+    args_post = {
+        'callback_url': marshmallow.fields.Str(missing=None)
+    }
+
+    @use_kwargs(args)
+    @api.param('wait', description='Do you want to be waiting, or get a work id that you can query later?', type=bool, missing=True)
+    @api.response(200, 'Success')
+    @api.response(422, 'Invalid tweet_id')
+    @api.response(404, 'Tweet not found')
+    def get(self, tweet_id, wait):
+        print('wait', wait)
+        if not wait:
+            return jobs_manager.create_task_for(credibility_manager.get_tweet_credibility_from_id, tweet_id)
+        else:
+            result = credibility_manager.get_tweet_credibility_from_id(tweet_id)
+            if not result:
+                return {'error': 'Tweet not found'}, 404
+            return result
