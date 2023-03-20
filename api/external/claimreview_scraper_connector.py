@@ -1,7 +1,6 @@
 import os
+from fastapi import Response
 import requests
-from io import BytesIO
-from flask import send_file
 
 from . import ExternalException
 
@@ -27,9 +26,12 @@ def get_latest(file_name):
     else:
         # binary file
         file_name = response.headers['content-disposition'].replace('attachment', '').replace(';', '').replace('filename=', '').replace('"', '').strip()
-        file = BytesIO(response.content)
-        file.seek(0)
-        return send_file(file, attachment_filename=file_name, as_attachment=True)
+        file_bytes = response.content
+        content_type = response.headers['content-type']
+        if file_name == 'zip':
+            # TODO: openapi docs is not displaying download button
+            content_type = 'application/x-zip-compressed'
+        return Response(content=file_bytes, media_type=content_type)
 
 def get_sample(args):
     args = {k: v for k, v in args.items() if v != None and v != ''}

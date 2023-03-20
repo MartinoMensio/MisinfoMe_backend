@@ -1,26 +1,35 @@
 # create requirements.txt with pip-compile (https://github.com/jazzband/pip-tools)
 # pip install pip-tools
-# pip-compile --resolver=backtracking
+# pip-compile
 redis
 requests
-celery
 python-dotenv
-gunicorn
-Werkzeug
-webargs
 validators
 tqdm
 tldextract
-supervisor==4.2.5
 regex
-pymongo==4.3.3
-marshmallow
-flask-restplus
-Flask-MonitoringDashboard
-flask-marshmallow
-Flask-Cors
-Flask
-dateparser==1.1.7
-cached-property
+pymongo
+dateparser
+# for unshortener
 beautifulsoup4
 lxml
+# to process tasks asynchronously (connection through redis)
+celery
+supervisor
+
+uvicorn
+
+# # things that exist because of Flask
+# Werkzeug
+# webargs
+# marshmallow
+# flask-restplus
+# Flask-MonitoringDashboard
+# flask-marshmallow
+# Flask-Cors
+# Flask
+# cached-property
+# gunicorn # web server or uvicorn ? FastAPI
+
+# FastAPI alternative
+fastapi

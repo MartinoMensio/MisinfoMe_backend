@@ -1,93 +1,50 @@
-import flask
-from flask import send_from_directory, redirect, url_for
-import flask_restplus
 import os
+from fastapi import FastAPI, APIRouter
+from starlette.applications import Starlette
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
+from starlette.responses import RedirectResponse
 
-# the swaggerui is usually served with static files with a path '/swaggerui'
-# but we can't serve that path because of the '/misinfo' prefix
-# so we need to modify the behaviour of the apidoc
-modified_apidoc = flask_restplus.apidoc.Apidoc('restplus_doc_modified',
-            __name__,
-            template_folder='templates',
-            # here lies the trick, to get the static files
-            static_folder=os.path.dirname(flask_restplus.__file__)+'/static',
-            # and serve with this new path
-            static_url_path='/misinfo/api/swaggerui',)
-
-# this will reply to the GET requests on the new path
-@modified_apidoc.add_app_template_global
-def swagger_static(filename):
-    #print('swagger_static', filename)
-    return url_for('restplus_doc_modified.static', filename=filename)
-
-
-
-def configure_static_resources(base_url, app: flask.Flask, api: flask_restplus.Api):
-    #app_url = base_url + '/app'
-    app_url = base_url
-
-    @app.route(base_url + '/static/<path:path>')
-    def static_proxy(path):
-        # the static files
-        print('here in static_proxy', path)
-        return send_from_directory('../app', path)
+def config_angular_frontend(app: APIRouter | FastAPI, static_folder: str, url_prefix: str, name: str):
+    # a new Starlette app that manages static files and 404 for angular (deep linking)
+    frontend = Starlette()
+    @frontend.middleware("http")
+    async def fix_not_found(request, call_next):
+        response = await call_next(request)
+        if response.status_code == 404:
+            return FileResponse(f'{static_folder}/index.html')
+        return response
+    @frontend.exception_handler(404)
+    def not_found(request, exc):
+        return FileResponse(f'{static_folder}/index.html')
+    # mount the folder with the static files
+    frontend.mount('/', StaticFiles(directory=static_folder))
+    # and then mount to the main app
+    app.mount(url_prefix, app=frontend, name=name)
 
 
-    @app.route(app_url + '/<path:path>')
-    @app.route(app_url + '/')
-    def deep_linking(path=None):
-        # send the angular application, mantaining the state informations (no redirects)
-        print('here in deep_linking')
-        return send_from_directory('../app', 'index.html')
+def configure_static_resources(main_router: APIRouter | FastAPI):
+    # frontend v1
+    config_angular_frontend(main_router, 'app-v1', '/frontend-v1', 'static app v1')
+    # frontend v2
+    config_angular_frontend(main_router, 'app-v2', '/frontend-v2', 'static app v2')
 
-    @app.route(base_url + '/favicon.ico')
-    def favicon_helper():
-        return send_from_directory('../app', 'favicon.ico')
-
-
-    @app.route(base_url + '/assets/<path:path>')
-    def assets_helper(path):
-        return send_from_directory('../app/assets', path)
-
-    # @app.route('/')
-    @app.route(base_url)
-    @app.route(base_url + '/')
-    #@app.route(app_url)
+    # root will go to the frontend v2
+    @main_router.route('/')
+    def redirect_home(request):
+        return RedirectResponse(url='/frontend-v2/')
+    
+    # deep links to the frontend v1
+    # /misinfo/credibility
+    @main_router.get('/misinfo/credibility/tweets/{tweet_id}', include_in_schema=False)
+    def redirect_home(tweet_id: str):
+        return RedirectResponse(url=f'/frontend-v1/credibility/tweets/{tweet_id}')
+    # /misinfo/credibility
+    @main_router.get('/misinfo/credibility/sources/{source}', include_in_schema=False)
+    def redirect_home(source: str):
+        return RedirectResponse(url=f'/frontend-v1/credibility/sources/{source}')
+    
+    # docs
+    @main_router.get('/misinfo/api', include_in_schema=False)
     def redirect_home():
-        print('here in redirect_home')
-        # this route is for sending the user to the homepage
-        return redirect(base_url + '/home')
-
-
-    @app.route('/static/<path:path>')
-    # @app.route('/favicon.ico')
-    def static_proxy_v2(path=None):
-        # the static files
-        print('here in static_proxy', path)
-        # raise ValueError(path)
-        return send_from_directory('../app_v2', path)
-
-    @app.route('/<path:path>')
-    @app.route('/home')
-    def send_new_frontend(path=None):
-        print(send_new_frontend, path)
-        # raise ValueError(path)
-        return send_from_directory('../app_v2', 'index.html')
-
-
-    # we need to register the newly created blueprint for the documentation
-    app.register_blueprint(modified_apidoc)
-    # and overwrite this damn method, to have an internal url to specs_url (otherwise it weirdly creates a localhost in the template)
-    flask_restplus.apidoc.ui_for = lambda self: flask.render_template('swagger-ui.html',
-        title=api.title,
-        specs_url='/misinfo/api/swagger.json')
-
-    """
-    # some experiments
-    @app.route(base_url + '/apiaaaa')
-    def get_swaggerui():
-        print('get homepage of swaggerui')
-        return flask.render_template('swagger-ui.html', title=api.title,
-                           specs_url='/misinfo/api/swagger.json')
-        #return flask_restplus.apidoc.ui_for(api)
-    """
+        return RedirectResponse(url='/docs')

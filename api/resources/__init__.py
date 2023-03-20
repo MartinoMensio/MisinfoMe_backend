@@ -1,52 +1,50 @@
-### This package is the View part, interfacing with web requests
-import flask_restplus
-import flask
-from flask_cors import CORS
+from fastapi import FastAPI, APIRouter
+from fastapi.middleware.cors import CORSMiddleware
 
-from . import entity_views, static_resources, stats_views, analysis_views, utils_views, credibility_views, jobs_views, data_views, twitter_views
+from . import entity_views, stats_views, analysis_views, utils_views, credibility_views, jobs_views, data_views, twitter_views
 from . import frontend_v2_views
-from . import static_resources
+
 from ..external import ExternalException
 
 
-
-def configure_endpoints(app: flask.Flask, api: flask_restplus.Api):
-    base_url = '/misinfo'
-
-    @api.errorhandler(ExternalException)
-    def default_error_handler(error: ExternalException):
-        return error.json_error, error.status_code
+def configure_endpoints(main_router: APIRouter):
 
     # endpoints for the entities
-    api.add_namespace(entity_views.api)
+    main_router.include_router(entity_views.router, prefix='/entities', tags=['entities'])
 
     # endpoints for the analyses
-    api.add_namespace(analysis_views.api)
+    main_router.include_router(analysis_views.router, prefix='/analysis', tags=['analysis'])
 
     # endpoints for the credibility graph
-    api.add_namespace(credibility_views.api)
+    main_router.include_router(credibility_views.router, prefix='/credibility', tags=['credibility'])
 
     # endpoints for the stats
-    api.add_namespace(stats_views.api)
+    main_router.include_router(stats_views.router, prefix='/stats', tags=['stats'])
 
     # endpoints for utils
-    api.add_namespace(utils_views.api)
+    main_router.include_router(utils_views.router, prefix='/utils', tags=['utils'])
 
     # endpoints for the new frontend
-    api.add_namespace(frontend_v2_views.api)
+    main_router.include_router(frontend_v2_views.router, prefix='/frontend/v2', tags=['frontend_v2'])
 
     # endpoints for the jobs
-    api.add_namespace(jobs_views.api)
+    main_router.include_router(jobs_views.router, prefix='/jobs', tags=['jobs'])
 
     # endpoints for data automatic update
-    api.add_namespace(data_views.api)
+    main_router.include_router(data_views.router, prefix='/data', tags=['data'])
 
     # twitter api
-    api.add_namespace(twitter_views.api)
+    main_router.include_router(twitter_views.router, prefix='/twitter', tags=['twitter'])
 
-    # endpoints for the static resources (frontend)
-    static_resources.configure_static_resources(base_url, app, api)
 
 def configure_cors(app):
-    # define here rules for the CORS and endpoints. Remember that in deployment the requests come from the same domain
-    cors = CORS(app, resources={r"/misinfo/api/*": {"origins": "*"}})
+    origins = [
+        "*", # allow all origins
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )

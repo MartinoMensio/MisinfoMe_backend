@@ -1,5 +1,7 @@
 app/*
-app_v2/*
+app-v1/*
+app_v1_backup/*
+app-v2/*
 flask_monitoringdashboard.db
 evaluation/**/*.csv
 evaluation/**.png

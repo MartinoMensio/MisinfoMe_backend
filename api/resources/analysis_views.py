@@ -1,186 +1,158 @@
-from flask_restplus import Resource, marshal_with, marshal, Namespace
-import marshmallow
-import webargs
-import flask_restplus
-from webargs.flaskparser import use_args, use_kwargs
+from datetime import date
+from typing import List
+from fastapi import APIRouter, HTTPException, Query, Path
+from pydantic import BaseModel
 
 from ..model import analysis_manager, jobs_manager
 
-api = Namespace('analysis', description='Analysis of some entities')
+router = APIRouter()
 
-### types of output
-count_analysis_fields = {
-    'id': flask_restplus.fields.Integer(attribute='_id'),
-    'screen_name': flask_restplus.fields.String,
-    'profile_image_url': flask_restplus.fields.String,
-    'tweets_cnt': flask_restplus.fields.Integer,
-    'shared_urls_cnt': flask_restplus.fields.Integer,
-    'verified_urls_cnt': flask_restplus.fields.Integer,
-    'mixed_urls_cnt': flask_restplus.fields.Integer,
-    'fake_urls_cnt': flask_restplus.fields.Integer,
-    'unknown_urls_cnt': flask_restplus.fields.Integer,
-    'score': flask_restplus.fields.Integer,
-    'rebuttals': flask_restplus.fields.Raw,
-    'fake_urls': flask_restplus.fields.Raw,
-    'mixed_urls': flask_restplus.fields.Raw,
-    'verified_urls': flask_restplus.fields.Raw,
-    'updated': flask_restplus.fields.DateTime(dt_format='rfc822'),
-    'cache': flask_restplus.fields.String
-}
-
-@api.route('/urls')
-class UrlAnalysis(Resource):
-    args = {
-        'url': marshmallow.fields.Str(missing=None),
-    }
-
-    @api.param('url', 'The URL to be analysed')
-    @use_kwargs(args)
-    def get(self, url):
-        """GET is for cached results"""
-        print('request GET', url)
-        if not url:
-            return {'error': 'Provide an url as parameter'}, 400
-        pass
+class CountAnalysis(BaseModel):
+    id: int
+    screen_name: str
+    profile_image_url: str
+    tweets_cnt: int
+    shared_urls_cnt: int
+    verified_urls_cnt: int
+    mixed_urls_cnt: int
+    fake_urls_cnt: int
+    unknown_urls_cnt: int
+    score: int
+    rebuttals: dict
+    fake_urls: dict
+    mixed_urls: dict
+    verified_urls: dict
+    updated: str
+    cache: str
 
 
-    @api.param('url', 'The URL to be analysed')
-    @use_kwargs(args)
-    def post(self, url):
-        """POST runs the analysis again"""
-        print('request POST', url)
-        if not url:
-            return {'error': 'Provide an url as parameter'}, 400
-        pass
-
-@api.route('/tweets')
-class TweetAnalysis(Resource):
-    args = {
-        'tweet_id': marshmallow.fields.Int(missing=None),
-    }
-
-    @api.param('tweet_id', 'The ID of the tweet to analyse')
-    @use_kwargs(args)
-    def get(self, tweet_id):
-        """GET is for cached results"""
-        print('request GET', tweet_id)
-        if not tweet_id:
-            return {'error': 'Provide an tweet_id as parameter'}, 400
-        pass
+@router.get("/urls")
+def get_url_analysis(
+    url: str = Query(..., description="The URL to be analysed")):
+    """
+    Returns the analysis of the URL. GET is for cached results
+    """
+    # return analysis_manager.get_url_analysis(url)
+    pass
 
 
-    @api.param('tweet_id', 'The ID of the tweet to analyse')
-    @use_kwargs(args)
-    def post(self, tweet_id):
-        """POST runs the analysis again"""
-        print('request POST', tweet_id)
-        if not tweet_id:
-            return {'error': 'Provide an tweet_id as parameter'}, 400
-        pass
+@router.post("/urls")
+def post_url_analysis(
+    url: str = Query(..., description="The URL to be analysed")):
+    """
+    Returns the analysis of the URL. POST runs the analysis again
+    """
+    # return analysis_manager.get_url_analysis(url)
+    pass
 
-@api.route('/twitter_accounts')
-class TwitterAccountAnalysis(Resource):
-    args = {
-        'user_id': marshmallow.fields.Int(missing=None),
-        'screen_name': marshmallow.fields.Str(missing=None),
-        'relation': marshmallow.fields.String(missing=None),
-        'limit': marshmallow.fields.Int(missing=200),
-        'use_credibility': marshmallow.fields.Boolean(missing=False),
-        'wait': marshmallow.fields.Boolean(missing=True)
-    }
 
-    @api.param('user_id', 'The user ID to analyse')
-    @api.param('screen_name', 'The screen_name to analyse')
-    @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
-    @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
-    @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility (legacy data interface as the old model)')
-    @api.param('wait', description='Do you want to be waiting, or get a work id that you can query later?', type=bool, missing=True)
-    @use_kwargs(args)
-    # @marshal_with(count_analysis_fields)
-    def get(self, user_id, screen_name, relation, limit, use_credibility, wait):
-        """GET is for cached results"""
-        allow_cached=True
-        only_cached=True
-        if wait:
-            if relation == 'friends':
-                if screen_name:
-                    result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
-                if user_id:
-                    result = analysis_manager.analyse_friends(user_id, limit, use_credibility=use_credibility)
-            elif user_id:
-                result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+@router.get("/tweets")
+def get_tweet_analysis(
+    tweet_id: int = Path(..., description="The ID of the tweet to analyse")):
+    """
+    Returns the analysis of the tweet. GET is for cached results
+    """
+    # return analysis_manager.get_tweet_analysis(tweet_id)
+    pass
+
+
+@router.post("/tweets")
+def post_tweet_analysis(
+    tweet_id: int = Path(..., description="The ID of the tweet to analyse")):
+    """
+    Returns the analysis of the tweet. POST runs the analysis again
+    """
+    # return analysis_manager.get_tweet_analysis(tweet_id)
+    pass
+
+@router.get("/twitter_accounts")
+def get_twitter_account_analysis(
+    user_id: int = Query(None, description="The user ID to analyse"),
+    screen_name: str = Query(None, description="The screen_name to analyse"),
+    relation: str = Query(None, description="if set to `friends` will analyse the friends instead of the user itself"),
+    limit: int = Query(200, description="if `relation` is set to `friends`, this tells how many friends maximum to analyse"),
+    use_credibility: bool = Query(False, description="Wether to use the old model (false) or the new one based on credibility"),
+    wait: bool = Query(True, description="Do you want to be waiting, or get a work id that you can query later?")):
+    """
+    Returns the analysis of the twitter account. GET is for cached results
+    """
+    allow_cached=True
+    only_cached=True
+    if wait:
+        if relation == 'friends':
+            if screen_name:
+                result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, use_credibility=use_credibility)
+            if user_id:
+                result = analysis_manager.analyse_friends(user_id, limit, use_credibility=use_credibility)
+        elif user_id:
+            result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        elif screen_name:
+            result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        return CountAnalysis(result)
+    else:
+        if relation == 'friends':
+            raise HTTPException(status_code=400, detail="async job not supported with this combination of parameters. set wait=False")
+        elif user_id:
+            raise HTTPException(status_code=400, detail="async job not supported with this combination of parameters. set wait=False")
+        elif screen_name:
+            return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+
+    raise HTTPException(status_code=400, detail="Provide a user_id or screen_name as parameter")
+
+
+@router.post("/twitter_accounts")
+def post_twitter_account_analysis(
+    user_id: int = Query(None, description="The user ID to analyse"),
+    screen_name: str = Query(None, description="The screen_name to analyse"),
+    relation: str = Query(None, description="if set to `friends` will analyse the friends instead of the user itself"),
+    limit: int = Query(200, description="if `relation` is set to `friends`, this tells how many friends maximum to analyse"),
+    use_credibility: bool = Query(False, description="Wether to use the old model (false) or the new one based on credibility"),
+    wait: bool = Query(True, description="Do you want to be waiting, or get a work id that you can query later?")):
+    """
+    Returns the analysis of the twitter account. POST is for running the analysis again
+    """
+    allow_cached=False
+    only_cached=False
+    if wait:
+        if relation == 'friends':
+            if user_id:
+                result = analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
             elif screen_name:
-                result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-            return marshal(result, count_analysis_fields), 200
-        else:
-            if relation == 'friends':
-                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
-            elif user_id:
-                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
-            elif screen_name:
-                return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+                result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        elif user_id:
+            result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        elif screen_name:
+            result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+        return CountAnalysis(result)
+    else:
+        if relation == 'friends':
+            raise HTTPException(status_code=400, detail="async job not supported with this combination of parameters. set wait=False")
+        elif user_id:
+            raise HTTPException(status_code=400, detail="async job not supported with this combination of parameters. set wait=False")
+        elif screen_name:
+            return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
+    raise HTTPException(status_code=400, detail="Provide a user_id(s) or screen_name(s) as parameter")
 
-        return {'error': 'Provide a user_id or screen_name as parameter'}, 400
 
-    @api.param('user_id', 'The user ID to analyse')
-    @api.param('screen_name', 'The screen_name to analyse')
-    @api.param('relation', 'if set to `friends` will analyse the friends instead of the user itself')
-    @api.param('limit', 'if `relation` is set to `friends`, this tells how many friends maximum to analyse')
-    @api.param('use_credibility', 'Wether to use the old model (false) or the new one based on credibility')
-    @api.param('wait', description='Do you want to be waiting, or get a work id that you can query later?', type=bool, missing=True)
-    @use_kwargs(args)
-    #@marshal_with(count_analysis_fields)
-    def post(self, user_id, screen_name, relation, limit, use_credibility, wait):
-        """POST runs the analysis again"""
-        allow_cached=False
-        only_cached=False
-        if wait:
-            if relation == 'friends':
-                if user_id:
-                    result = analysis_manager.analyse_friends(user_id, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-                elif screen_name:
-                    result = analysis_manager.analyse_friends_from_screen_name(screen_name, limit, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-            elif user_id:
-                result = analysis_manager.analyse_twitter_account(user_id, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-            elif screen_name:
-                result = analysis_manager.analyse_twitter_account_from_screen_name(screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-            return marshal(result, count_analysis_fields), 200
-        else:
-            if relation == 'friends':
-                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
-            elif user_id:
-                return {'error': 'async job not supported with this combination of parameters. set wait=False'}, 400
-            elif screen_name:
-                return jobs_manager.create_task_for(analysis_manager.analyse_twitter_account_from_screen_name, screen_name, allow_cached=allow_cached, only_cached=only_cached, use_credibility=use_credibility)
-        return {'error': 'Provide a user_id(s) or screen_name(s) as parameter'}, 400
+@router.get("/time_distribution_url")
+def get_url_time_distribution_analysis(
+    url: str = Query(None, description="The url to analyse temporally"),
+    time_granularity: str = Query('month', description="The time granularity wanted. Possible values are `year`, `month`, `week`, `day`")):
+    """
+    Returns the time distribution of the url
+    """
+    if not url:
+        raise HTTPException(status_code=400, detail="missing parameter url")
+    return analysis_manager.analyse_time_distribution_url(url, time_granularity)
 
-@api.route('/time_distribution_url')
-class UrlTimeDistributionAnalysis(Resource):
-    args = {
-        'url': marshmallow.fields.Str(missing=None),
-        'time_granularity': marshmallow.fields.Str(missing='month', validate=lambda tg: tg in ['year', 'month', 'week', 'day'])
-    }
 
-    @api.param('url', 'The url to analyse temporally')
-    @api.param('time_granularity', 'The time granularity wanted. Possible values are `year`, `month`, `week`, `day`')
-    @use_kwargs(args)
-    def get(self, url, time_granularity):
-        if not url:
-            return {'error': 'missing parameter url'}, 400
-        return analysis_manager.analyse_time_distribution_url(url, time_granularity)
-
-@api.route('/time_distribution_tweets')
-class TweetsTimeDistributionAnalysis(Resource):
-    args = {
-        'tweets_ids': webargs.fields.DelimitedList(marshmallow.fields.Int(), missing=[]),
-        'time_granularity': marshmallow.fields.Str(missing='month', validate=lambda tg: tg in ['year', 'month', 'week', 'day']),
-        'mode': marshmallow.fields.Str(missing='absolute', validate=lambda m: m in ['absolute', 'relative']),
-        'reference_date': marshmallow.fields.Date(missing=None)
-    }
-
-    @api.param('tweets_ids', 'The IDs of the tweets to analyse')
-    @api.param('time_granularity', 'The time granularity wanted. Possible values are `year`, `month`, `week`, `day`')
-    @api.param('mode', 'The mode for time. Possible values are `absolute`, `relative`')
-    @use_kwargs(args)
-    def get(self, tweets_ids, time_granularity, mode, reference_date):
-        return analysis_manager.analyse_time_distribution_tweets(tweets_ids, time_granularity, mode, reference_date)
+@router.get("/time_distribution_tweets")
+def get_tweets_time_distribution_analysis(
+    tweets_ids: List[int] = Query([], description="The IDs of the tweets to analyse"),
+    time_granularity: str = Query('month', description="The time granularity wanted. Possible values are `year`, `month`, `week`, `day`"),
+    mode: str = Query('absolute', description="The mode for time. Possible values are `absolute`, `relative`"),
+    reference_date: date = Query(None, description="The reference date for relative mode")):
+    """
+    Returns the time distribution of the tweets
+    """
+    return analysis_manager.analyse_time_distribution_tweets(tweets_ids, time_granularity, mode, reference_date)
