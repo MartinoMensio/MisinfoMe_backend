@@ -9,8 +9,8 @@ WORKDIR /app
 RUN pip install -r requirements.txt
 
 # celery non root user
-RUN useradd -ms /bin/bash celery
+# RUN useradd -ms /bin/bash celery
 # RUN chown -R celery:celery /app
-USER celery
+# USER celery
 
 CMD ["supervisord"]
