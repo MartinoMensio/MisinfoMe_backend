@@ -16,8 +16,10 @@ billiard==3.6.4.0
     # via celery
 celery==5.2.7
     # via -r requirements.in
-certifi==2019.3.9
-    # via requests
+certifi==2022.12.7
+    # via
+    #   -r requirements.in
+    #   requests
 charset-normalizer==2.1.1
     # via requests
 click==8.1.3
