@@ -7,8 +7,9 @@ from . import ExternalException
 DATA_ENDPOINT = os.environ.get('DATA_ENDPOINT', 'http://localhost:20400')
 print('DATA_ENDPOINT', DATA_ENDPOINT)
 
-def download_data(body):
-    response = requests.post(f'{DATA_ENDPOINT}/data/download', json=body)
+def download_data(date):
+    print(date)
+    response = requests.post(f'{DATA_ENDPOINT}/data/download', json={'date': date})
     if response.status_code != 200:
         raise ExternalException(response.status_code, response.json())
     return response.json()
