@@ -37,11 +37,14 @@ def configure_static_resources(main_router: APIRouter | FastAPI):
     # deep links to the frontend v1
     # /misinfo/credibility
     @main_router.get('/misinfo/credibility/tweets/{tweet_id}', include_in_schema=False)
-    def redirect_home(tweet_id: str):
+    def redirect_tweet_credibility(tweet_id: str):
         return RedirectResponse(url=f'/frontend-v1/credibility/tweets/{tweet_id}')
     # /misinfo/credibility
+    @main_router.get('/misinfo/credibility/sources', include_in_schema=False)
+    def redirect_sources_credibility():
+        return RedirectResponse(url=f'/frontend-v1/credibility/sources')
     @main_router.get('/misinfo/credibility/sources/{source}', include_in_schema=False)
-    def redirect_home(source: str):
+    def redirect_source_credibility(source: str):
         return RedirectResponse(url=f'/frontend-v1/credibility/sources/{source}')
     
     # docs
