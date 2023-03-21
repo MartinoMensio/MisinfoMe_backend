@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import entity_views, stats_views, analysis_views, utils_views, credibility_views, jobs_views, data_views, twitter_views
 from . import frontend_v2_views
+from . import sparql_views
 
 from ..external import ExternalException
 
@@ -35,6 +36,9 @@ def configure_endpoints(main_router: APIRouter):
 
     # twitter api
     main_router.include_router(twitter_views.router, prefix='/twitter', tags=['twitter'])
+
+    # sparql api
+    main_router.include_router(sparql_views.router, prefix='/sparql', tags=['sparql'])
 
 
 def configure_cors(app):

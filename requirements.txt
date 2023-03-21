@@ -7,7 +7,9 @@
 amqp==5.1.1
     # via kombu
 anyio==3.6.2
-    # via starlette
+    # via
+    #   starlette
+    #   watchfiles
 async-timeout==4.0.2
     # via redis
 beautifulsoup4==4.7.1
@@ -28,6 +30,7 @@ click==8.1.3
     #   click-didyoumean
     #   click-plugins
     #   click-repl
+    #   rdflib-endpoint
     #   uvicorn
 click-didyoumean==0.3.0
     # via celery
@@ -44,16 +47,22 @@ deprecated==1.2.13
 dnspython==2.3.0
     # via pymongo
 fastapi==0.94.1
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   rdflib-endpoint
 filelock==3.10.0
     # via tldextract
 h11==0.14.0
+    # via uvicorn
+httptools==0.5.0
     # via uvicorn
 idna==2.8
     # via
     #   anyio
     #   requests
     #   tldextract
+isodate==0.6.1
+    # via rdflib
 kombu==5.2.4
     # via celery
 lxml==4.9.2
@@ -67,16 +76,26 @@ pydantic==1.10.6
 pymongo==4.3.3
     # via -r requirements.in
 pyparsing==3.0.9
-    # via packaging
+    # via
+    #   packaging
+    #   rdflib
 python-dateutil==2.8.0
     # via dateparser
-python-dotenv==0.10.1
-    # via -r requirements.in
+python-dotenv==1.0.0
+    # via
+    #   -r requirements.in
+    #   uvicorn
 pytz==2022.2.1
     # via
     #   celery
     #   dateparser
     #   tzlocal
+pyyaml==6.0
+    # via uvicorn
+rdflib==6.3.1
+    # via rdflib-endpoint
+rdflib-endpoint==0.4.0
+    # via -r requirements.in
 redis==4.3.4
     # via -r requirements.in
 regex==2019.4.14
@@ -93,6 +112,7 @@ requests-file==1.4.3
 six==1.12.0
     # via
     #   click-repl
+    #   isodate
     #   python-dateutil
     #   requests-file
 sniffio==1.3.0
@@ -113,8 +133,12 @@ tzlocal==1.5.1
     # via dateparser
 urllib3==1.26.12
     # via requests
-uvicorn==0.21.1
-    # via -r requirements.in
+uvicorn[standard]==0.21.1
+    # via
+    #   -r requirements.in
+    #   rdflib-endpoint
+uvloop==0.17.0
+    # via uvicorn
 validators==0.20.0
     # via -r requirements.in
 vine==5.0.0
@@ -122,8 +146,12 @@ vine==5.0.0
     #   amqp
     #   celery
     #   kombu
+watchfiles==0.18.1
+    # via uvicorn
 wcwidth==0.2.5
     # via prompt-toolkit
+websockets==10.4
+    # via uvicorn
 wrapt==1.11.1
     # via deprecated
 

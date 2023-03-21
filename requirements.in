@@ -21,3 +21,6 @@ supervisor # supervisor==4.2.5 has CVE-2022-40897, but it's the latest
 # FastAPI
 fastapi
 uvicorn
+
+# sparql
+rdflib-endpoint
