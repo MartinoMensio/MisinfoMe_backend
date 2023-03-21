@@ -24,14 +24,14 @@ def get_factcheckers():
     return credibility_manager.get_factcheckers()
 
 
-@router.get('/sources/')
+@router.get('/sources')
 def get_source_credibility(source: str = Query(..., description='The source to analyse')):
     """
     Get the credibility of a certain source
     """
     return credibility_manager.get_source_credibility(source)
 
-@router.post('/sources/')
+@router.post('/sources')
 def post_source_credibility(
     source: str = Query(..., description='The source to analyse'),
     callback_url: str = Query(None, description='The callback_url coming from the gateway. If absent, the call will be blocking')):
@@ -44,14 +44,14 @@ def post_source_credibility(
         return credibility_manager.get_source_credibility(source)
 
 
-@router.get('/urls/')
+@router.get('/urls')
 def get_url_credibility(url: str = Query(..., description='The URL to analyse')):
     """
     Get the credibility of a certain URL
     """
     return credibility_manager.get_url_credibility(url)
 
-@router.post('/urls/')
+@router.post('/urls')
 def post_url_credibility(
     url: str = Query(..., description='The URL to analyse'),
     callback_url: str = Query(None, description='The callback_url coming from the gateway. If absent, the call will be blocking')):
@@ -97,7 +97,7 @@ def post_tweet_credibility_batch(
     return credibility_manager.get_tweet_credibility_from_dirty_tweet_batch(tweets)
     
 
-@router.get('/users/')
+@router.get('/users')
 def get_user_credibility(
             screen_name: str = Query(..., description='The `screen_name` of the twitter profile to analyse'),
             wait: bool = Query(True, description='Do you want to be waiting, or get a work id that you can query later?')):
@@ -111,7 +111,7 @@ def get_user_credibility(
         return result
 
 
-@router.post('/users/')
+@router.post('/users')
 def post_user_credibility(
             screen_name: str = Query(..., description='The `screen_name` of the twitter profile to analyse'),
             callback_url: str = Query(None, description='A URL to be POSTed with the result of the job. If absent, the call will be blocking')):
@@ -122,7 +122,7 @@ def post_user_credibility(
         return credibility_manager.get_user_credibility_from_screen_name(screen_name)
 
 
-@router.get('/user-friends/')
+@router.get('/user-friends')
 def get_user_friends_credibility(
             screen_name: str = Query(..., description='The `screen_name` of the twitter profile with the friends to get the cached analysis'),
             limit: int = Query(300, description='How many friends to retrieve, default 300')):

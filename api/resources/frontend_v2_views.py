@@ -8,7 +8,7 @@ from . import statuses
 router = APIRouter()
 
 
-@router.get('/home/')
+@router.get('/home')
 def get_frontend_v2_home():
     """Get the info to populate the homepage"""
     return entity_manager.get_frontend_v2_home()

@@ -10,7 +10,7 @@ class StatsBody(BaseModel):
     date: str
 
 
-@router.post('/update/')
+@router.post('/update')
 def update_data(body: StatsBody):
     json_data = body.json()
     print(json_data)
@@ -29,7 +29,7 @@ def get_latest_data(
     return claimreview_scraper_connector.get_latest(file_name)
 
 
-@router.get('/sample/')
+@router.get('/sample')
 def get_random_samples(
     since: str = Query(None, description='Time filter, only get items published since the provided date. Format YYYY-MM-DD'),
     until: str = Query(None, description='Time filter, only get items published until the provided date. Format YYYY-MM-DD'),
