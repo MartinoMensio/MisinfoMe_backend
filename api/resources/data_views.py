@@ -16,7 +16,8 @@ def update_data(body: StatsBody):
     print(json_data)
     a = credibility_connector.update_origin('ifcn')
     print(a)
-    b = claimreview_scraper_connector.download_data(json_data)
+    date = body.date
+    b = claimreview_scraper_connector.download_data(date)
     print(b)
     c = credibility_connector.update_origin('factchecking_report')
     print(c)
