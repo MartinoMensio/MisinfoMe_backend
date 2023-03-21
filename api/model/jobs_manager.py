@@ -66,16 +66,11 @@ class CallbackTask(Task):
 
 @celery.task(base=CallbackTask, bind=True)# TODO(bind=True) will have self.update_state() to let the user to have more details https://blog.miguelgrinberg.com/post/using-celery-with-flask
 def wrapper(self, time_demanding_fn, *args, **kwargs):
-    logger.info('job_id', wrapper.request.id, time_demanding_fn)
+    logger.info('inside wrapper')
+    # logger.info('job_id', wrapper.request.id, time_demanding_fn)
     # TODO add a function to be called each time that an update comes, and call self.update_state() with bind=True
     tell_me_your_status = lambda message: self.update_state(state = message)
     result = time_demanding_fn(update_status_fn=tell_me_your_status, *args, **kwargs)
-    try:
-        # TODO: something is wrong here, content is not defined. Also, the requests.post is already in CallbackTask
-        response = requests.post(GATEWAY_MODULE_ENDPOINT, json=content)
-        print(response.status_code)
-    except:
-        logger.error('error submitting to gateway')
     return result
 
 def create_task_for(*args, **kwargs):
