@@ -12,7 +12,8 @@ The folders are organised in the following way:
     - credibility: the core of computation of what is credible
         - graph: building and traversing the graph of credibility
         - sources: where the data comes from (API / datasets)
-- app (unversioned): contains the transpiled frontend (look at https://github.com/MartinoMensio/MisinfoMe_frontend)
+- app-v1 (unversioned): contains the transpiled frontend (look at https://github.com/MartinoMensio/MisinfoMe_frontend)
+- app-v2 (unversioned): contains the new transpiled frontend (look at https://github.com/MartinoMensio/misinfome-frontend-v2/)
 - examples: contains some json examples of the responses provided
 - test: some tests
 
