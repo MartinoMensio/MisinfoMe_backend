@@ -1,0 +1,39 @@
+[tool.pdm]
+
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Backend for MisinfoMe"
+authors = [
+    {name = "Martino Mensio", email = "martino.mensio@open.ac.uk"},
+]
+dependencies = [
+    "redis",
+    "requests",
+    "certifi",
+    "python-dotenv",
+    "validators",
+    "tqdm",
+    "tldextract",
+    "regex",
+    "pymongo",
+    "dateparser",
+    "beautifulsoup4",
+    "lxml",
+    "celery",
+    "supervisor",
+    "fastapi",
+    "uvicorn"
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[tool.pdm.dev-dependencies]  # This is dev dependencies
+dev1 = [
+    "black", "pytest"
+]
+
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
