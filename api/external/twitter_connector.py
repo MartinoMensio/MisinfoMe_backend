@@ -119,6 +119,14 @@ def search_tweets_from_user_id_v2(user_id, get_all=False, until_id=None):
     return response.json()
 
 
+def get_tweet_from_id_v2(tweet_id):
+    response = requests.get(f"{TWITTER_CONNECTOR}v2/tweets/{tweet_id}")
+    if response.status_code != 200:
+        print("ERROR", tweet_id, response.status_code)
+        raise ExternalException(response.status_code, response.json())
+    return response.json()
+
+
 def get_status():
     try:
         response = requests.get(f"{TWITTER_CONNECTOR}utils/status")

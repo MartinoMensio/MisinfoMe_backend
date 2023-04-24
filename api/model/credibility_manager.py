@@ -962,6 +962,64 @@ def get_v2_profile_credibility(screen_name, until_id=None, update_status_fn=None
     return response
 
 
+def get_v2_tweet_credibility(tweet_id):
+    tweet_info = twitter_connector.get_tweet_from_id_v2(tweet_id)
+    new_tweets_analysed = get_tweet_credibility_from_dirty_tweet_batch([tweet_info])[0]
+    # attach the tweet object here
+    new_tweets_analysed["tweet"] = tweet_info
+    # author object is extra
+    author = tweet_info["author"]
+    # print(all_tweets_reviewed.keys())
+    all_tweets_reviewed = [new_tweets_analysed]
+    # all_tweets_reviewed = [
+    #     el for el in all_tweets_reviewed if el["credibility"]["confidence"] > 0.01
+    # ]
+    # sort worst first
+    # all_tweets_reviewed = sorted(
+    #     all_tweets_reviewed, key=lambda el: el["credibility"]["value"]
+    # )
+    for el in all_tweets_reviewed:
+        el["coinform_label"] = get_coinform_label(el["credibility"])
+        el["user_id"] = author["id"]
+        el["id"] = el["itemReviewed"]
+    # save to DB the reviews from these tweets
+    database.save_reviewed_tweets_v2(all_tweets_reviewed)
+    # get the sources and links info
+    sources_info = get_sources_assessments_v2(new_tweets_analysed)
+    links_info = get_links_factchecks_v2(new_tweets_analysed)
+
+    links_label = "not_verifiable"
+    if any(el["coinform_label"] == "not_credible" for el in links_info):
+        links_label = "not_credible"
+    elif any(el["coinform_label"] == "uncertain" for el in links_info):
+        links_label = "uncertain"
+    elif any(el["coinform_label"] == "mostly_credible" for el in links_info):
+        links_label = "mostly_credible"
+    elif any(el["coinform_label"] == "credible" for el in links_info):
+        links_label = "credible"
+    sources_label = "not_verifiable"
+    if any(el["coinform_label"] == "not_credible" for el in sources_info):
+        sources_label = "not_credible"
+    elif any(el["coinform_label"] == "uncertain" for el in sources_info):
+        sources_label = "uncertain"
+    elif any(el["coinform_label"] == "mostly_credible" for el in sources_info):
+        sources_label = "mostly_credible"
+    elif any(el["coinform_label"] == "credible" for el in sources_info):
+        sources_label = "credible"
+
+    result = {
+        "author": author,
+        "tweet": el["tweet"],
+        "coinform_label": el["coinform_label"],
+        "credibility_score": el["credibility"]["value"],
+        "matching_links": links_info,
+        "matching_sources": sources_info,  # TODO
+        "links_label": links_label,
+        "sources_label": sources_label,
+    }
+    return result
+
+
 def get_links_factchecks_v2(credibility_assessment):
     results = []
     # TODO what about directly reviewed tweets?
