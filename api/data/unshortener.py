@@ -115,7 +115,6 @@ def unshorten(url, use_cache=True):
     if cached:
         # match found
         result = cached['to']
-        return result
     else:
         # not found
         # first of all, check if it is a webarchive url
@@ -148,6 +147,7 @@ def unshorten(url, use_cache=True):
             if use_cache:
                 # save in the cache for next calls
                 database.save_url_redirect(url_normalised, result)
+    result = url_normalize(result)
     return result
 
 
@@ -241,6 +241,8 @@ def escape(unescaped_str):
     return quote(unquoted, SAFE_CHARS)
 
 def url_normalize(url):
+    if not url:
+        return None
     # print('url normalize called', url)
     url = url.replace('\t', '').replace('\r', '').replace('\n', '')
     url = url.strip()
@@ -308,7 +310,7 @@ def url_normalize(url):
     query = parse_qsl(url.query, True)
     query = dict(query)
     # ignore tracking stuff
-    query = {k:v for k,v in query.items() if k not in ['fbclid', 'mc_cid', 'mc_eid', 'refresh_count', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']}
+    query = {k:v for k,v in query.items() if k not in ['fbclid', 'mc_cid', 'mc_eid', 'refresh_count', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'igshid']}
     query = sorted(query.items())
     query = urlencode(query)
 
