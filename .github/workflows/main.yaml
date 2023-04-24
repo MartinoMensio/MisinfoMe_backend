@@ -111,7 +111,7 @@ jobs:
       name: trigger main repo
       uses: peter-evans/repository-dispatch@v2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.MISINFOME_GH_TOKEN }}
         repository: MartinoMensio/MisinfoMe
         event-type: docker-build
         client-payload: '{"docker_image": "${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ env.TODAY }}"}'
