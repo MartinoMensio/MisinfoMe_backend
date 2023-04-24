@@ -30,8 +30,9 @@ def get_redirect_info_remote(url):
     raise NotImplementedError()
 """
 
+
 def clear_url(url):
-    url = url[:1000] # mongo limit
+    url = url[:1000]  # mongo limit
     if validators.url(url) == True:
         return url
     else:
@@ -41,19 +42,21 @@ def clear_url(url):
 # migration function
 def load_mappings(input_file_path):
     content = utils.read_json(input_file_path)
-    for k,v in content.items():
-        #k = lower(k)
-        #v = lower(v)
+    for k, v in content.items():
+        # k = lower(k)
+        # v = lower(v)
         k = clear_url(k)
         v = clear_url(v)
         if not k or not v:
             continue
         database.save_url_redirect(k, v)
 
+
 # migration function
 def load():
-    load_mappings('cache/url_mappings.json')
-    load_mappings('../datasets/data/mappings.json')
+    load_mappings("cache/url_mappings.json")
+    load_mappings("../datasets/data/mappings.json")
+
 
 # TODO run that to see when it's the case to retrieve the redirect info from the webservice
 def analyse_redirects():
@@ -61,8 +64,8 @@ def analyse_redirects():
     different_redirects = []
     redirecting_domains = set()
     for redirect_info in database.get_url_redirects():
-        from_url = redirect_info['_id']
-        to_url = redirect_info['to']
+        from_url = redirect_info["_id"]
+        to_url = redirect_info["to"]
         if from_url != to_url:
             different_redirects.append([from_url, to_url])
             try:

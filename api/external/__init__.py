@@ -1,6 +1,6 @@
-
 class ExternalException(Exception):
     """An helper to propagate the error when the other services provide a bad answer"""
+
     status_code: int
     json_error: dict
 
