@@ -114,8 +114,4 @@ jobs:
         token: ${{ secrets.MISINFOME_GH_TOKEN }}
         repository: MartinoMensio/MisinfoMe
         event-type: docker-build
-        client-payload: >
-        {
-          "submodule": "${{ github.event.repository.name }}",
-          "commit_sha": "${{ github.sha }}"
-        }
+        client-payload: '{ "submodule": "${{ github.event.repository.name }}", "commit_sha": "${{ github.sha }}" }'
