@@ -3,7 +3,7 @@ dump_datasets:
 
 
 dump_claimreviews:
-	mongodump -d claimreview_scraper -c claim_reviews -o dump && echo "dumped datasets"
+	mongodump -d claimreview_collector -c claim_reviews -o dump && echo "dumped datasets"
 
 dump_credibility:
 	mongodump -d credibility -o dump && echo "dumped credibility"

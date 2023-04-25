@@ -1,7 +1,7 @@
 from ..external import (
     twitter_connector,
     credibility_connector,
-    claimreview_scraper_connector,
+    claimreview_connector,
 )
 from ..data import data
 from ..data import database
@@ -125,7 +125,7 @@ def get_most_popular_entries():
 
 def get_latest_reviews(max=6):
     # image_url, title, description, fact_check_url
-    latest = claimreview_scraper_connector.get_latest_factchecks()
+    latest = claimreview_connector.get_latest_factchecks()
     latest = latest[:max]
     results = []
     for el in latest:

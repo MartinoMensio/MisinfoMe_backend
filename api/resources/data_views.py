@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
 
-from ..external import claimreview_scraper_connector, credibility_connector
+from ..external import claimreview_connector, credibility_connector
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ def update_data(body: StatsBody):
     a = credibility_connector.update_origin("ifcn")
     print(a)
     date = body.date
-    b = claimreview_scraper_connector.download_data(date)
+    b = claimreview_connector.download_data(date)
     print(b)
     c = credibility_connector.update_origin("factchecking_report")
     print(c)
@@ -32,7 +32,7 @@ def get_latest_data(
         description='The wanted file. Use the keys from the "files" dict that you can get without this parameter',
     )
 ):
-    return claimreview_scraper_connector.get_latest(file_name)
+    return claimreview_connector.get_latest(file_name)
 
 
 @router.get("/sample")
@@ -71,4 +71,4 @@ def get_random_samples(
         "exclude_homepage_url_misinfo": exclude_homepage_url_misinfo,
         "cursor": cursor,
     }
-    return claimreview_scraper_connector.get_sample(args)
+    return claimreview_connector.get_sample(args)
