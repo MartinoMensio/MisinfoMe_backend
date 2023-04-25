@@ -114,4 +114,4 @@ jobs:
         token: ${{ secrets.MISINFOME_GH_TOKEN }}
         repository: MartinoMensio/MisinfoMe
         event-type: 'Update: ${{ github.event.repository.name }}'
-        client-payload: '{ "submodule": "${{ github.event.repository.name }}", "commit_sha": "${{ github.sha }}" }'
+        client-payload: '{ "submodule": "backend", "commit_sha": "${{ github.sha }}" }'
