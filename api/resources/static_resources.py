@@ -45,7 +45,7 @@ def configure_static_resources(main_router: APIRouter | FastAPI):
         return RedirectResponse(url=f'/frontend-v1/credibility/sources')
     @main_router.get('/misinfo/credibility/sources/{source}', include_in_schema=False)
     def redirect_source_credibility(source: str):
-        return RedirectResponse(url=f'/frontend-v1/credibility/sources/{source}')
+        return RedirectResponse(url=f'/frontend-v2/sources/{source}')
     
     # docs
     @main_router.get('/misinfo/api', include_in_schema=False)
