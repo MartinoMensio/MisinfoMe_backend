@@ -31,7 +31,10 @@ license = {text = "MIT"}
 
 [tool.pdm.dev-dependencies]  # This is dev dependencies
 dev1 = [
-    "black", "pytest"
+    "black",
+    "httpx",
+    "pytest",
+    "coveralls",
 ]
 
 [build-system]
