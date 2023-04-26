@@ -1,9 +1,9 @@
 .pdm-python
 
-app/*
 app-v1/*
-app_v1_backup/*
+!app-v1/.gitkeep
 app-v2/*
+!app-v2/.gitkeep
 flask_monitoringdashboard.db
 evaluation/**/*.csv
 evaluation/**.png
