@@ -144,10 +144,6 @@ def get_sources():
     return sources_collection.find()
 
 
-def get_domains():
-    return domains_collection.find()
-
-
 def save_count_result(user_id, count_result):
     count_result["_id"] = int(user_id)
     return replace_safe(twitter_users_counts, count_result)

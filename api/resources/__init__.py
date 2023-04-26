@@ -2,7 +2,6 @@ from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import (
-    entity_views,
     stats_views,
     analysis_views,
     utils_views,
@@ -17,11 +16,6 @@ from ..external import ExternalException
 
 
 def configure_endpoints(main_router: APIRouter):
-    # endpoints for the entities
-    main_router.include_router(
-        entity_views.router, prefix="/entities", tags=["entities"]
-    )
-
     # endpoints for the analyses
     main_router.include_router(
         analysis_views.router, prefix="/analysis", tags=["analysis"]

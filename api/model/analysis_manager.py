@@ -1,5 +1,4 @@
 from ..evaluation import evaluate
-from ..data import twitter_old
 from ..external import twitter_connector
 
 
