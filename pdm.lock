@@ -343,11 +343,11 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "4.5.4"
+version = "4.5.5"
 requires_python = ">=3.7"
 summary = "Python client for Redis database and key-value store"
 dependencies = [
-    "async-timeout>=4.0.2; python_version <= \"3.11.2\"",
+    "async-timeout>=4.0.2; python_full_version <= \"3.11.2\"",
 ]
 
 [[package]]
@@ -499,6 +499,7 @@ summary = "Measures the displayed width of unicode strings in a terminal"
 
 [metadata]
 lock_version = "4.2"
+cross_platform = true
 groups = ["default", "dev1"]
 content_hash = "sha256:422d12470625d46c2803d2060bab685610c4c6c7ea1d5e4652cab8e9f9b0b648"
 
@@ -995,9 +996,9 @@ content_hash = "sha256:422d12470625d46c2803d2060bab685610c4c6c7ea1d5e4652cab8e9f
     {url = "https://files.pythonhosted.org/packages/94/f0/909f94fea74759654390a3e1a9e4e185b6cd9aa810e533e3586f39da3097/pytz_deprecation_shim-0.1.0.post0.tar.gz", hash = "sha256:af097bae1b616dde5c5744441e2ddc69e74dfdcb0c263129610d85b87445a59d"},
     {url = "https://files.pythonhosted.org/packages/eb/73/3eaab547ca809754e67e06871cff0fc962bafd4b604e15f31896a0f94431/pytz_deprecation_shim-0.1.0.post0-py2.py3-none-any.whl", hash = "sha256:8314c9692a636c8eb3bda879b9f119e350e93223ae83e70e80c31675a0fdc1a6"},
 ]
-"redis 4.5.4" = [
-    {url = "https://files.pythonhosted.org/packages/15/00/141ee6abca8d32448b23539e8f0e74091842c30ef357b636b372e2606aa9/redis-4.5.4.tar.gz", hash = "sha256:73ec35da4da267d6847e47f68730fdd5f62e2ca69e3ef5885c6a78a9374c3893"},
-    {url = "https://files.pythonhosted.org/packages/b5/d4/ef474a49ec5821f3155c5de2d37ddcc4a497e2500cd16d4a9e51ce02030d/redis-4.5.4-py3-none-any.whl", hash = "sha256:2c19e6767c474f2e85167909061d525ed65bea9301c0770bb151e041b7ac89a2"},
+"redis 4.5.5" = [
+    {url = "https://files.pythonhosted.org/packages/53/30/128c5599bc3fa61488866be0228326b3e486be34480126f70e572043adf8/redis-4.5.5.tar.gz", hash = "sha256:dc87a0bdef6c8bfe1ef1e1c40be7034390c2ae02d92dcd0c7ca1729443899880"},
+    {url = "https://files.pythonhosted.org/packages/e0/7f/21a09f8c9f5db6f5e24432f7a0f916ca386025d74e4da6d0f5164aa9a78a/redis-4.5.5-py3-none-any.whl", hash = "sha256:77929bc7f5dab9adf3acba2d3bb7d7658f1e0c2f1cafe7eb36434e751c471119"},
 ]
 "regex 2023.5.5" = [
     {url = "https://files.pythonhosted.org/packages/01/36/aedf96310757fa5a421749be911ed750077171930f439a233bfd8f87e43c/regex-2023.5.5-cp36-cp36m-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:fee0016cc35a8a91e8cc9312ab26a6fe638d484131a7afa79e1ce6165328a135"},
