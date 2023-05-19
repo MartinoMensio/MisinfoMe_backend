@@ -205,7 +205,7 @@ dependencies = [
 
 [[package]]
 name = "httpx"
-version = "0.24.0"
+version = "0.24.1"
 requires_python = ">=3.7"
 summary = "The next generation HTTP client."
 dependencies = [
@@ -420,7 +420,7 @@ dependencies = [
 
 [[package]]
 name = "tldextract"
-version = "3.4.2"
+version = "3.4.3"
 requires_python = ">=3.7"
 summary = "Accurately separates a URL's subdomain, domain, and public suffix, using the Public Suffix List (PSL). By default, this includes the public ICANN TLDs and their exceptions. You can optionally support the Public Suffix List's private domains as well."
 dependencies = [
@@ -743,9 +743,9 @@ content_hash = "sha256:422d12470625d46c2803d2060bab685610c4c6c7ea1d5e4652cab8e9f
     {url = "https://files.pythonhosted.org/packages/41/16/c809655d32fd93e688b9e2a1aaba1008118369d1eda00818f6f65eb509f8/httpcore-0.17.0.tar.gz", hash = "sha256:cc045a3241afbf60ce056202301b4d8b6af08845e3294055eb26b09913ef903c"},
     {url = "https://files.pythonhosted.org/packages/6c/39/05ebe30333ec66bba849d3c25c85d759b94c43bb03b2222de051c50d4390/httpcore-0.17.0-py3-none-any.whl", hash = "sha256:0fdfea45e94f0c9fd96eab9286077f9ff788dd186635ae61b312693e4d943599"},
 ]
-"httpx 0.24.0" = [
-    {url = "https://files.pythonhosted.org/packages/4e/c1/692013f1e6115a061a14f6c7d05947515a1eb7b85ef6e9bf0ffbf0e92738/httpx-0.24.0-py3-none-any.whl", hash = "sha256:447556b50c1921c351ea54b4fe79d91b724ed2b027462ab9a329465d147d5a4e"},
-    {url = "https://files.pythonhosted.org/packages/ae/23/f7beaf11a8b95fc173b8979c4bfd23ea7711c5ebd458d657d24a59df7e9f/httpx-0.24.0.tar.gz", hash = "sha256:507d676fc3e26110d41df7d35ebd8b3b8585052450f4097401c9be59d928c63e"},
+"httpx 0.24.1" = [
+    {url = "https://files.pythonhosted.org/packages/ec/91/e41f64f03d2a13aee7e8c819d82ee3aa7cdc484d18c0ae859742597d5aa0/httpx-0.24.1-py3-none-any.whl", hash = "sha256:06781eb9ac53cde990577af654bd990a4949de37a28bdb4a230d434f3a30b9bd"},
+    {url = "https://files.pythonhosted.org/packages/f8/2a/114d454cb77657dbf6a293e69390b96318930ace9cd96b51b99682493276/httpx-0.24.1.tar.gz", hash = "sha256:5853a43053df830c20f8110c5e69fe44d035d850b2dfe795e196f00fdb774bdd"},
 ]
 "idna 3.4" = [
     {url = "https://files.pythonhosted.org/packages/8b/e1/43beb3d38dba6cb420cefa297822eac205a277ab43e5ba5d5c46faf96438/idna-3.4.tar.gz", hash = "sha256:814f528e8dead7d329833b91c5faa87d60bf71824cd12a7530b5526063d02cb4"},
@@ -1122,9 +1122,9 @@ content_hash = "sha256:422d12470625d46c2803d2060bab685610c4c6c7ea1d5e4652cab8e9f
     {url = "https://files.pythonhosted.org/packages/2c/7a/0ad3973941590c040475046fef37a2b08a76691e61aa59540828ee235a6e/supervisor-4.2.5-py2.py3-none-any.whl", hash = "sha256:2ecaede32fc25af814696374b79e42644ecaba5c09494c51016ffda9602d0f08"},
     {url = "https://files.pythonhosted.org/packages/ce/37/517989b05849dd6eaa76c148f24517544704895830a50289cbbf53c7efb9/supervisor-4.2.5.tar.gz", hash = "sha256:34761bae1a23c58192281a5115fb07fbf22c9b0133c08166beffc70fed3ebc12"},
 ]
-"tldextract 3.4.2" = [
-    {url = "https://files.pythonhosted.org/packages/a6/13/bd0d0d855df1c161bdf4098b7006d9f8e68a5288377da12adfb801ddcb1d/tldextract-3.4.2-py3-none-any.whl", hash = "sha256:1f168f0a1c000a757aefed94a5bda10349c58976cb2ef1cc17c6e3b213440521"},
-    {url = "https://files.pythonhosted.org/packages/bf/d7/f146b8ff570f138f98521dd770026f790b43448aa10d19706bc1d09a44a8/tldextract-3.4.2.tar.gz", hash = "sha256:98e36b0aa3a6d8fd084d80d75ae1372da02027efb556c146a59dfd14457071ba"},
+"tldextract 3.4.3" = [
+    {url = "https://files.pythonhosted.org/packages/ce/d5/fd274ffb00ace49387b3de13eb8346f7003ee23b01c2bc8c2737a9e856f4/tldextract-3.4.3-py3-none-any.whl", hash = "sha256:5ed3fd01df4e78b8b378bdff94397cd8cdb130b54d2681c40d254beadd50f69f"},
+    {url = "https://files.pythonhosted.org/packages/f6/c6/31e43b2ba3c21421c0d3beb5c6a616d649fcb008054c770b594dcd7c7805/tldextract-3.4.3.tar.gz", hash = "sha256:d3fbbfcdadbaff5d414dd8a77cfcc8c3aa811fa5470d8bad289b4c508f39d778"},
 ]
 "tqdm 4.65.0" = [
     {url = "https://files.pythonhosted.org/packages/3d/78/81191f56abb7d3d56963337dbdff6aa4f55805c8afd8bad64b0a34199e9b/tqdm-4.65.0.tar.gz", hash = "sha256:1871fb68a86b8fb3b59ca4cdd3dcccbc7e6d613eeed31f4c332531977b89beb5"},
