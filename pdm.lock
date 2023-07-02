@@ -173,12 +173,13 @@ summary = "Pythonic argument parser, that will make you smile"
 
 [[package]]
 name = "fastapi"
-version = "0.98.0"
+version = "0.99.1"
 requires_python = ">=3.7"
 summary = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 dependencies = [
     "pydantic!=1.8,!=1.8.1,<2.0.0,>=1.7.4",
     "starlette<0.28.0,>=0.27.0",
+    "typing-extensions>=4.5.0",
 ]
 
 [[package]]
@@ -729,9 +730,9 @@ content_hash = "sha256:422d12470625d46c2803d2060bab685610c4c6c7ea1d5e4652cab8e9f
 "docopt 0.6.2" = [
     {url = "https://files.pythonhosted.org/packages/a2/55/8f8cab2afd404cf578136ef2cc5dfb50baa1761b68c9da1fb1e4eed343c9/docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
 ]
-"fastapi 0.98.0" = [
-    {url = "https://files.pythonhosted.org/packages/50/2c/6b94f191519dcc8190e78aff7bcb12c58329d1ab4c8aa11f2def9c214599/fastapi-0.98.0-py3-none-any.whl", hash = "sha256:f4165fb1fe3610c52cb1b8282c1480de9c34bc270f56a965aa93a884c350d605"},
-    {url = "https://files.pythonhosted.org/packages/eb/e4/35797cc07d279206e6b61ff77333b4a50637204c77141f89c829d7318fac/fastapi-0.98.0.tar.gz", hash = "sha256:0d3c18886f652038262b5898fec6b09f4ca92ee23e9d9b1d1d24e429f84bf27b"},
+"fastapi 0.99.1" = [
+    {url = "https://files.pythonhosted.org/packages/22/93/42b9998a6e28eaee90724db439e27a66b7dc6a5b9e85499add1e042141e2/fastapi-0.99.1.tar.gz", hash = "sha256:ac78f717cd80d657bd183f94d33b9bda84aa376a46a9dab513586b8eef1dc6fc"},
+    {url = "https://files.pythonhosted.org/packages/73/eb/03b691afa0b5ffa1e93ed34f97ec1e7855c758efbdcfb16c209af0b0506b/fastapi-0.99.1-py3-none-any.whl", hash = "sha256:976df7bab51ac7beda9f68c4513b8c4490b5c1135c72aafd0a5ee4023ec5282e"},
 ]
 "filelock 3.10.7" = [
     {url = "https://files.pythonhosted.org/packages/25/89/3c51e2896bf666fdda7e776f3421f1bfec843c34311c0a3486c90452a04d/filelock-3.10.7-py3-none-any.whl", hash = "sha256:bde48477b15fde2c7e5a0713cbe72721cb5a5ad32ee0b8f419907960b9d75536"},
