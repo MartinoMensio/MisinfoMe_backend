@@ -5,7 +5,7 @@ amqp==5.1.1
 anyio==3.7.1
 beautifulsoup4==4.12.2
 billiard==4.1.0
-black==23.9.0
+black==23.9.1
 celery==5.3.4
 certifi==2023.7.22
 charset-normalizer==3.1.0
@@ -21,8 +21,8 @@ docopt==0.6.2
 fastapi==0.103.1
 filelock==3.10.7
 h11==0.14.0
-httpcore==0.17.0
-httpx==0.24.1
+httpcore==0.18.0
+httpx==0.25.0
 idna==3.4
 iniconfig==2.0.0
 kombu==5.3.2
