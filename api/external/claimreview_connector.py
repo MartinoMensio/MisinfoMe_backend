@@ -48,7 +48,7 @@ def get_sample(args):
     args = {k: v for k, v in args.items() if v != None and v != ""}
     response = requests.get(f"{DATA_ENDPOINT}/data/sample", params=args)
     if response.status_code != 200:
-        raise HTTPException(response.status_code, response)
+        raise HTTPException(response.status_code, response.json())
     return response.json()
 
 
