@@ -30,7 +30,7 @@ def search_twitter_user_from_screen_name(screen_name):
     )
     if response.status_code != 200:
         print("ERROR", screen_name, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -42,7 +42,7 @@ def search_tweets_from_screen_name(screen_name):
     )
     if response.status_code != 200:
         print("ERROR", screen_name, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     result = response.json()
     print(f"retrieved {len(result)} tweets for {screen_name}")
     return result
@@ -56,7 +56,7 @@ def search_friends_from_screen_name(screen_name, limit=200):
     )
     if response.status_code != 200:
         print("ERROR", screen_name, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -65,7 +65,7 @@ def search_tweets_with_url(url):
     response = requests.get(f"{TWITTER_CONNECTOR}search/tweets", params={"link": url})
     if response.status_code != 200:
         print("ERROR", url, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -73,7 +73,7 @@ def get_tweet(tweet_id):
     response = requests.get(f"{TWITTER_CONNECTOR}tweets/{tweet_id}")
     if response.status_code != 200:
         print("ERROR", tweet_id, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -104,7 +104,7 @@ def search_twitter_user_from_username_v2(username):
     )
     if response.status_code != 200:
         print("ERROR", username, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -115,7 +115,7 @@ def search_tweets_from_user_id_v2(user_id, get_all=False, until_id=None):
     )
     if response.status_code != 200:
         print("ERROR", user_id, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 
@@ -123,7 +123,7 @@ def get_tweet_from_id_v2(tweet_id):
     response = requests.get(f"{TWITTER_CONNECTOR}v2/tweets/{tweet_id}")
     if response.status_code != 200:
         print("ERROR", tweet_id, response.status_code)
-        raise ExternalException(response.status_code, response.json())
+        raise ExternalException(response)
     return response.json()
 
 

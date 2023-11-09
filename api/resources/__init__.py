@@ -12,8 +12,6 @@ from . import (
 )
 from . import frontend_v2_views
 
-from ..external import ExternalException
-
 
 def configure_endpoints(main_router: APIRouter):
     # endpoints for the analyses
