@@ -4,7 +4,7 @@
 amqp==5.1.1
 anyio==3.7.1
 async-timeout==4.0.2; python_full_version <= "3.11.2"
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
 billiard==4.2.0
 black==23.12.1
 celery==5.3.6
@@ -58,7 +58,7 @@ typing-extensions==4.8.0
 tzdata==2023.2
 tzlocal==4.3
 urllib3==2.1.0
-uvicorn==0.25.0
+uvicorn==0.26.0
 validators==0.22.0
 vine==5.1.0
 wcwidth==0.2.6
