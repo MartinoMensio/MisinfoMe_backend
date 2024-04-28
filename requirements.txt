@@ -6,7 +6,7 @@ anyio==3.7.1
 async-timeout==4.0.3; python_full_version < "3.11.3"
 beautifulsoup4==4.12.3
 billiard==4.2.0
-black==24.4.0
+black==24.4.2
 celery==5.4.0
 certifi==2024.2.2
 charset-normalizer==3.1.0
@@ -33,17 +33,17 @@ mypy-extensions==1.0.0
 packaging==23.0
 pathspec==0.11.1
 platformdirs==3.2.0
-pluggy==1.4.0
+pluggy==1.5.0
 prompt-toolkit==3.0.38
 pydantic==1.10.7
-pymongo==4.6.3
-pytest==8.1.1
+pymongo==4.7.0
+pytest==8.2.0
 python-dateutil==2.8.2
 python-dotenv==1.0.1
 pytz==2023.2
 pytz-deprecation-shim==0.1.0.post0
-redis==5.0.3
-regex==2024.4.16
+redis==5.0.4
+regex==2024.4.28
 requests==2.31.0
 requests-file==1.5.1
 setuptools==67.6.0
